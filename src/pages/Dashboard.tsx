@@ -282,7 +282,8 @@ const Dashboard = () => {
                         contentStyle={{ borderRadius: '8px', border: 'none', background: 'hsl(0 0% 12%)', color: 'hsl(0 0% 90%)' }}
                       />
                       <Line type="monotone" dataKey="avgCalories" stroke="hsl(0 0% 100%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(0 0% 100%)' }} name="Calorias" />
-                      <Line type="monotone" dataKey="avgBurned" stroke="hsl(0 0% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(0 0% 45%)' }} name="Gastas" />
+                      <Line type="monotone" dataKey="avgBurned" stroke="hsl(0 0% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(0 0% 45%)' }} name="Atividade" />
+                      <Line type="monotone" dataKey="basal" stroke="hsl(25 95% 53%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(25 95% 53%)' }} name="TMB" strokeDasharray="5 5" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
