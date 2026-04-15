@@ -27,6 +27,45 @@ export interface DailyBurn {
   activityDuration: string;
 }
 
+export interface Bioimpedance {
+  basalRate: number;
+  weight: number;
+  height: number;
+  bodyFat: number;
+  muscleMass: number;
+  bodyWater: number;
+  boneMass: number;
+  visceralFat: number;
+  metabolicAge: number;
+}
+
+export interface Race {
+  id: string;
+  name: string;
+  type: string;
+  date: string;
+  location: string;
+  distance: string;
+}
+
+export const defaultBioimpedance: Bioimpedance = {
+  basalRate: 1750,
+  weight: 78,
+  height: 178,
+  bodyFat: 16.5,
+  muscleMass: 35.2,
+  bodyWater: 58,
+  boneMass: 3.2,
+  visceralFat: 8,
+  metabolicAge: 28,
+};
+
+export const defaultRaces: Race[] = [
+  { id: '1', name: 'Maratona de São Paulo', type: 'Maratona', date: '2026-10-18', location: 'São Paulo, Brasil', distance: '42.195 km' },
+  { id: '2', name: 'Ironman 70.3 Florianópolis', type: 'Ironman 70.3', date: '2026-07-12', location: 'Florianópolis, Brasil', distance: '113 km' },
+  { id: '3', name: 'Meia Maratona do Rio', type: 'Meia Maratona', date: '2026-06-07', location: 'Rio de Janeiro, Brasil', distance: '21.1 km' },
+];
+
 export const defaultGoal: DietGoal = {
   name: 'Plano Performance',
   caloriesTarget: 2000,
@@ -94,21 +133,22 @@ export const dailyBurn: DailyBurn = {
   activityDuration: '45 min',
 };
 
+// basalRate default = 1750 for mock chart data
 export const weeklyData = [
-  { day: 'Seg', calories: 1850, burned: 580, protein: 145, carbs: 165 },
-  { day: 'Ter', calories: 2100, burned: 420, protein: 155, carbs: 190 },
-  { day: 'Qua', calories: 1920, burned: 700, protein: 162, carbs: 170 },
-  { day: 'Qui', calories: 2050, burned: 350, protein: 148, carbs: 185 },
-  { day: 'Sex', calories: 1780, burned: 640, protein: 158, carbs: 155 },
-  { day: 'Sáb', calories: 2300, burned: 300, protein: 130, carbs: 210 },
-  { day: 'Dom', calories: 1950, burned: 500, protein: 152, carbs: 175 },
+  { day: 'Seg', calories: 1850, burned: 580, protein: 145, carbs: 165, basal: 1750 },
+  { day: 'Ter', calories: 2100, burned: 420, protein: 155, carbs: 190, basal: 1750 },
+  { day: 'Qua', calories: 1920, burned: 700, protein: 162, carbs: 170, basal: 1750 },
+  { day: 'Qui', calories: 2050, burned: 350, protein: 148, carbs: 185, basal: 1750 },
+  { day: 'Sex', calories: 1780, burned: 640, protein: 158, carbs: 155, basal: 1750 },
+  { day: 'Sáb', calories: 2300, burned: 300, protein: 130, carbs: 210, basal: 1750 },
+  { day: 'Dom', calories: 1950, burned: 500, protein: 152, carbs: 175, basal: 1750 },
 ];
 
 export const monthlyData = [
-  { week: 'Sem 1', avgCalories: 1950, avgBurned: 520, avgProtein: 148, avgCarbs: 172, daysOnTarget: 5, daysOver: 2 },
-  { week: 'Sem 2', avgCalories: 2020, avgBurned: 480, avgProtein: 155, avgCarbs: 178, daysOnTarget: 4, daysOver: 3 },
-  { week: 'Sem 3', avgCalories: 1880, avgBurned: 610, avgProtein: 160, avgCarbs: 165, daysOnTarget: 6, daysOver: 1 },
-  { week: 'Sem 4', avgCalories: 1920, avgBurned: 550, avgProtein: 158, avgCarbs: 170, daysOnTarget: 5, daysOver: 2 },
+  { week: 'Sem 1', avgCalories: 1950, avgBurned: 520, avgProtein: 148, avgCarbs: 172, daysOnTarget: 5, daysOver: 2, basal: 1750 },
+  { week: 'Sem 2', avgCalories: 2020, avgBurned: 480, avgProtein: 155, avgCarbs: 178, daysOnTarget: 4, daysOver: 3, basal: 1750 },
+  { week: 'Sem 3', avgCalories: 1880, avgBurned: 610, avgProtein: 160, avgCarbs: 165, daysOnTarget: 6, daysOver: 1, basal: 1750 },
+  { week: 'Sem 4', avgCalories: 1920, avgBurned: 550, avgProtein: 158, avgCarbs: 170, daysOnTarget: 5, daysOver: 2, basal: 1750 },
 ];
 
 export const historyMeals: Meal[] = [
