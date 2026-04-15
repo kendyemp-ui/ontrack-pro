@@ -268,6 +268,7 @@ const Dashboard = () => {
           {period === 'month' && (() => {
             const monthlyWithBalance = monthlyData.map(d => ({
               ...d,
+              basal: bioimpedance.basalRate,
               balance: d.avgCalories - (d.avgBurned + bioimpedance.basalRate),
             }));
             return (
