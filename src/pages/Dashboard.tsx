@@ -75,7 +75,7 @@ const Dashboard = () => {
               <Zap size={13} strokeWidth={1.5} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Saldo Líquido</span>
             </div>
-            <p className={`text-3xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-destructive' : 'text-accent'}`}>
+            <p className={`text-3xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {netBalance > 0 ? '+' : ''}{netBalance}
             </p>
             <p className="text-[10px] text-muted-foreground tracking-wide">
