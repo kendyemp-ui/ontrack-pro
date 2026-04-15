@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
-import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
+import { integrations, dailyBurn } from '@/data/mockData';
 
 const Profile = () => {
   const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace } = useApp();
