@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
-import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
+import { integrations, dailyBurn } from '@/data/mockData';
 
 const Profile = () => {
   const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace } = useApp();
@@ -207,6 +208,82 @@ const Profile = () => {
 
           <p className="text-xs text-muted-foreground mt-4">
             🏆 Em breve: acompanhe treinos e progressão até a prova em um dashboard dedicado.
+          </p>
+        </div>
+
+        {/* Integrações - Smartwatches */}
+        <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Watch size={18} className="text-primary" />
+              <h2 className="text-base font-heading font-semibold text-foreground">Integrações</h2>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {integrations.filter(i => i.status === 'config').length} ativo(s)
+            </span>
+          </div>
+
+          {/* Dados do dia */}
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-4 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Activity size={14} className="text-primary" />
+              <span className="text-xs font-medium text-foreground">Dados de hoje</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center">
+                <p className="text-lg font-heading font-bold text-primary">{dailyBurn.total}</p>
+                <p className="text-[10px] text-muted-foreground">kcal ativas</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-heading font-bold text-accent">{dailyBurn.steps.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground">passos</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-heading font-bold text-warning">{dailyBurn.activityDuration}</p>
+                <p className="text-[10px] text-muted-foreground">{dailyBurn.activity}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Lista de integrações */}
+          <div className="space-y-2">
+            {integrations.map(integration => {
+              const statusConfig: Record<string, { label: string; color: string }> = {
+                connected: { label: 'Conectado', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+                soon: { label: 'Em breve', color: 'bg-muted text-muted-foreground border-border' },
+                config: { label: 'Configurando', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+                disconnected: { label: 'Desconectado', color: 'bg-destructive/10 text-destructive border-destructive/20' },
+              };
+              const config = statusConfig[integration.status] || statusConfig.soon;
+              
+              const IconComponent = {
+                'Apple Watch': Watch,
+                'Garmin': Activity,
+                'Oura Ring': Heart,
+                'Smart Ring': Watch,
+                'WhatsApp Business API': MessageCircle,
+                'Google Fit': Smartphone,
+              }[integration.name] || Watch;
+
+              return (
+                <div key={integration.name} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-background/50 flex items-center justify-center">
+                    <IconComponent size={18} className="text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{integration.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{integration.description}</p>
+                  </div>
+                  <span className={`text-[10px] font-medium px-2 py-1 rounded-full border ${config.color}`}>
+                    {config.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-4">
+            ⌚ Conecte seus dispositivos para sincronizar calorias gastas, passos e atividades automaticamente.
           </p>
         </div>
       </div>
