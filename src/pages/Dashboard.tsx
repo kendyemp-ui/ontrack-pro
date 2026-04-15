@@ -75,7 +75,7 @@ const Dashboard = () => {
               <Zap size={13} strokeWidth={1.5} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Saldo Líquido</span>
             </div>
-            <p className={`text-3xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-destructive' : 'text-accent'}`}>
+            <p className={`text-3xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {netBalance > 0 ? '+' : ''}{netBalance}
             </p>
             <p className="text-[10px] text-muted-foreground tracking-wide">
@@ -174,7 +174,7 @@ const Dashboard = () => {
             <SummaryItem text={`TMB: ${bioimpedance.basalRate} kcal + Atividade: ${burn.total} kcal = ${totalBurn} kcal`} isNegative={false} />
             <SummaryItem
               text={`Saldo: ${netBalance > 0 ? '+' : ''}${netBalance} kcal (${netBalance < 0 ? 'déficit' : 'superávit'})`}
-              isNegative={netBalance > 0}
+              isNegative={netBalance < 0}
             />
           </div>
         </div>
@@ -201,6 +201,7 @@ const Dashboard = () => {
           {period === 'week' && (() => {
             const weeklyWithBalance = weeklyData.map(d => ({
               ...d,
+              basal: bioimpedance.basalRate,
               balance: d.calories - (d.burned + bioimpedance.basalRate),
             }));
             return (
@@ -216,6 +217,7 @@ const Dashboard = () => {
                       />
                       <Bar dataKey="calories" fill="hsl(0 0% 100%)" radius={[4, 4, 0, 0]} name="Consumidas" opacity={0.9} />
                       <Bar dataKey="burned" fill="hsl(0 0% 45%)" radius={[4, 4, 0, 0]} name="Atividade" />
+                      <Bar dataKey="basal" fill="hsl(25 95% 53%)" radius={[4, 4, 0, 0]} name="TMB" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -234,7 +236,7 @@ const Dashboard = () => {
                       <ReferenceLine y={0} stroke="hsl(0 0% 30%)" strokeDasharray="3 3" />
                       <Bar dataKey="balance" name="Saldo" radius={[4, 4, 4, 4]}>
                         {weeklyWithBalance.map((entry, index) => (
-                          <Cell key={index} fill={entry.balance >= 0 ? 'hsl(0 62% 55%)' : 'hsl(160 70% 45%)'} />
+                          <Cell key={index} fill={entry.balance < 0 ? 'hsl(0 62% 55%)' : 'hsl(142 70% 45%)'} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -242,10 +244,13 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center gap-4 mb-4">
                   <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="w-2 h-2 rounded-full bg-accent"></span> Déficit
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(0 62% 55%)' }}></span> Déficit
                   </span>
                   <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="w-2 h-2 rounded-full bg-destructive"></span> Superávit
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(142 70% 45%)' }}></span> Superávit
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(25 95% 53%)' }}></span> TMB
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -263,6 +268,7 @@ const Dashboard = () => {
           {period === 'month' && (() => {
             const monthlyWithBalance = monthlyData.map(d => ({
               ...d,
+              basal: bioimpedance.basalRate,
               balance: d.avgCalories - (d.avgBurned + bioimpedance.basalRate),
             }));
             return (
@@ -276,7 +282,8 @@ const Dashboard = () => {
                         contentStyle={{ borderRadius: '8px', border: 'none', background: 'hsl(0 0% 12%)', color: 'hsl(0 0% 90%)' }}
                       />
                       <Line type="monotone" dataKey="avgCalories" stroke="hsl(0 0% 100%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(0 0% 100%)' }} name="Calorias" />
-                      <Line type="monotone" dataKey="avgBurned" stroke="hsl(0 0% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(0 0% 45%)' }} name="Gastas" />
+                      <Line type="monotone" dataKey="avgBurned" stroke="hsl(0 0% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(0 0% 45%)' }} name="Atividade" />
+                      <Line type="monotone" dataKey="basal" stroke="hsl(25 95% 53%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(25 95% 53%)' }} name="TMB" strokeDasharray="5 5" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -295,7 +302,7 @@ const Dashboard = () => {
                       <ReferenceLine y={0} stroke="hsl(0 0% 30%)" strokeDasharray="3 3" />
                       <Bar dataKey="balance" name="Saldo" radius={[4, 4, 4, 4]}>
                         {monthlyWithBalance.map((entry, index) => (
-                          <Cell key={index} fill={entry.balance >= 0 ? 'hsl(0 62% 55%)' : 'hsl(160 70% 45%)'} />
+                          <Cell key={index} fill={entry.balance < 0 ? 'hsl(0 62% 55%)' : 'hsl(142 70% 45%)'} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -306,7 +313,7 @@ const Dashboard = () => {
                     <div key={w.week} className="bg-secondary/50 rounded-xl p-3">
                       <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{w.week}</p>
                       <p className="text-sm font-heading font-semibold text-foreground">{w.avgCalories} kcal</p>
-                      <p className={`text-xs font-medium ${w.balance >= 0 ? 'text-destructive' : 'text-accent'}`}>
+                      <p className={`text-xs font-medium ${w.balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {w.balance >= 0 ? `+${w.balance}` : w.balance} kcal
                       </p>
                     </div>
