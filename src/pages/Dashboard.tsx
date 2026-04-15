@@ -302,7 +302,7 @@ const Dashboard = () => {
                       <ReferenceLine y={0} stroke="hsl(0 0% 30%)" strokeDasharray="3 3" />
                       <Bar dataKey="balance" name="Saldo" radius={[4, 4, 4, 4]}>
                         {monthlyWithBalance.map((entry, index) => (
-                          <Cell key={index} fill={entry.balance >= 0 ? 'hsl(0 62% 55%)' : 'hsl(160 70% 45%)'} />
+                          <Cell key={index} fill={entry.balance < 0 ? 'hsl(0 62% 55%)' : 'hsl(142 70% 45%)'} />
                         ))}
                       </Bar>
                     </BarChart>
