@@ -11,6 +11,7 @@ import MealRegistration from "./pages/MealRegistration";
 import DietGoals from "./pages/DietGoals";
 import MealHistory from "./pages/MealHistory";
 import Integrations from "./pages/Integrations";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/diet" element={<ProtectedRoute><DietGoals /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><MealHistory /></ProtectedRoute>} />
             <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppProvider>
