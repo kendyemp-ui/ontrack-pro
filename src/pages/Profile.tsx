@@ -274,8 +274,8 @@ const Profile = () => {
                     <p className="text-sm font-medium text-foreground truncate">{integration.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{integration.description}</p>
                   </div>
-                  <span className={`text-[10px] font-medium px-2 py-1 rounded-full border ${statusConfig.color}`}>
-                    {statusConfig.label}
+                  <span className={`text-[10px] font-medium px-2 py-1 rounded-full border ${config.color}`}>
+                    {config.label}
                   </span>
                 </div>
               );
