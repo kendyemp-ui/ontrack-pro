@@ -313,7 +313,7 @@ const Dashboard = () => {
                     <div key={w.week} className="bg-secondary/50 rounded-xl p-3">
                       <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{w.week}</p>
                       <p className="text-sm font-heading font-semibold text-foreground">{w.avgCalories} kcal</p>
-                      <p className={`text-xs font-medium ${w.balance >= 0 ? 'text-destructive' : 'text-accent'}`}>
+                      <p className={`text-xs font-medium ${w.balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {w.balance >= 0 ? `+${w.balance}` : w.balance} kcal
                       </p>
                     </div>
