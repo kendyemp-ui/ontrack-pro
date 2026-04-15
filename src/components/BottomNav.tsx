@@ -14,7 +14,7 @@ const BottomNav = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/50 backdrop-blur-xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 border-t border-border/40 backdrop-blur-xl">
       <div className="flex items-center justify-around h-16 max-w-md mx-auto px-2">
         {navItems.map(({ path, label, icon: Icon }) => {
           const isActive = location.pathname === path;
@@ -24,12 +24,12 @@ const BottomNav = () => {
               onClick={() => navigate(path)}
               className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'text-primary'
+                  ? 'text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
-              <span className="text-[10px] font-medium">{label}</span>
+              <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+              <span className="text-[9px] font-medium uppercase tracking-wider">{label}</span>
             </button>
           );
         })}
