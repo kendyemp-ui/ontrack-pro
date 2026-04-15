@@ -236,7 +236,7 @@ const Dashboard = () => {
                       <ReferenceLine y={0} stroke="hsl(0 0% 30%)" strokeDasharray="3 3" />
                       <Bar dataKey="balance" name="Saldo" radius={[4, 4, 4, 4]}>
                         {weeklyWithBalance.map((entry, index) => (
-                          <Cell key={index} fill={entry.balance >= 0 ? 'hsl(0 62% 55%)' : 'hsl(160 70% 45%)'} />
+                          <Cell key={index} fill={entry.balance < 0 ? 'hsl(0 62% 55%)' : 'hsl(142 70% 45%)'} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -244,10 +244,13 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center gap-4 mb-4">
                   <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="w-2 h-2 rounded-full bg-accent"></span> Déficit
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(0 62% 55%)' }}></span> Déficit
                   </span>
                   <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="w-2 h-2 rounded-full bg-destructive"></span> Superávit
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(142 70% 45%)' }}></span> Superávit
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(25 95% 53%)' }}></span> TMB
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
