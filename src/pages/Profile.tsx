@@ -218,7 +218,9 @@ const Profile = () => {
               <Watch size={18} className="text-primary" />
               <h2 className="text-base font-heading font-semibold text-foreground">Integrações</h2>
             </div>
-            <span className="text-xs text-muted-foreground">{integrations.filter(i => i.status === 'connected').length} conectado(s)</span>
+            <span className="text-xs text-muted-foreground">
+              {integrations.filter(i => i.status === 'config').length} ativo(s)
+            </span>
           </div>
 
           {/* Dados do dia */}
