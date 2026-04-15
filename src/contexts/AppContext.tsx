@@ -65,7 +65,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const caloriesRemaining = goal.caloriesTarget - totalCalories;
   const proteinRemaining = goal.proteinTarget - totalProtein;
   const carbsRemaining = goal.carbsTarget - totalCarbs;
-  const netBalance = totalCalories - burn.total;
+  const totalBurn = burn.total + bioimpedance.basalRate;
+  const netBalance = totalCalories - totalBurn;
 
   return (
     <AppContext.Provider value={{

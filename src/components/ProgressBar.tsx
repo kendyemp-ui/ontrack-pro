@@ -7,7 +7,7 @@ interface ProgressBarProps {
   showRemaining?: boolean;
 }
 
-const ProgressBar = ({ value, max, label, unit, colorClass = 'gradient-primary', showRemaining = true }: ProgressBarProps) => {
+const ProgressBar = ({ value, max, label, unit, colorClass = 'gradient-accent', showRemaining = true }: ProgressBarProps) => {
   const percentage = Math.min((value / max) * 100, 100);
   const isOver = value > max;
   const remaining = max - value;
@@ -15,19 +15,19 @@ const ProgressBar = ({ value, max, label, unit, colorClass = 'gradient-primary',
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-xs font-medium text-foreground uppercase tracking-wider">{label}</span>
+        <span className="text-xs font-semibold text-foreground font-heading">
           {value}{unit} <span className="text-muted-foreground font-normal">/ {max}{unit}</span>
         </span>
       </div>
-      <div className="progress-bar h-2.5">
+      <div className="progress-bar h-1.5">
         <div
           className={`progress-fill ${isOver ? 'bg-destructive' : colorClass}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
       {showRemaining && (
-        <p className={`text-xs ${isOver ? 'text-destructive' : 'text-muted-foreground'}`}>
+        <p className={`text-[10px] ${isOver ? 'text-destructive' : 'text-muted-foreground'}`}>
           {isOver
             ? `Excedeu ${Math.abs(remaining)}${unit}`
             : `Faltam ${remaining}${unit}`}
