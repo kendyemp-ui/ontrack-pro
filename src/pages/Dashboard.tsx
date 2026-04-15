@@ -201,6 +201,7 @@ const Dashboard = () => {
           {period === 'week' && (() => {
             const weeklyWithBalance = weeklyData.map(d => ({
               ...d,
+              basal: bioimpedance.basalRate,
               balance: d.calories - (d.burned + bioimpedance.basalRate),
             }));
             return (
