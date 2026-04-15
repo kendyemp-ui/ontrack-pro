@@ -174,7 +174,7 @@ const Dashboard = () => {
             <SummaryItem text={`TMB: ${bioimpedance.basalRate} kcal + Atividade: ${burn.total} kcal = ${totalBurn} kcal`} isNegative={false} />
             <SummaryItem
               text={`Saldo: ${netBalance > 0 ? '+' : ''}${netBalance} kcal (${netBalance < 0 ? 'déficit' : 'superávit'})`}
-              isNegative={netBalance > 0}
+              isNegative={netBalance < 0}
             />
           </div>
         </div>
