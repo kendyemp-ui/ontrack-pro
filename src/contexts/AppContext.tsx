@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Meal, DietGoal, DailyBurn, defaultGoal, todayMeals, dailyBurn } from '@/data/mockData';
+import { Meal, DietGoal, DailyBurn, Bioimpedance, Race, defaultGoal, todayMeals, dailyBurn, defaultBioimpedance, defaultRaces } from '@/data/mockData';
 
 interface AppState {
   isLoggedIn: boolean;
@@ -7,10 +7,15 @@ interface AppState {
   meals: Meal[];
   goal: DietGoal;
   burn: DailyBurn;
+  bioimpedance: Bioimpedance;
+  races: Race[];
   login: (email: string, password: string) => boolean;
   logout: () => void;
   addMeal: (meal: Meal) => void;
   updateGoal: (goal: DietGoal) => void;
+  updateBioimpedance: (bio: Bioimpedance) => void;
+  addRace: (race: Race) => void;
+  removeRace: (id: string) => void;
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
@@ -34,6 +39,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [meals, setMeals] = useState<Meal[]>(todayMeals);
   const [goal, setGoal] = useState<DietGoal>(defaultGoal);
   const [burn] = useState<DailyBurn>(dailyBurn);
+  const [bioimpedance, setBioimpedance] = useState<Bioimpedance>(defaultBioimpedance);
+  const [races, setRaces] = useState<Race[]>(defaultRaces);
 
   const login = (email: string, password: string) => {
     if (email === 'teste@moveonhealth.com' && password === '123456') {
@@ -44,10 +51,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => setIsLoggedIn(false);
-
   const addMeal = (meal: Meal) => setMeals(prev => [...prev, meal]);
-
   const updateGoal = (newGoal: DietGoal) => setGoal(newGoal);
+  const updateBioimpedance = (bio: Bioimpedance) => setBioimpedance(bio);
+  const addRace = (race: Race) => setRaces(prev => [...prev, race]);
+  const removeRace = (id: string) => setRaces(prev => prev.filter(r => r.id !== id));
 
   const todaysMeals = meals.filter(m => m.date === '2026-04-15');
   const totalCalories = todaysMeals.reduce((s, m) => s + m.calories, 0);
@@ -61,8 +69,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AppContext.Provider value={{
-      isLoggedIn, userName, meals, goal, burn,
-      login, logout, addMeal, updateGoal,
+      isLoggedIn, userName, meals, goal, burn, bioimpedance, races,
+      login, logout, addMeal, updateGoal, updateBioimpedance, addRace, removeRace,
       totalCalories, totalProtein, totalCarbs,
       caloriesRemaining, proteinRemaining, carbsRemaining, netBalance,
     }}>

@@ -1,12 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, MessageCircle, Target, Clock, Puzzle } from 'lucide-react';
+import { Home, MessageCircle, Target, Clock, User } from 'lucide-react';
 
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
   { path: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
   { path: '/diet', label: 'Dieta', icon: Target },
   { path: '/history', label: 'Histórico', icon: Clock },
-  { path: '/integrations', label: 'Integrações', icon: Puzzle },
+  { path: '/profile', label: 'Perfil', icon: User },
 ];
 
 const BottomNav = () => {

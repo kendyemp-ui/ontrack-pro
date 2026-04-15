@@ -3,7 +3,7 @@ import BottomNav from '@/components/BottomNav';
 import ProgressBar from '@/components/ProgressBar';
 import { MessageCircle, Flame, TrendingUp, Utensils, Zap, Activity } from 'lucide-react';
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, ReferenceLine, Cell } from 'recharts';
 import { weeklyData, monthlyData } from '@/data/mockData';
 
 const motivationalQuotes = [
@@ -15,7 +15,7 @@ const motivationalQuotes = [
 const Dashboard = () => {
   const {
     userName, totalCalories, totalProtein, totalCarbs,
-    goal, burn, caloriesRemaining, proteinRemaining, carbsRemaining, netBalance, meals,
+    goal, burn, caloriesRemaining, proteinRemaining, carbsRemaining, netBalance, meals, bioimpedance,
   } = useApp();
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
 
@@ -182,58 +182,103 @@ const Dashboard = () => {
             ))}
           </div>
 
-          {period === 'week' && (
-            <>
-              <div className="h-48 mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyData}>
-                    <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
-                    />
-                    <Bar dataKey="calories" fill="hsl(160, 84%, 39%)" radius={[6, 6, 0, 0]} name="Consumidas" />
-                    <Bar dataKey="burned" fill="hsl(200, 80%, 50%)" radius={[6, 6, 0, 0]} name="Gastas" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <MiniStat label="Média Calorias" value="1993 kcal" />
-                <MiniStat label="Média Gastas" value="499 kcal" />
-                <MiniStat label="Média Proteína" value="150g" />
-                <MiniStat label="Média Carboidratos" value="179g" />
-                <MiniStat label="Dias na Meta" value="4 dias" />
-                <MiniStat label="Dias Acima" value="3 dias" />
-              </div>
-            </>
-          )}
+          {period === 'week' && (() => {
+            const weeklyWithBalance = weeklyData.map(d => ({
+              ...d,
+              balance: d.calories - (d.burned + bioimpedance.basalRate),
+            }));
+            return (
+              <>
+                <div className="h-48 mb-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyWithBalance}>
+                      <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
+                      <Bar dataKey="calories" fill="hsl(160, 84%, 39%)" radius={[6, 6, 0, 0]} name="Consumidas" />
+                      <Bar dataKey="burned" fill="hsl(200, 80%, 50%)" radius={[6, 6, 0, 0]} name="Gastas" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground mb-1 mt-3">Déficit / Superávit (TMB: {bioimpedance.basalRate} kcal)</p>
+                <div className="h-32 mb-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyWithBalance}>
+                      <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
+                        formatter={(value: number) => [`${value > 0 ? '+' : ''}${value} kcal`, 'Saldo']} />
+                      <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                      <Bar dataKey="balance" name="Saldo" radius={[4, 4, 4, 4]}>
+                        {weeklyWithBalance.map((entry, index) => (
+                          <Cell key={index} fill={entry.balance >= 0 ? 'hsl(0, 72%, 51%)' : 'hsl(160, 84%, 39%)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-[10px] text-muted-foreground mb-3">🟢 Déficit (queimou mais) · 🔴 Superávit (consumiu mais)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <MiniStat label="Média Calorias" value="1993 kcal" />
+                  <MiniStat label="Média Gastas" value="499 kcal" />
+                  <MiniStat label="Média Proteína" value="150g" />
+                  <MiniStat label="Média Carboidratos" value="179g" />
+                  <MiniStat label="Dias em Déficit" value={`${weeklyWithBalance.filter(d => d.balance < 0).length} dias`} />
+                  <MiniStat label="Dias em Superávit" value={`${weeklyWithBalance.filter(d => d.balance >= 0).length} dias`} />
+                </div>
+              </>
+            );
+          })()}
 
-          {period === 'month' && (
-            <>
-              <div className="h-48 mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyData}>
-                    <XAxis dataKey="week" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
-                    />
-                    <Line type="monotone" dataKey="avgCalories" stroke="hsl(160, 84%, 39%)" strokeWidth={2} dot={{ r: 4 }} name="Calorias" />
-                    <Line type="monotone" dataKey="avgBurned" stroke="hsl(200, 80%, 50%)" strokeWidth={2} dot={{ r: 4 }} name="Gastas" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {monthlyData.map(w => (
-                  <div key={w.week} className="bg-secondary/50 rounded-xl p-3">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">{w.week}</p>
-                    <p className="text-sm font-semibold text-foreground">{w.avgCalories} kcal</p>
-                    <p className="text-xs text-muted-foreground">{w.daysOnTarget} dias na meta</p>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+          {period === 'month' && (() => {
+            const monthlyWithBalance = monthlyData.map(d => ({
+              ...d,
+              balance: d.avgCalories - (d.avgBurned + bioimpedance.basalRate),
+            }));
+            return (
+              <>
+                <div className="h-48 mb-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyWithBalance}>
+                      <XAxis dataKey="week" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
+                      <Line type="monotone" dataKey="avgCalories" stroke="hsl(160, 84%, 39%)" strokeWidth={2} dot={{ r: 4 }} name="Calorias" />
+                      <Line type="monotone" dataKey="avgBurned" stroke="hsl(200, 80%, 50%)" strokeWidth={2} dot={{ r: 4 }} name="Gastas" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground mb-1 mt-3">Saldo Semanal (TMB: {bioimpedance.basalRate} kcal)</p>
+                <div className="h-32 mb-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyWithBalance}>
+                      <XAxis dataKey="week" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
+                        formatter={(value: number) => [`${value > 0 ? '+' : ''}${value} kcal`, 'Saldo']} />
+                      <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                      <Bar dataKey="balance" name="Saldo" radius={[4, 4, 4, 4]}>
+                        {monthlyWithBalance.map((entry, index) => (
+                          <Cell key={index} fill={entry.balance >= 0 ? 'hsl(0, 72%, 51%)' : 'hsl(160, 84%, 39%)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {monthlyWithBalance.map(w => (
+                    <div key={w.week} className="bg-secondary/50 rounded-xl p-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">{w.week}</p>
+                      <p className="text-sm font-semibold text-foreground">{w.avgCalories} kcal</p>
+                      <p className={`text-xs font-medium ${w.balance >= 0 ? 'text-destructive' : 'text-primary'}`}>
+                        {w.balance >= 0 ? `+${w.balance}` : w.balance} kcal saldo
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
 
           {period === 'year' && (
             <div className="text-center py-8">
