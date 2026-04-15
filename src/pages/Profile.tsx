@@ -248,12 +248,13 @@ const Profile = () => {
           {/* Lista de integrações */}
           <div className="space-y-2">
             {integrations.map(integration => {
-              const statusConfig = {
+              const statusConfig: Record<string, { label: string; color: string }> = {
                 connected: { label: 'Conectado', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
                 soon: { label: 'Em breve', color: 'bg-muted text-muted-foreground border-border' },
                 config: { label: 'Configurando', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
                 disconnected: { label: 'Desconectado', color: 'bg-destructive/10 text-destructive border-destructive/20' },
-              }[integration.status];
+              };
+              const config = statusConfig[integration.status] || statusConfig.soon;
               
               const IconComponent = {
                 'Apple Watch': Watch,
