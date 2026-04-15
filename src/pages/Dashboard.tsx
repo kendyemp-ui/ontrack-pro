@@ -216,6 +216,7 @@ const Dashboard = () => {
                       />
                       <Bar dataKey="calories" fill="hsl(0 0% 100%)" radius={[4, 4, 0, 0]} name="Consumidas" opacity={0.9} />
                       <Bar dataKey="burned" fill="hsl(0 0% 45%)" radius={[4, 4, 0, 0]} name="Atividade" />
+                      <Bar dataKey="basal" fill="hsl(25 95% 53%)" radius={[4, 4, 0, 0]} name="TMB" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
