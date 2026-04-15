@@ -3,7 +3,7 @@ import BottomNav from '@/components/BottomNav';
 import ProgressBar from '@/components/ProgressBar';
 import { MessageCircle, Flame, TrendingUp, Utensils, Zap, Activity } from 'lucide-react';
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, ReferenceLine, Cell } from 'recharts';
 import { weeklyData, monthlyData } from '@/data/mockData';
 
 const motivationalQuotes = [
@@ -15,7 +15,7 @@ const motivationalQuotes = [
 const Dashboard = () => {
   const {
     userName, totalCalories, totalProtein, totalCarbs,
-    goal, burn, caloriesRemaining, proteinRemaining, carbsRemaining, netBalance, meals,
+    goal, burn, caloriesRemaining, proteinRemaining, carbsRemaining, netBalance, meals, bioimpedance,
   } = useApp();
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
 
