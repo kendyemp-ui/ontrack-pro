@@ -1,0 +1,151 @@
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, CheckCircle2, AlertTriangle, AlertOctagon, CalendarX, TrendingUp, Search, MessageCircle, ChevronRight } from 'lucide-react';
+import { ProLayout } from '@/components/pro/ProLayout';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/pro/StatusBadge';
+import { usePro } from '@/contexts/ProContext';
+import { cn } from '@/lib/utils';
+
+type Filter = 'todos' | 'aderente' | 'atencao' | 'risco' | 'sem-registro';
+
+export default function ProDashboard() {
+  const { patients, kpis } = usePro();
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState<Filter>('todos');
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    return patients.filter(p => {
+      if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filter === 'todos') return true;
+      if (filter === 'sem-registro') return !p.registeredToday;
+      return p.status === filter;
+    });
+  }, [patients, filter, search]);
+
+  const kpiCards = [
+    { label: 'Clientes ativos', value: kpis.total, icon: Users, accent: 'text-foreground', bg: 'bg-secondary' },
+    { label: 'Boa adesão', value: kpis.aderentes, icon: CheckCircle2, accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: 'Em atenção', value: kpis.atencao, icon: AlertTriangle, accent: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { label: 'Em risco', value: kpis.risco, icon: AlertOctagon, accent: 'text-red-400', bg: 'bg-red-500/10' },
+    { label: 'Sem registro hoje', value: kpis.semRegistro, icon: CalendarX, accent: 'text-muted-foreground', bg: 'bg-secondary' },
+    { label: 'Adesão média', value: `${kpis.mediaAdesao}%`, icon: TrendingUp, accent: 'text-accent', bg: 'bg-accent/10' },
+  ];
+
+  const filters: { id: Filter; label: string; count: number }[] = [
+    { id: 'todos', label: 'Todos', count: kpis.total },
+    { id: 'aderente', label: 'Aderentes', count: kpis.aderentes },
+    { id: 'atencao', label: 'Atenção', count: kpis.atencao },
+    { id: 'risco', label: 'Risco', count: kpis.risco },
+    { id: 'sem-registro', label: 'Sem registro hoje', count: kpis.semRegistro },
+  ];
+
+  return (
+    <ProLayout
+      title="Visão geral"
+      subtitle="Acompanhe sua carteira de pacientes em tempo real"
+      actions={<Button onClick={() => navigate('/pro/pacientes/novo')} size="sm">Novo paciente</Button>}
+    >
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {kpiCards.map((k, i) => (
+          <Card key={i} className="p-4 glass-card">
+            <div className={cn('h-9 w-9 rounded-lg flex items-center justify-center mb-3', k.bg)}>
+              <k.icon className={cn('h-4 w-4', k.accent)} />
+            </div>
+            <p className="text-xs text-muted-foreground mb-1">{k.label}</p>
+            <p className="text-2xl font-semibold tracking-tight">{k.value}</p>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="glass-card">
+        <div className="p-4 border-b border-border flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+          <div className="flex flex-wrap gap-1.5">
+            {filters.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-xs font-medium transition-colors border',
+                  filter === f.id
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-foreground/40'
+                )}
+              >
+                {f.label} <span className="opacity-60 ml-1">{f.count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar paciente..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        </div>
+
+        <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-border">
+          <div className="col-span-3">Paciente</div>
+          <div className="col-span-2">Objetivo</div>
+          <div className="col-span-2">Status</div>
+          <div className="col-span-2">Adesão semanal</div>
+          <div className="col-span-2">Última interação</div>
+          <div className="col-span-1 text-right">Ações</div>
+        </div>
+
+        <div className="divide-y divide-border">
+          {filtered.length === 0 && (
+            <div className="p-12 text-center text-sm text-muted-foreground">
+              Nenhum paciente encontrado.
+            </div>
+          )}
+          {filtered.map(p => (
+            <div
+              key={p.id}
+              className="grid grid-cols-1 md:grid-cols-12 gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors items-center cursor-pointer"
+              onClick={() => navigate(`/pro/pacientes/${p.id}`)}
+            >
+              <div className="col-span-3 flex items-center gap-3 min-w-0">
+                <img src={p.avatar} alt={p.name} className="h-9 w-9 rounded-full bg-secondary shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{p.name}</p>
+                  <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                    <MessageCircle className="h-3 w-3" /> WhatsApp
+                  </p>
+                </div>
+              </div>
+              <div className="col-span-2 text-sm text-muted-foreground">{p.goal}</div>
+              <div className="col-span-2"><StatusBadge status={p.status} /></div>
+              <div className="col-span-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden max-w-[100px]">
+                    <div
+                      className={cn(
+                        'h-full rounded-full',
+                        p.weeklyAdherence >= 75 ? 'bg-emerald-500' : p.weeklyAdherence >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                      )}
+                      style={{ width: `${p.weeklyAdherence}%` }}
+                    />
+                  </div>
+                  <span className="text-xs tabular-nums text-muted-foreground">{p.weeklyAdherence}%</span>
+                </div>
+              </div>
+              <div className="col-span-2 text-xs text-muted-foreground">{p.lastInteraction}</div>
+              <div className="col-span-1 flex justify-end">
+                <Button variant="ghost" size="sm" className="h-7 px-2">
+                  Ver perfil <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </ProLayout>
+  );
+}
