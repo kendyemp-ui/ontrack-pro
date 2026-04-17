@@ -92,6 +92,16 @@ const Login = () => {
         <p className="text-center text-[10px] text-muted-foreground/40 tracking-wide">
           teste@moveonhealth.com / 123456
         </p>
+
+        <div className="pt-4 border-t border-border/40">
+          <button
+            type="button"
+            onClick={() => navigate('/pro')}
+            className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wide"
+          >
+            É profissional da saúde? <span className="font-semibold underline underline-offset-4">Acesse o Moveon Pro →</span>
+          </button>
+        </div>
       </div>
     </div>
   );
