@@ -11,8 +11,8 @@ const Profile = () => {
   const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout } = useApp();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     toast({ title: 'Sessão encerrada', description: 'Você saiu da sua conta.' });
     navigate('/');
   };
