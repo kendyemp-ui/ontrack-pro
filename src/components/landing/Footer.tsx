@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Instagram, Twitter } from "lucide-react";
+import { Mail, AtSign, MessageCircle } from "lucide-react";
 import logo from "@/assets/ontrack-logo.png";
 
 export const Footer = () => {
