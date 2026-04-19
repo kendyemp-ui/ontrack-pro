@@ -33,7 +33,7 @@ const Dashboard = () => {
       <div className="max-w-md mx-auto px-4 pt-6 space-y-4">
         {/* Header */}
         <div className="animate-fade-in pt-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">moveon health</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">ontrack</p>
           <h1 className="text-3xl font-heading font-bold text-foreground mt-1">Olá, {userName}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             15 de abril de 2026 — Quarta-feira

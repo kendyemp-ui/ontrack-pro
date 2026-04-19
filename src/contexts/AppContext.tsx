@@ -43,7 +43,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [races, setRaces] = useState<Race[]>(defaultRaces);
 
   const login = (email: string, password: string) => {
-    if (email === 'teste@moveonhealth.com' && password === '123456') {
+    if (email === 'teste@ontrack.com' && password === '123456') {
       setIsLoggedIn(true);
       return true;
     }

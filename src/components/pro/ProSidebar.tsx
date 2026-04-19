@@ -39,7 +39,7 @@ export function ProSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold tracking-tight">Moveon Health</span>
+              <span className="text-sm font-semibold tracking-tight">OnTrack</span>
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Pro</span>
             </div>
           )}

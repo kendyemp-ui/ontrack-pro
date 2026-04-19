@@ -26,7 +26,7 @@ const WhatsAppChat = () => {
               <MessageCircle size={22} className="text-primary-foreground" />
             </div>
             <div>
-              <p className="font-heading font-semibold text-foreground">Moveon Health</p>
+              <p className="font-heading font-semibold text-foreground">OnTrack</p>
               <p className="text-sm text-muted-foreground">+55 11 99999-0000</p>
             </div>
           </div>
@@ -59,7 +59,7 @@ const WhatsAppChat = () => {
                 <MessageCircle size={14} className="text-primary-foreground" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-primary-foreground">Moveon Health</p>
+                <p className="text-sm font-semibold text-primary-foreground">OnTrack</p>
                 <p className="text-[10px] text-primary-foreground/70">online</p>
               </div>
             </div>

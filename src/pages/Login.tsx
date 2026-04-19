@@ -27,7 +27,7 @@ const Login = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
       <div className="w-full max-w-sm space-y-10 animate-fade-in">
         <div className="flex flex-col items-center space-y-4">
-          <img src={logo} alt="Moveon Health" className="h-8 object-contain invert" />
+          <img src={logo} alt="OnTrack" className="h-8 object-contain invert" />
           <p className="text-xs text-muted-foreground tracking-[0.3em] uppercase">
             da rotina à conquista
           </p>
@@ -90,7 +90,7 @@ const Login = () => {
         </form>
 
         <p className="text-center text-[10px] text-muted-foreground/40 tracking-wide">
-          teste@moveonhealth.com / 123456
+          teste@ontrack.com / 123456
         </p>
 
         <div className="pt-4 border-t border-border/40">
@@ -99,7 +99,7 @@ const Login = () => {
             onClick={() => navigate('/pro')}
             className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wide"
           >
-            É profissional da saúde? <span className="font-semibold underline underline-offset-4">Acesse o Moveon Pro →</span>
+            É profissional da saúde? <span className="font-semibold underline underline-offset-4">Acesse o OnTrack Pro →</span>
           </button>
         </div>
       </div>
