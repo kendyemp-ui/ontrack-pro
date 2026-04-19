@@ -32,7 +32,7 @@ export const Footer = () => {
                 aria-label="Instagram"
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground transition-colors hover:border-accent/50 hover:text-accent"
               >
-                <Instagram size={15} />
+                <AtSign size={15} />
               </a>
               <a
                 href="https://twitter.com"
@@ -41,7 +41,7 @@ export const Footer = () => {
                 aria-label="Twitter"
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground transition-colors hover:border-accent/50 hover:text-accent"
               >
-                <Twitter size={15} />
+                <MessageCircle size={15} />
               </a>
             </div>
           </div>

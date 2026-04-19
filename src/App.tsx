@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { ProProvider, usePro } from "@/contexts/ProContext";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
@@ -70,7 +71,8 @@ const App = () => (
           <ProProvider>
             <Routes>
               {/* Paciente (B2C) */}
-              <Route path="/" element={<LoginRedirect />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<LoginRedirect />} />
               <Route path="/esqueci-senha" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
