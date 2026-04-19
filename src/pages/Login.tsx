@@ -73,14 +73,29 @@ const Login = () => {
       email: parsed.data.email,
       password: parsed.data.password,
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       const msg = error.message.includes('Invalid login credentials')
         ? 'E-mail ou senha incorretos'
         : error.message;
       setLoginErrors({ form: msg });
       return;
     }
+
+    // Validar assinatura ativa após autenticação
+    const { data: hasAccess } = await supabase.rpc('is_subscription_active', {
+      _email: parsed.data.email,
+    });
+    if (!hasAccess) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setLoginErrors({
+        form: 'Sua assinatura não está ativa. Renove para continuar acessando a plataforma.',
+      });
+      return;
+    }
+
+    setLoading(false);
     toast.success('Bem-vindo de volta!');
     navigate('/dashboard');
   };
@@ -98,6 +113,26 @@ const Login = () => {
       return;
     }
     setLoading(true);
+
+    // 1) Validar se o e-mail tem assinatura ativa antes de criar conta
+    const { data: hasAccess, error: rpcError } = await supabase.rpc('is_subscription_active', {
+      _email: parsed.data.email,
+    });
+    if (rpcError) {
+      setLoading(false);
+      setSignupErrors({ form: 'Não foi possível validar sua assinatura. Tente novamente.' });
+      return;
+    }
+    if (!hasAccess) {
+      setLoading(false);
+      setSignupErrors({
+        form:
+          'Este e-mail não possui assinatura ativa. Use o mesmo e-mail da sua compra ou entre em contato com o suporte.',
+      });
+      return;
+    }
+
+    // 2) Criar conta
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
