@@ -15,6 +15,7 @@ import DietGoals from "./pages/DietGoals";
 import MealHistory from "./pages/MealHistory";
 import Integrations from "./pages/Integrations";
 import Profile from "./pages/Profile";
+import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import NotFound from "./pages/NotFound";
 import ProLogin from "./pages/pro/ProLogin";
 import ProDashboard from "./pages/pro/ProDashboard";
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/history" element={<ProtectedRoute><MealHistory /></ProtectedRoute>} />
               <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/admin/assinaturas" element={<ProtectedRoute><AdminSubscriptions /></ProtectedRoute>} />
 
               {/* Profissional (B2B SaaS) */}
               <Route path="/pro" element={<ProLoginRedirect />} />
