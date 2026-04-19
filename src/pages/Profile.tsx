@@ -1,13 +1,21 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
-import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle } from 'lucide-react';
+import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { integrations, dailyBurn } from '@/data/mockData';
 
 const Profile = () => {
-  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace } = useApp();
+  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout } = useApp();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    toast({ title: 'Sessão encerrada', description: 'Você saiu da sua conta.' });
+    navigate('/');
+  };
 
   const [bio, setBio] = useState({ ...bioimpedance });
   const [editingBio, setEditingBio] = useState(false);
@@ -284,6 +292,23 @@ const Profile = () => {
 
           <p className="text-xs text-muted-foreground mt-4">
             ⌚ Conecte seus dispositivos para sincronizar calorias gastas, passos e atividades automaticamente.
+          </p>
+        </div>
+
+        {/* Conta - Logout */}
+        <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <User size={18} className="text-primary" />
+            <h2 className="text-base font-heading font-semibold text-foreground">Conta</h2>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full h-11 rounded-xl border border-destructive/30 bg-destructive/5 text-destructive font-medium text-sm flex items-center justify-center gap-2 hover:bg-destructive/10 transition-all active:scale-[0.98]"
+          >
+            <LogOut size={16} /> Sair da conta
+          </button>
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            Você será redirecionado para a tela de login.
           </p>
         </div>
       </div>
