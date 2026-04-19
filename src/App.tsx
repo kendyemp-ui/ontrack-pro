@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { ProProvider, usePro } from "@/contexts/ProContext";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import WhatsAppChat from "./pages/WhatsAppChat";
 import MealRegistration from "./pages/MealRegistration";
@@ -21,20 +23,29 @@ import ProPatientNew from "./pages/pro/ProPatientNew";
 import ProPatientProfile from "./pages/pro/ProPatientProfile";
 import ProAlerts from "./pages/pro/ProAlerts";
 import ProWhatsApp from "./pages/pro/ProWhatsApp";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn } = useApp();
+  const { isLoggedIn, authLoading } = useApp();
+  if (authLoading) return <FullScreenLoader />;
   if (!isLoggedIn) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
 const LoginRedirect = () => {
-  const { isLoggedIn } = useApp();
+  const { isLoggedIn, authLoading } = useApp();
+  if (authLoading) return <FullScreenLoader />;
   if (isLoggedIn) return <Navigate to="/dashboard" replace />;
   return <Login />;
 };
+
+const FullScreenLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <Loader2 className="animate-spin text-muted-foreground" size={24} />
+  </div>
+);
 
 const ProProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn } = usePro();
@@ -59,6 +70,8 @@ const App = () => (
             <Routes>
               {/* Paciente (B2C) */}
               <Route path="/" element={<LoginRedirect />} />
+              <Route path="/esqueci-senha" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppChat /></ProtectedRoute>} />
               <Route path="/meal" element={<ProtectedRoute><MealRegistration /></ProtectedRoute>} />
