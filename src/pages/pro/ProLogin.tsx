@@ -67,7 +67,7 @@ export default function ProLogin() {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Da rotina à conquista — para você acompanhar cada paciente.
+          Evolução que acompanha você — e cada paciente.
         </p>
       </div>
     </div>
