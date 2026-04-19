@@ -27,7 +27,9 @@ const Login = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
       <div className="w-full max-w-sm space-y-10 animate-fade-in">
         <div className="flex flex-col items-center space-y-4">
-          <img src={logo} alt="OnTrack" className="h-8 object-contain invert" />
+          <div className="bg-white rounded-2xl px-6 py-4 shadow-sm">
+            <img src={logo} alt="OnTrack — Evolução que acompanha você" className="h-14 object-contain" />
+          </div>
           <p className="text-xs text-muted-foreground tracking-[0.3em] uppercase">
             da rotina à conquista
           </p>
