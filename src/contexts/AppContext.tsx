@@ -1,16 +1,20 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { Meal, DietGoal, DailyBurn, Bioimpedance, Race, defaultGoal, todayMeals, dailyBurn, defaultBioimpedance, defaultRaces } from '@/data/mockData';
 
 interface AppState {
   isLoggedIn: boolean;
+  authLoading: boolean;
+  user: User | null;
+  session: Session | null;
   userName: string;
   meals: Meal[];
   goal: DietGoal;
   burn: DailyBurn;
   bioimpedance: Bioimpedance;
   races: Race[];
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
   addMeal: (meal: Meal) => void;
   updateGoal: (goal: DietGoal) => void;
   updateBioimpedance: (bio: Bioimpedance) => void;
@@ -34,23 +38,57 @@ export const useApp = () => {
 };
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName] = useState('João');
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [fullName, setFullName] = useState<string>('');
+
   const [meals, setMeals] = useState<Meal[]>(todayMeals);
   const [goal, setGoal] = useState<DietGoal>(defaultGoal);
   const [burn] = useState<DailyBurn>(dailyBurn);
   const [bioimpedance, setBioimpedance] = useState<Bioimpedance>(defaultBioimpedance);
   const [races, setRaces] = useState<Race[]>(defaultRaces);
 
-  const login = (email: string, password: string) => {
-    if (email === 'teste@ontrack.com' && password === '123456') {
-      setIsLoggedIn(true);
-      return true;
+  useEffect(() => {
+    // Set up listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+    });
+
+    // THEN check existing session
+    supabase.auth.getSession().then(({ data: { session: existing } }) => {
+      setSession(existing);
+      setUser(existing?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch profile name when user logs in (deferred to avoid deadlock)
+  useEffect(() => {
+    if (!user) {
+      setFullName('');
+      return;
     }
-    return false;
+    setTimeout(() => {
+      supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.full_name) setFullName(data.full_name);
+          else setFullName(user.email?.split('@')[0] ?? '');
+        });
+    }, 0);
+  }, [user]);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
-  const logout = () => setIsLoggedIn(false);
   const addMeal = (meal: Meal) => setMeals(prev => [...prev, meal]);
   const updateGoal = (newGoal: DietGoal) => setGoal(newGoal);
   const updateBioimpedance = (bio: Bioimpedance) => setBioimpedance(bio);
@@ -68,10 +106,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const totalBurn = burn.total + bioimpedance.basalRate;
   const netBalance = totalCalories - totalBurn;
 
+  const userName = fullName?.split(' ')[0] || 'você';
+
   return (
     <AppContext.Provider value={{
-      isLoggedIn, userName, meals, goal, burn, bioimpedance, races,
-      login, logout, addMeal, updateGoal, updateBioimpedance, addRace, removeRace,
+      isLoggedIn: !!session,
+      authLoading,
+      user,
+      session,
+      userName,
+      meals, goal, burn, bioimpedance, races,
+      logout, addMeal, updateGoal, updateBioimpedance, addRace, removeRace,
       totalCalories, totalProtein, totalCarbs,
       caloriesRemaining, proteinRemaining, carbsRemaining, netBalance,
     }}>
