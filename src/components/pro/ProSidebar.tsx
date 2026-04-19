@@ -36,14 +36,10 @@ export function ProSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3">
           {collapsed ? (
-            <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center shrink-0">
-              <img src={logo} alt="OnTrack" className="h-6 object-contain" />
-            </div>
+            <img src={logo} alt="OnTrack" className="h-7 object-contain invert dark:invert-0 mx-auto" />
           ) : (
             <div className="flex items-center gap-2 w-full">
-              <div className="bg-white rounded-lg px-2 py-1 flex-1 flex items-center justify-center">
-                <img src={logo} alt="OnTrack" className="h-6 object-contain" />
-              </div>
+              <img src={logo} alt="OnTrack" className="h-8 object-contain invert dark:invert-0" />
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Pro</span>
             </div>
           )}

@@ -35,11 +35,12 @@ export default function ProLogin() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-white rounded-2xl px-6 py-4 shadow-sm mb-4 flex items-center gap-3">
-            <img src={logo} alt="OnTrack" className="h-12 object-contain" />
+          <div className="flex items-center gap-3 mb-3">
+            <img src={logo} alt="OnTrack" className="h-16 object-contain invert dark:invert-0" />
             <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold border-l border-border pl-3">Pro</span>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">Área do profissional da saúde</p>
+          <p className="text-xs text-muted-foreground italic tracking-wide">evolução que acompanha você</p>
+          <p className="text-sm text-muted-foreground mt-3">Área do profissional da saúde</p>
         </div>
 
         <Card className="p-6 glass-card">
@@ -66,7 +67,7 @@ export default function ProLogin() {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Da rotina à conquista — para você acompanhar cada paciente.
+          Evolução que acompanha você — e cada paciente.
         </p>
       </div>
     </div>
