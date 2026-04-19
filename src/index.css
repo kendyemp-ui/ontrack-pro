@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Figtree:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -51,8 +51,9 @@
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 0 0% 100%;
 
-    --font-heading: 'Space Grotesk', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Figtree', sans-serif;
+    --font-display: 'Outfit', sans-serif;
   }
 }
 
@@ -123,5 +124,84 @@
 
   .stat-glow {
     box-shadow: 0 0 40px -10px hsl(160 70% 45% / 0.15);
+  }
+
+  /* ===== Landing page utilities ===== */
+  .landing-container {
+    @apply mx-auto w-full max-w-7xl px-6 lg:px-8;
+  }
+
+  .landing-eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur;
+  }
+
+  .landing-h1 {
+    font-family: var(--font-heading);
+    @apply text-4xl font-semibold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl;
+    letter-spacing: -0.03em;
+  }
+
+  .landing-h2 {
+    font-family: var(--font-heading);
+    @apply text-3xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl;
+    letter-spacing: -0.025em;
+  }
+
+  .landing-h3 {
+    font-family: var(--font-heading);
+    @apply text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl;
+  }
+
+  .landing-lead {
+    @apply text-base text-muted-foreground sm:text-lg leading-relaxed;
+  }
+
+  .landing-card {
+    @apply rounded-2xl border border-border/60 bg-card/70 backdrop-blur transition-all duration-300 hover:border-border hover:bg-card;
+  }
+
+  .landing-card-elevated {
+    @apply rounded-2xl border border-border/60 bg-gradient-to-b from-card to-card/40 shadow-[0_1px_0_0_hsl(0_0%_100%/0.04)_inset,0_30px_60px_-30px_hsl(0_0%_0%/0.6)];
+  }
+
+  .landing-section {
+    @apply py-20 sm:py-28 md:py-32;
+  }
+
+  .accent-text {
+    color: hsl(var(--accent));
+  }
+
+  .text-gradient-mono {
+    background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 65%) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, hsl(0 0% 100% / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 80px -10px hsl(var(--accent) / 0.4), 0 0 200px -40px hsl(var(--accent) / 0.25);
+  }
+
+  .phone-frame {
+    @apply relative rounded-[2.2rem] border border-border bg-black p-2 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)];
+  }
+
+  .phone-frame-inner {
+    @apply relative overflow-hidden rounded-[1.7rem] bg-background;
+  }
+
+  .marquee-fade {
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   }
 }
