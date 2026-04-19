@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/sidebar';
 import { usePro } from '@/contexts/ProContext';
 import { useNavigate } from 'react-router-dom';
+import logo from '@/assets/logo.png';
 
 const items = [
   { title: 'Dashboard', url: '/pro/dashboard', icon: LayoutDashboard },
@@ -34,13 +35,16 @@ export function ProSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3">
-          <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center shrink-0">
-            <Activity className="h-5 w-5 text-accent-foreground" />
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold tracking-tight">OnTrack</span>
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Pro</span>
+          {collapsed ? (
+            <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center shrink-0">
+              <img src={logo} alt="OnTrack" className="h-6 object-contain" />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 w-full">
+              <div className="bg-white rounded-lg px-2 py-1 flex-1 flex items-center justify-center">
+                <img src={logo} alt="OnTrack" className="h-6 object-contain" />
+              </div>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Pro</span>
             </div>
           )}
         </div>

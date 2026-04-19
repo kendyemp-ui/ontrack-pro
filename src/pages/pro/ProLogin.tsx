@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { usePro } from '@/contexts/ProContext';
 import { toast } from '@/hooks/use-toast';
+import logo from '@/assets/logo.png';
 
 export default function ProLogin() {
   const [email, setEmail] = useState('profissional@teste.com');
@@ -34,10 +35,10 @@ export default function ProLogin() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col items-center mb-8">
-          <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center mb-4 stat-glow">
-            <Activity className="h-6 w-6 text-accent-foreground" />
+          <div className="bg-white rounded-2xl px-6 py-4 shadow-sm mb-4 flex items-center gap-3">
+            <img src={logo} alt="OnTrack" className="h-12 object-contain" />
+            <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold border-l border-border pl-3">Pro</span>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">OnTrack <span className="text-muted-foreground font-light">Pro</span></h1>
           <p className="text-sm text-muted-foreground mt-1">Área do profissional da saúde</p>
         </div>
 
