@@ -37,7 +37,7 @@ export default function ProLogin() {
           <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center mb-4 stat-glow">
             <Activity className="h-6 w-6 text-accent-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Moveon Health <span className="text-muted-foreground font-light">Pro</span></h1>
+          <h1 className="text-2xl font-semibold tracking-tight">OnTrack <span className="text-muted-foreground font-light">Pro</span></h1>
           <p className="text-sm text-muted-foreground mt-1">Área do profissional da saúde</p>
         </div>
 

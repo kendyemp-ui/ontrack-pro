@@ -85,7 +85,7 @@ export default function ProWhatsApp() {
           </Bubble>
 
           <Bubble side="sent">
-            <p className="text-xs opacity-70 mb-1">Moveon Health • 12:34</p>
+            <p className="text-xs opacity-70 mb-1">OnTrack • 12:34</p>
             <p className="text-sm leading-relaxed">
               Boa, Marina! Identifiquei <strong>frango grelhado, arroz integral e salada</strong>.
               <br /><br />
