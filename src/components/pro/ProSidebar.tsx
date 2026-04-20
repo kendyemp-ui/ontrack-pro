@@ -28,7 +28,7 @@ export function ProSidebar() {
 
   const handleLogout = () => {
     logout();
-    navigate('/pro');
+    navigate('/pro/login');
   };
 
   return (

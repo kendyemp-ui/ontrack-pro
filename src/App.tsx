@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import NotFound from "./pages/NotFound";
 import ProLogin from "./pages/pro/ProLogin";
+import ProLanding from "./pages/ProLanding";
 import ProDashboard from "./pages/pro/ProDashboard";
 import ProPatients from "./pages/pro/ProPatients";
 import ProPatientNew from "./pages/pro/ProPatientNew";
@@ -51,7 +52,7 @@ const FullScreenLoader = () => (
 
 const ProProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn } = usePro();
-  if (!isLoggedIn) return <Navigate to="/pro" replace />;
+  if (!isLoggedIn) return <Navigate to="/pro/login" replace />;
   return <>{children}</>;
 };
 
@@ -59,6 +60,12 @@ const ProLoginRedirect = () => {
   const { isLoggedIn } = usePro();
   if (isLoggedIn) return <Navigate to="/pro/dashboard" replace />;
   return <ProLogin />;
+};
+
+const ProLandingRedirect = () => {
+  const { isLoggedIn } = usePro();
+  if (isLoggedIn) return <Navigate to="/pro/dashboard" replace />;
+  return <ProLanding />;
 };
 
 const App = () => (
@@ -85,7 +92,8 @@ const App = () => (
               <Route path="/admin/assinaturas" element={<ProtectedRoute><AdminSubscriptions /></ProtectedRoute>} />
 
               {/* Profissional (B2B SaaS) */}
-              <Route path="/pro" element={<ProLoginRedirect />} />
+              <Route path="/pro" element={<ProLandingRedirect />} />
+              <Route path="/pro/login" element={<ProLoginRedirect />} />
               <Route path="/pro/dashboard" element={<ProProtectedRoute><ProDashboard /></ProProtectedRoute>} />
               <Route path="/pro/pacientes" element={<ProProtectedRoute><ProPatients /></ProProtectedRoute>} />
               <Route path="/pro/pacientes/novo" element={<ProProtectedRoute><ProPatientNew /></ProProtectedRoute>} />
