@@ -63,11 +63,6 @@ const ProLoginRedirect = () => {
   return <ProLogin />;
 };
 
-const ProLandingRedirect = () => {
-  const { isLoggedIn } = usePro();
-  if (isLoggedIn) return <Navigate to="/pro/dashboard" replace />;
-  return <ProLanding />;
-};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -93,7 +88,7 @@ const App = () => (
               <Route path="/admin/assinaturas" element={<ProtectedRoute><AdminSubscriptions /></ProtectedRoute>} />
 
               {/* Profissional (B2B SaaS) */}
-              <Route path="/pro" element={<ProLandingRedirect />} />
+              <Route path="/pro" element={<ProLanding />} />
               <Route path="/pro/login" element={<ProLoginRedirect />} />
               <Route path="/pro/cadastro" element={<ProSignup />} />
               <Route path="/pro/dashboard" element={<ProProtectedRoute><ProDashboard /></ProProtectedRoute>} />
