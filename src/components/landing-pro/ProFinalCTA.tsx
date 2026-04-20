@@ -29,7 +29,7 @@ export const ProFinalCTA = () => {
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="pro-bg-accent h-12 px-7 text-black hover:opacity-90">
-                <Link to="/pro/login">
+                <Link to="/pro/cadastro">
                   Testar OnTrack Pro
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>

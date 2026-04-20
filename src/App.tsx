@@ -20,6 +20,7 @@ import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import NotFound from "./pages/NotFound";
 import ProLogin from "./pages/pro/ProLogin";
 import ProLanding from "./pages/ProLanding";
+import ProSignup from "./pages/pro/ProSignup";
 import ProDashboard from "./pages/pro/ProDashboard";
 import ProPatients from "./pages/pro/ProPatients";
 import ProPatientNew from "./pages/pro/ProPatientNew";
@@ -94,6 +95,7 @@ const App = () => (
               {/* Profissional (B2B SaaS) */}
               <Route path="/pro" element={<ProLandingRedirect />} />
               <Route path="/pro/login" element={<ProLoginRedirect />} />
+              <Route path="/pro/cadastro" element={<ProSignup />} />
               <Route path="/pro/dashboard" element={<ProProtectedRoute><ProDashboard /></ProProtectedRoute>} />
               <Route path="/pro/pacientes" element={<ProProtectedRoute><ProPatients /></ProProtectedRoute>} />
               <Route path="/pro/pacientes/novo" element={<ProProtectedRoute><ProPatientNew /></ProProtectedRoute>} />

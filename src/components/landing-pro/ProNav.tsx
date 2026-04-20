@@ -66,7 +66,7 @@ export const ProNav = () => {
             size="sm"
             className="text-sm pro-bg-accent text-black hover:opacity-90"
           >
-            <a href="#planos">Testar grátis</a>
+            <Link to="/pro/cadastro">Testar grátis</Link>
           </Button>
         </div>
 
@@ -98,7 +98,7 @@ export const ProNav = () => {
                 <Link to="/pro/login">Entrar</Link>
               </Button>
               <Button asChild size="sm" className="pro-bg-accent text-black hover:opacity-90">
-                <a href="#planos" onClick={() => setOpen(false)}>Testar grátis</a>
+                <Link to="/pro/cadastro" onClick={() => setOpen(false)}>Testar grátis</Link>
               </Button>
             </div>
           </div>
