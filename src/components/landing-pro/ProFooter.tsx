@@ -47,7 +47,7 @@ export const ProFooter = () => {
                 aria-label="LinkedIn"
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground transition-colors hover:pro-border-accent hover:pro-accent"
               >
-                <Linkedin size={15} />
+                <LinkedinIcon size={15} />
               </a>
             </div>
           </div>
