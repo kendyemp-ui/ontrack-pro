@@ -55,7 +55,7 @@ const ResetPassword = () => {
     }
     toast.success('Senha atualizada!', { description: 'Você já pode entrar com a nova senha.' });
     await supabase.auth.signOut();
-    navigate('/');
+    navigate('/login');
   };
 
   return (

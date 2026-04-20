@@ -14,7 +14,7 @@ const Profile = () => {
   const handleLogout = async () => {
     await logout();
     toast({ title: 'Sessão encerrada', description: 'Você saiu da sua conta.' });
-    navigate('/');
+    navigate('/login');
   };
 
   const [bio, setBio] = useState({ ...bioimpedance });

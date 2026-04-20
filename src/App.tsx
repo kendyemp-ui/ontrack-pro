@@ -32,7 +32,7 @@ const queryClient = new QueryClient();
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, authLoading } = useApp();
   if (authLoading) return <FullScreenLoader />;
-  if (!isLoggedIn) return <Navigate to="/" replace />;
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
