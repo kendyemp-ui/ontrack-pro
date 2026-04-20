@@ -33,10 +33,10 @@ const PLANS = ["teste", "start", "scale", "pro"] as const;
 type Plan = (typeof PLANS)[number];
 
 const planLabels: Record<Plan, string> = {
-  teste: "Teste — 5 pacientes (grátis)",
-  start: "Start — 10 pacientes (R$ 199,90/mês)",
-  scale: "Scale — 30 pacientes (R$ 398,90/mês)",
-  pro: "Pro — 50 pacientes (R$ 499,90/mês)",
+  teste: "Teste, 5 pacientes (grátis)",
+  start: "Start, 10 pacientes (R$ 199,90/mês)",
+  scale: "Scale, 30 pacientes (R$ 398,90/mês)",
+  pro: "Pro, 50 pacientes (R$ 499,90/mês)",
 };
 
 const ALLOWED_EXT = ["jpg", "jpeg", "png", "webp", "pdf"];
