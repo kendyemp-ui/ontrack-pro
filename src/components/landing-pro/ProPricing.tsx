@@ -154,7 +154,7 @@ export const ProPricing = () => {
                     : "bg-foreground text-background hover:bg-foreground/90"
                 )}
               >
-                <Link to="/pro/login">{plan.cta}</Link>
+                <Link to={`/pro/cadastro?plano=${plan.name.toLowerCase()}`}>{plan.cta}</Link>
               </Button>
             </div>
           ))}

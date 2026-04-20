@@ -7,7 +7,7 @@ const screens = [
   {
     img: dashboard,
     title: "Dashboard principal",
-    desc: "Veja seu dia inteiro em um olhar — meta, calorias, macros e última refeição.",
+    desc: "Veja seu dia inteiro em um olhar, meta, calorias, macros e última refeição.",
   },
   {
     img: history,

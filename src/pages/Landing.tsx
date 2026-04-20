@@ -15,7 +15,7 @@ import Footer from "@/components/landing/Footer";
 
 const Landing = () => {
   useEffect(() => {
-    document.title = "OnTrack App — Evolução que acompanha você";
+    document.title = "OnTrack App, Evolução que acompanha você";
 
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -75,7 +75,7 @@ const Landing = () => {
     <div className="min-h-screen bg-background text-foreground">
       <LandingNav />
       <main>
-        <h1 className="sr-only">OnTrack App — Acompanhamento nutricional inteligente</h1>
+        <h1 className="sr-only">OnTrack App, Acompanhamento nutricional inteligente</h1>
         <Hero />
         <PainSection />
         <HowItWorks />

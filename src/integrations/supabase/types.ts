@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      pro_signups: {
+        Row: {
+          created_at: string
+          crn: string
+          document_path: string
+          email: string
+          full_name: string
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          selected_plan: string
+          status: Database["public"]["Enums"]["pro_signup_status"]
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          crn: string
+          document_path: string
+          email: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selected_plan?: string
+          status?: Database["public"]["Enums"]["pro_signup_status"]
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          crn?: string
+          document_path?: string
+          email?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selected_plan?: string
+          status?: Database["public"]["Enums"]["pro_signup_status"]
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -123,6 +171,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      pro_signup_status: "pending" | "approved" | "rejected"
       subscription_status:
         | "active"
         | "cancelled"
@@ -258,6 +307,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      pro_signup_status: ["pending", "approved", "rejected"],
       subscription_status: [
         "active",
         "cancelled",

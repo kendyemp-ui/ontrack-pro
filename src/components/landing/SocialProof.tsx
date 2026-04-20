@@ -12,7 +12,7 @@ const testimonials = [
     name: "Rafael C.",
     role: "Usuário há 4 meses",
     quote:
-      "Eu testei vários apps e desisti de todos. O OnTrack é o único que não me cansa — em 30 segundos eu registro tudo.",
+      "Eu testei vários apps e desisti de todos. O OnTrack é o único que não me cansa, em 30 segundos eu registro tudo.",
     rating: 5,
   },
   {
@@ -40,7 +40,7 @@ const testimonials = [
     name: "Bruno T.",
     role: "Usuário há 7 meses",
     quote:
-      "Perdi 9kg em 5 meses só por ter clareza do que eu comia. Não tem segredo, é constância — e o app entrega isso.",
+      "Perdi 9kg em 5 meses só por ter clareza do que eu comia. Não tem segredo, é constância, e o app entrega isso.",
     rating: 5,
   },
 ];

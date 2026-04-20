@@ -25,7 +25,7 @@ export const Features = () => {
           </div>
           <p className="landing-lead md:text-right">
             Cada funcionalidade existe pra eliminar uma fricção da sua rotina.
-            Sem excesso, sem distração — só o que importa.
+            Sem excesso, sem distração, só o que importa.
           </p>
         </div>
 

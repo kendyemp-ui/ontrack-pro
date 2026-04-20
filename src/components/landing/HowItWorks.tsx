@@ -5,13 +5,13 @@ const steps = [
     icon: Camera,
     step: "01",
     title: "Registre sua alimentação",
-    desc: "Adicione refeições em segundos. Texto, foto ou direto pelo WhatsApp — o que for mais rápido pra você.",
+    desc: "Adicione refeições em segundos. Texto, foto ou direto pelo WhatsApp, o que for mais rápido pra você.",
   },
   {
     icon: Activity,
     step: "02",
     title: "Acompanhe calorias e macros",
-    desc: "Veja em tempo real quantas calorias, proteínas e carboidratos você consumiu — sem planilha, sem complicação.",
+    desc: "Veja em tempo real quantas calorias, proteínas e carboidratos você consumiu, sem planilha, sem complicação.",
   },
   {
     icon: LineChart,

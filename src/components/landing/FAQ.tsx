@@ -8,15 +8,15 @@ import {
 const faqs = [
   {
     q: "Como funciona o OnTrack App?",
-    a: "Você registra suas refeições no app, ele calcula automaticamente calorias, proteína e carboidratos, e mostra sua evolução em gráficos claros. É como ter um diário inteligente da sua rotina alimentar — sem planilha, sem complicação.",
+    a: "Você registra suas refeições no app, ele calcula automaticamente calorias, proteína e carboidratos, e mostra sua evolução em gráficos claros. É como ter um diário inteligente da sua rotina alimentar, sem planilha, sem complicação.",
   },
   {
     q: "Preciso de nutricionista para usar?",
-    a: "Não. O OnTrack foi desenhado pra você usar sozinho, com metas e feedback automáticos. Mas se você já trabalha com um profissional, o app facilita o acompanhamento — você pode compartilhar seu histórico facilmente.",
+    a: "Não. O OnTrack foi desenhado pra você usar sozinho, com metas e feedback automáticos. Mas se você já trabalha com um profissional, o app facilita o acompanhamento, você pode compartilhar seu histórico facilmente.",
   },
   {
     q: "Consigo acompanhar minha evolução ao longo do tempo?",
-    a: "Sim. O app mostra sua evolução por semana, mês e ano — com gráficos de calorias, macros e consistência. Você vê exatamente onde está progredindo e onde precisa ajustar.",
+    a: "Sim. O app mostra sua evolução por semana, mês e ano, com gráficos de calorias, macros e consistência. Você vê exatamente onde está progredindo e onde precisa ajustar.",
   },
   {
     q: "O app mostra calorias e macros das refeições?",

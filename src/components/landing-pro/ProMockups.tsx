@@ -1,6 +1,6 @@
 import { Check, Circle, AlertTriangle, MessageCircle, TrendingUp, Image as ImageIcon } from "lucide-react";
 
-/* CSS-only "real component" mockups — sharp, no AI text artifacts */
+/* CSS-only "real component" mockups, sharp, no AI text artifacts */
 
 const PatientRow = ({
   name,

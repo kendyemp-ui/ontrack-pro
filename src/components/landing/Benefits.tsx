@@ -19,7 +19,7 @@ const benefits = [
   {
     icon: TrendingUp,
     title: "Acompanhamento real da evolução",
-    desc: "Acompanhe seu progresso por semana, mês e ano — sem achismo.",
+    desc: "Acompanhe seu progresso por semana, mês e ano, sem achismo.",
   },
   {
     icon: Layout,
