@@ -59,7 +59,7 @@ export default function AdminSubscriptions() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      navigate('/');
+      navigate('/login');
       return;
     }
     supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data }) => {
