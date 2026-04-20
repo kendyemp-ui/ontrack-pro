@@ -3,6 +3,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import Hero from "@/components/landing/Hero";
 import PainSection from "@/components/landing/PainSection";
 import HowItWorks from "@/components/landing/HowItWorks";
+import WhatsAppFeature from "@/components/landing/WhatsAppFeature";
 import Benefits from "@/components/landing/Benefits";
 import Features from "@/components/landing/Features";
 import Mockups from "@/components/landing/Mockups";
@@ -78,6 +79,7 @@ const Landing = () => {
         <Hero />
         <PainSection />
         <HowItWorks />
+        <WhatsAppFeature />
         <Benefits />
         <Features />
         <Mockups />
