@@ -5,7 +5,7 @@ const testimonials = [
     name: "Dra. Helena Vieira",
     role: "Nutricionista clínica · São Paulo",
     initial: "H",
-    text: "Em 3 meses minha taxa de renovação subiu de 41% para 73%. Os pacientes se sentem acompanhados de verdade — e eu não trabalho a mais por isso.",
+    text: "Em 3 meses minha taxa de renovação subiu de 41% para 73%. Os pacientes se sentem acompanhados de verdade, e eu não trabalho a mais por isso.",
   },
   {
     name: "Carolina Mendes",
@@ -17,7 +17,7 @@ const testimonials = [
     name: "Rafael Tavares",
     role: "Nutri funcional · Rio de Janeiro",
     initial: "R",
-    text: "Saí do caderno e do WhatsApp pessoal. Agora minha operação tem cara de software de verdade — e meu ticket subiu 40%.",
+    text: "Saí do caderno e do WhatsApp pessoal. Agora minha operação tem cara de software de verdade, e meu ticket subiu 40%.",
   },
 ];
 

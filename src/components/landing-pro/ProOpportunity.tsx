@@ -23,7 +23,7 @@ export const ProOpportunity = () => {
             <p className="landing-lead mt-5">
               Profissionais que mantêm relacionamento ativo entre consultas têm uma operação
               completamente diferente: clientes que renovam, indicam e percebem o valor do
-              acompanhamento — não só do plano alimentar.
+              acompanhamento, não só do plano alimentar.
             </p>
             <p className="landing-lead mt-4">
               O OnTrack Pro automatiza essa presença para você, transformando dados do dia a dia

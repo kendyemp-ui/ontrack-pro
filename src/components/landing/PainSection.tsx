@@ -37,7 +37,7 @@ export const PainSection = () => {
             <span className="text-muted-foreground">Manter constância é o mais difícil.</span>
           </h2>
           <p className="landing-lead mt-5">
-            A maioria das pessoas falha não por falta de vontade — mas por falta de uma
+            A maioria das pessoas falha não por falta de vontade, mas por falta de uma
             ferramenta que torne o acompanhamento simples o suficiente para ser sustentável.
           </p>
         </div>

@@ -4,12 +4,12 @@ const pains = [
   {
     icon: Flame,
     title: "O paciente sai motivado, mas esfria em 7 dias",
-    text: "Sem presença ativa entre consultas, a empolgação some — e o resultado também.",
+    text: "Sem presença ativa entre consultas, a empolgação some, e o resultado também.",
   },
   {
     icon: TrendingDown,
     title: "Sem acompanhamento, a adesão despenca",
-    text: "O plano fica no papel. Você só descobre que ele abandonou na próxima consulta — se ela acontecer.",
+    text: "O plano fica no papel. Você só descobre que ele abandonou na próxima consulta, se ela acontecer.",
   },
   {
     icon: AlarmClock,
@@ -19,7 +19,7 @@ const pains = [
   {
     icon: EyeOff,
     title: "Você não vê o que acontece entre consultas",
-    text: "Refeições, pesos, sintomas, dúvidas — tudo se perde em conversas soltas no WhatsApp pessoal.",
+    text: "Refeições, pesos, sintomas, dúvidas, tudo se perde em conversas soltas no WhatsApp pessoal.",
   },
   {
     icon: Repeat,
@@ -29,7 +29,7 @@ const pains = [
   {
     icon: Calendar,
     title: "Sua agenda não escala",
-    text: "Atender mais pacientes vira sinônimo de trabalhar mais horas — não de operar melhor.",
+    text: "Atender mais pacientes vira sinônimo de trabalhar mais horas, não de operar melhor.",
   },
 ];
 
@@ -44,7 +44,7 @@ export const ProPainSection = () => {
             <span className="text-destructive">custa retenção.</span>
           </h2>
           <p className="landing-lead mt-5">
-            A consulta é só 1 hora por mês. Os outros 29 dias decidem se o paciente volta — ou some.
+            A consulta é só 1 hora por mês. Os outros 29 dias decidem se o paciente volta, ou some.
             Sem presença nesse intervalo, você está construindo uma operação que precisa repor
             cliente o tempo inteiro.
           </p>

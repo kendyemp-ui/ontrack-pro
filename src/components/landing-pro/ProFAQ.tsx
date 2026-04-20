@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     q: "Preciso ter número oficial de WhatsApp Business?",
-    a: "Não. O OnTrack Pro fornece o canal automatizado. Você não precisa expor seu número pessoal nem contratar API oficial separadamente — já está incluso na assinatura.",
+    a: "Não. O OnTrack Pro fornece o canal automatizado. Você não precisa expor seu número pessoal nem contratar API oficial separadamente, já está incluso na assinatura.",
   },
   {
     q: "Posso testar antes de pagar?",
@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "Posso migrar de plano depois?",
-    a: "Sim, a qualquer momento — sem fidelidade. O upgrade é imediato e o downgrade vale na próxima cobrança. Você só paga proporcional ao uso.",
+    a: "Sim, a qualquer momento, sem fidelidade. O upgrade é imediato e o downgrade vale na próxima cobrança. Você só paga proporcional ao uso.",
   },
   {
     q: "O que acontece se eu ultrapassar o limite do plano?",

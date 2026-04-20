@@ -27,7 +27,7 @@ export const ProHero = () => {
 
           <p className="landing-lead mx-auto mt-6 max-w-2xl">
             O OnTrack Pro ajuda nutricionistas a manterem presença ativa na rotina dos pacientes,
-            aumentando adesão, relacionamento e retorno entre consultas — sem esforço manual.
+            aumentando adesão, relacionamento e retorno entre consultas, sem esforço manual.
           </p>
 
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">

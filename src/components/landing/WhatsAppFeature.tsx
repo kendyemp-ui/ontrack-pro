@@ -27,7 +27,7 @@ const messages = [
     type: "sent" as const,
     time: "12:43",
     text:
-      "Você já consumiu *1.840 / 2.480 kcal* hoje 🔥\nProteína: 98/140g\nFaltam *640 kcal* pra sua meta — segue firme! 💪",
+      "Você já consumiu *1.840 / 2.480 kcal* hoje 🔥\nProteína: 98/140g\nFaltam *640 kcal* pra sua meta, segue firme! 💪",
   },
 ];
 
@@ -40,7 +40,7 @@ const benefits = [
   {
     icon: Zap,
     title: "Registro automático",
-    desc: "Calorias, proteína e carbs calculados na hora — sem você precisar pensar.",
+    desc: "Calorias, proteína e carbs calculados na hora, sem você precisar pensar.",
   },
   {
     icon: Clock,
@@ -77,7 +77,7 @@ export const WhatsAppFeature = () => {
             <p className="landing-lead mt-5 max-w-xl">
               Esqueça digitar, escanear código de barras ou abrir app. Mande uma
               foto da sua refeição no WhatsApp do OnTrack e ela é registrada
-              automaticamente — calorias, proteína e carbs calculados na hora.
+              automaticamente, calorias, proteína e carbs calculados na hora.
             </p>
 
             <div className="mt-10 space-y-5">
@@ -102,7 +102,7 @@ export const WhatsAppFeature = () => {
               <Sparkles size={16} className="shrink-0 text-accent" />
               <p className="text-xs leading-relaxed text-muted-foreground">
                 <span className="font-semibold text-foreground">Sem app pra abrir.</span>{" "}
-                Você usa o WhatsApp 80x por dia — agora ele trabalha pela sua
+                Você usa o WhatsApp 80x por dia, agora ele trabalha pela sua
                 evolução.
               </p>
             </div>
