@@ -1,6 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
-import ProgressBar from '@/components/ProgressBar';
+import NutritionRing from '@/components/NutritionRing';
 import { MessageCircle, Flame, TrendingUp, Utensils, Zap, Activity, Heart } from 'lucide-react';
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, ReferenceLine, Cell } from 'recharts';
@@ -42,33 +42,25 @@ const Dashboard = () => {
           <p className="text-xs text-accent mt-2 font-medium tracking-wide">{quote}</p>
         </div>
 
-        {/* Main Stats - Hero Cards */}
-        <div className="grid grid-cols-2 gap-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          <div className="glass-card rounded-2xl p-4 space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Utensils size={13} strokeWidth={1.5} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">Consumidas</span>
-            </div>
-            <p className="text-3xl font-heading font-bold text-foreground tracking-tight">{totalCalories}</p>
-            <p className="text-[10px] text-muted-foreground tracking-wide">kcal</p>
-          </div>
+        {/* Hero ring — central calorie ring + macros (matches landing visual) */}
+        <div className="glass-card rounded-2xl p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <NutritionRing
+            consumed={totalCalories}
+            goal={goal.caloriesTarget}
+            protein={{ current: totalProtein, goal: goal.proteinTarget }}
+            carbs={{ current: totalCarbs, goal: goal.carbsTarget }}
+          />
+        </div>
 
+        {/* Secondary stats — burn vs balance */}
+        <div className="grid grid-cols-2 gap-3 animate-slide-up" style={{ animationDelay: '0.15s' }}>
           <div className="glass-card rounded-2xl p-4 space-y-1">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Flame size={13} strokeWidth={1.5} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Gasto Total</span>
             </div>
-            <p className="text-3xl font-heading font-bold text-foreground tracking-tight">{totalBurn}</p>
+            <p className="text-2xl font-heading font-bold text-foreground tracking-tight">{totalBurn}</p>
             <p className="text-[10px] text-muted-foreground tracking-wide">kcal (TMB + ativ.)</p>
-          </div>
-
-          <div className="glass-card rounded-2xl p-4 space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <TrendingUp size={13} strokeWidth={1.5} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">Meta</span>
-            </div>
-            <p className="text-3xl font-heading font-bold text-foreground tracking-tight">{goal.caloriesTarget}</p>
-            <p className="text-[10px] text-muted-foreground tracking-wide">kcal</p>
           </div>
 
           <div className="glass-card rounded-2xl p-4 space-y-1 stat-glow">
@@ -76,7 +68,7 @@ const Dashboard = () => {
               <Zap size={13} strokeWidth={1.5} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Saldo Líquido</span>
             </div>
-            <p className={`text-3xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p className={`text-2xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {netBalance > 0 ? '+' : ''}{netBalance}
             </p>
             <p className="text-[10px] text-muted-foreground tracking-wide">
@@ -86,7 +78,7 @@ const Dashboard = () => {
         </div>
 
         {/* Basal Info */}
-        <div className="flex items-center justify-between px-1 animate-slide-up" style={{ animationDelay: '0.12s' }}>
+        <div className="flex items-center justify-between px-1 animate-slide-up" style={{ animationDelay: '0.18s' }}>
           <div className="flex items-center gap-2">
             <Heart size={12} className="text-accent" />
             <span className="text-[10px] text-muted-foreground">TMB: <span className="text-foreground font-semibold">{bioimpedance.basalRate} kcal</span></span>
@@ -95,14 +87,6 @@ const Dashboard = () => {
             <Activity size={12} className="text-accent" />
             <span className="text-[10px] text-muted-foreground">Atividade: <span className="text-foreground font-semibold">{burn.total} kcal</span></span>
           </div>
-        </div>
-
-        {/* Macro Progress */}
-        <div className="glass-card rounded-2xl p-5 space-y-5 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <h2 className="text-xs font-heading font-semibold text-foreground uppercase tracking-wider">Progresso do Dia</h2>
-          <ProgressBar value={totalCalories} max={goal.caloriesTarget} label="Calorias" unit=" kcal" />
-          <ProgressBar value={totalProtein} max={goal.proteinTarget} label="Proteína" unit="g" />
-          <ProgressBar value={totalCarbs} max={goal.carbsTarget} label="Carboidratos" unit="g" />
         </div>
 
         {/* Activity Card */}
