@@ -29,6 +29,13 @@ const Dashboard = () => {
   const proteinExceeded = proteinRemaining < 0;
   const carbsExceeded = carbsRemaining < 0;
 
+  // Gordura: ~25% das calorias da meta / 9 kcal por grama
+  const fatsTarget = Math.round((goal.caloriesTarget * 0.25) / 9);
+  const totalFats = todaysMeals.reduce((sum, m) => {
+    // Estimativa: ~30% das kcal da refeição como gordura / 9
+    return sum + Math.round((m.calories * 0.3) / 9);
+  }, 0);
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto px-4 pt-6 space-y-4">
@@ -49,6 +56,7 @@ const Dashboard = () => {
             goal={goal.caloriesTarget}
             protein={{ current: totalProtein, goal: goal.proteinTarget }}
             carbs={{ current: totalCarbs, goal: goal.carbsTarget }}
+            fats={{ current: totalFats, goal: fatsTarget }}
           />
         </div>
 
