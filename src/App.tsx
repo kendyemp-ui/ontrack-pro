@@ -63,11 +63,6 @@ const ProLoginRedirect = () => {
   return <ProLogin />;
 };
 
-const ProLandingRedirect = () => {
-  const { isLoggedIn } = usePro();
-  if (isLoggedIn) return <Navigate to="/pro/dashboard" replace />;
-  return <ProLanding />;
-};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
