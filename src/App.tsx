@@ -52,7 +52,7 @@ const FullScreenLoader = () => (
 
 const ProProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn } = usePro();
-  if (!isLoggedIn) return <Navigate to="/pro" replace />;
+  if (!isLoggedIn) return <Navigate to="/pro/login" replace />;
   return <>{children}</>;
 };
 
