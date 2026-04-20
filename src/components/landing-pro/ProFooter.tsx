@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Activity, Mail, AtSign, Linkedin as LinkedinIcon } from "lucide-react";
+import { Activity, Mail, AtSign, Briefcase as LinkedinIcon } from "lucide-react";
 
 export const ProFooter = () => {
   const year = new Date().getFullYear();
