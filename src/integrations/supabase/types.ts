@@ -108,31 +108,43 @@ export type Database = {
       }
       daily_summary: {
         Row: {
+          activity_count: number | null
+          calorie_balance: number | null
           carbs_consumed: number | null
           client_id: string | null
+          fat_consumed: number | null
           id: string
           kcal_burned: number | null
           kcal_consumed: number | null
+          meal_count: number | null
           protein_consumed: number | null
           summary_date: string
           updated_at: string | null
         }
         Insert: {
+          activity_count?: number | null
+          calorie_balance?: number | null
           carbs_consumed?: number | null
           client_id?: string | null
+          fat_consumed?: number | null
           id?: string
           kcal_burned?: number | null
           kcal_consumed?: number | null
+          meal_count?: number | null
           protein_consumed?: number | null
           summary_date: string
           updated_at?: string | null
         }
         Update: {
+          activity_count?: number | null
+          calorie_balance?: number | null
           carbs_consumed?: number | null
           client_id?: string | null
+          fat_consumed?: number | null
           id?: string
           kcal_burned?: number | null
           kcal_consumed?: number | null
+          meal_count?: number | null
           protein_consumed?: number | null
           summary_date?: string
           updated_at?: string | null
