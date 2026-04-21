@@ -208,6 +208,19 @@ const Dashboard = () => {
             />
           </div>
         </div>
+
+        {/* Enviar resumo no WhatsApp */}
+        {hasClientRecord && (
+          <button
+            onClick={handleSendDailyReport}
+            disabled={sendingReport}
+            className="w-full glass-card rounded-2xl p-4 flex items-center justify-center gap-2 text-sm font-medium text-foreground hover:bg-accent/5 transition-colors disabled:opacity-50 animate-slide-up"
+            style={{ animationDelay: '0.4s' }}
+          >
+            <Send size={16} strokeWidth={1.5} />
+            {sendingReport ? 'Enviando resumo...' : 'Enviar resumo do dia no WhatsApp'}
+          </button>
+        )}
       </div>
       <BottomNav />
     </div>
