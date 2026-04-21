@@ -47,6 +47,28 @@ function normalizePhone(raw: string): string {
   return raw.replace(/^whatsapp:/i, "").trim();
 }
 
+function phoneLookupCandidates(phone: string): string[] {
+  const digits = phone.replace(/\D/g, "");
+  const candidates = new Set<string>([phone]);
+
+  // Brasil: aceita variações com/sem o 9 após o DDD para compatibilidade com WhatsApp/Twilio.
+  if (digits.startsWith("55") && digits.length >= 12) {
+    const country = digits.slice(0, 2);
+    const ddd = digits.slice(2, 4);
+    const local = digits.slice(4);
+
+    if (local.length === 8) {
+      candidates.add(`+${country}${ddd}9${local}`);
+    }
+
+    if (local.length === 9 && local.startsWith("9")) {
+      candidates.add(`+${country}${ddd}${local.slice(1)}`);
+    }
+  }
+
+  return [...candidates];
+}
+
 // ---------- TwiML response helper ----------
 function twimlResponse(message: string): Response {
   const xml = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapeXml(message)}</Message></Response>`;
@@ -268,7 +290,8 @@ Deno.serve(async (req) => {
     const { data: client, error: clientErr } = await supabase
       .from("clients")
       .select("id, name")
-      .eq("phone_e164", fromPhone)
+      .in("phone_e164", phoneLookupCandidates(fromPhone))
+      .limit(1)
       .maybeSingle();
 
     if (clientErr) {
