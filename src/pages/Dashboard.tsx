@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import NutritionRing from '@/components/NutritionRing';
-import { MessageCircle, Flame, Utensils, Zap, Activity, Heart } from 'lucide-react';
+import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
 
 const Dashboard = () => {
