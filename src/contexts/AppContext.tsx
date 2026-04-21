@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Meal, DietGoal, DailyBurn, Bioimpedance, Race, defaultGoal, todayMeals, dailyBurn, defaultBioimpedance, defaultRaces } from '@/data/mockData';
+import { Meal, DietGoal, Bioimpedance, Race, defaultGoal, defaultBioimpedance, defaultRaces } from '@/data/mockData';
 import { useTodayMeals } from '@/hooks/useTodayMeals';
+import { useTodayActivities, ActivityLogRow } from '@/hooks/useTodayActivities';
 
 interface AppState {
   isLoggedIn: boolean;
@@ -11,25 +12,26 @@ interface AppState {
   session: Session | null;
   userName: string;
   meals: Meal[];
+  activities: ActivityLogRow[];
   goal: DietGoal;
-  burn: DailyBurn;
   bioimpedance: Bioimpedance;
   races: Race[];
-  /** True when meals are coming from the live Supabase fluxo (Make/Twilio). */
-  mealsLive: boolean;
-  /** Loading state of the live meals fetch. */
-  mealsLoading: boolean;
-  /** Whether the logged-in user has a matched `clients` row by phone. */
+  /** True when the logged-in user has a matched `clients` row by phone. */
   hasClientRecord: boolean;
+  mealsLoading: boolean;
+  activitiesLoading: boolean;
+  clientId: string | null;
   logout: () => Promise<void>;
-  addMeal: (meal: Meal) => void;
   updateGoal: (goal: DietGoal) => void;
   updateBioimpedance: (bio: Bioimpedance) => void;
   addRace: (race: Race) => void;
   removeRace: (id: string) => void;
+  deleteMeal: (id: string) => Promise<void>;
+  deleteActivity: (id: string) => Promise<void>;
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
+  totalBurn: number;
   caloriesRemaining: number;
   proteinRemaining: number;
   carbsRemaining: number;
@@ -51,23 +53,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [fullName, setFullName] = useState<string>('');
   const [userPhone, setUserPhone] = useState<string | null>(null);
 
-  const [meals, setMeals] = useState<Meal[]>(todayMeals);
   const [goal, setGoal] = useState<DietGoal>(defaultGoal);
-  const [burn] = useState<DailyBurn>(dailyBurn);
   const [bioimpedance, setBioimpedance] = useState<Bioimpedance>(defaultBioimpedance);
   const [races, setRaces] = useState<Race[]>(defaultRaces);
 
-  // Live meals from Supabase (fed by Make/Twilio/OpenAI flow)
   const liveMeals = useTodayMeals(user?.id ?? null, userPhone);
+  const liveActivities = useTodayActivities(liveMeals.clientId);
 
   useEffect(() => {
-    // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
     });
 
-    // THEN check existing session
     supabase.auth.getSession().then(({ data: { session: existing } }) => {
       setSession(existing);
       setUser(existing?.user ?? null);
@@ -77,7 +75,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch profile (name + phone) when user logs in (deferred to avoid deadlock)
   useEffect(() => {
     if (!user) {
       setFullName('');
@@ -102,30 +99,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
-  const addMeal = (meal: Meal) => setMeals(prev => [...prev, meal]);
   const updateGoal = (newGoal: DietGoal) => setGoal(newGoal);
   const updateBioimpedance = (bio: Bioimpedance) => setBioimpedance(bio);
   const addRace = (race: Race) => setRaces(prev => [...prev, race]);
   const removeRace = (id: string) => setRaces(prev => prev.filter(r => r.id !== id));
 
-  // Decide which meals feed the rest of the app:
-  // - if the logged user has a real `clients` row, use live data (even if empty for today)
-  // - otherwise, keep the mock so the demo experience stays intact
-  const hasClientRecord = !!liveMeals.clientId;
-  const effectiveMeals: Meal[] = hasClientRecord ? liveMeals.meals : meals;
+  const deleteMeal = async (id: string) => {
+    await supabase.from('meal_logs').delete().eq('id', id);
+  };
 
-  const todaysMeals = hasClientRecord
-    ? effectiveMeals
-    : effectiveMeals.filter(m => m.date === '2026-04-15');
-  const totalCalories = todaysMeals.reduce((s, m) => s + m.calories, 0);
-  const totalProtein = todaysMeals.reduce((s, m) => s + m.protein, 0);
-  const totalCarbs = todaysMeals.reduce((s, m) => s + m.carbs, 0);
+  const deleteActivity = async (id: string) => {
+    await supabase.from('activity_logs').delete().eq('id', id);
+  };
+
+  // Sempre dados reais do Supabase. Sem mock.
+  const meals: Meal[] = liveMeals.meals;
+  const activities = liveActivities.rows.filter(r => r.status === 'processed');
+
+  const totalCalories = meals.reduce((s, m) => s + m.calories, 0);
+  const totalProtein = meals.reduce((s, m) => s + m.protein, 0);
+  const totalCarbs = meals.reduce((s, m) => s + m.carbs, 0);
+  const totalBurn = liveActivities.totalBurn;
 
   const caloriesRemaining = goal.caloriesTarget - totalCalories;
   const proteinRemaining = goal.proteinTarget - totalProtein;
   const carbsRemaining = goal.carbsTarget - totalCarbs;
-  const totalBurn = burn.total + bioimpedance.basalRate;
-  const netBalance = totalCalories - totalBurn;
+
+  // Saldo diário = consumidas - (TMB + atividade)
+  const netBalance = totalCalories - (totalBurn + bioimpedance.basalRate);
 
   const userName = fullName?.split(' ')[0] || 'você';
 
@@ -136,13 +137,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       user,
       session,
       userName,
-      meals: effectiveMeals,
-      goal, burn, bioimpedance, races,
-      mealsLive: hasClientRecord,
+      meals,
+      activities,
+      goal, bioimpedance, races,
+      hasClientRecord: !!liveMeals.clientId,
       mealsLoading: liveMeals.loading,
-      hasClientRecord,
-      logout, addMeal, updateGoal, updateBioimpedance, addRace, removeRace,
-      totalCalories, totalProtein, totalCarbs,
+      activitiesLoading: liveActivities.loading,
+      clientId: liveMeals.clientId,
+      logout, updateGoal, updateBioimpedance, addRace, removeRace,
+      deleteMeal, deleteActivity,
+      totalCalories, totalProtein, totalCarbs, totalBurn,
       caloriesRemaining, proteinRemaining, carbsRemaining, netBalance,
     }}>
       {children}
