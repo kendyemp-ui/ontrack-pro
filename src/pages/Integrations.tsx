@@ -1,5 +1,6 @@
 import BottomNav from '@/components/BottomNav';
-import { integrations, dailyBurn } from '@/data/mockData';
+import { integrations } from '@/data/mockData';
+import { useApp } from '@/contexts/AppContext';
 import { Activity } from 'lucide-react';
 
 const statusLabels: Record<string, { label: string; className: string }> = {
@@ -10,6 +11,9 @@ const statusLabels: Record<string, { label: string; className: string }> = {
 };
 
 const Integrations = () => {
+  const { totalBurn, activities } = useApp();
+  const totalSteps = activities.reduce((s, a) => s + Number(a.activity_steps ?? 0), 0);
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto px-4 pt-6 space-y-5">
@@ -18,27 +22,28 @@ const Integrations = () => {
           <p className="text-sm text-muted-foreground mt-1">Conecte dispositivos e plataformas para enriquecer seus dados</p>
         </div>
 
-        {/* Simulated wearable data */}
+        {/* Dados reais do dia */}
         <div className="glass-card rounded-2xl p-5 animate-slide-up">
           <div className="flex items-center gap-2 mb-4">
             <Activity size={16} className="text-primary" />
-            <h2 className="text-base font-heading font-semibold text-foreground">Dados Simulados do Dia</h2>
+            <h2 className="text-base font-heading font-semibold text-foreground">Atividade do Dia</h2>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-primary/10 rounded-xl p-3 text-center">
-              <p className="text-lg font-heading font-bold text-primary">{dailyBurn.total}</p>
-              <p className="text-[10px] text-muted-foreground">kcal gastas</p>
+          {activities.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Nenhuma atividade registrada ainda. Envie texto ou print de smartwatch pelo WhatsApp.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-primary/10 rounded-xl p-3 text-center">
+                <p className="text-lg font-heading font-bold text-primary">{totalBurn}</p>
+                <p className="text-[10px] text-muted-foreground">kcal gastas</p>
+              </div>
+              <div className="bg-accent/10 rounded-xl p-3 text-center">
+                <p className="text-lg font-heading font-bold text-accent">{totalSteps.toLocaleString('pt-BR')}</p>
+                <p className="text-[10px] text-muted-foreground">passos</p>
+              </div>
             </div>
-            <div className="bg-accent/10 rounded-xl p-3 text-center">
-              <p className="text-lg font-heading font-bold text-accent">{dailyBurn.steps.toLocaleString()}</p>
-              <p className="text-[10px] text-muted-foreground">passos</p>
-            </div>
-            <div className="bg-warning/10 rounded-xl p-3 text-center">
-              <p className="text-lg font-heading font-bold text-warning">{dailyBurn.activityDuration}</p>
-              <p className="text-[10px] text-muted-foreground">{dailyBurn.activity}</p>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground/60 text-center mt-3">Dados simulados para demonstração</p>
+          )}
         </div>
 
         {/* Integration List */}
