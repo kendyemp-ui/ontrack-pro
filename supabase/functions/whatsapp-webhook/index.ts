@@ -557,7 +557,7 @@ Deno.serve(async (req) => {
           return;
         }
 
-        // meal_text ou meal_image
+        // meal_text, meal_image ou meal_image_plus_text (imagem com texto complementar)
         const { data: mealLog, error: mealErr } = await supabase
           .from("meal_logs")
           .insert({
