@@ -5,10 +5,16 @@ import BottomNav from '@/components/BottomNav';
 import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { integrations, dailyBurn } from '@/data/mockData';
+import { integrations } from '@/data/mockData';
 
 const Profile = () => {
-  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout } = useApp();
+  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout, totalBurn, activities } = useApp();
+  const dailyBurn = {
+    total: totalBurn,
+    steps: activities.reduce((s, a) => s + Number(a.activity_steps ?? 0), 0),
+    activity: activities[0]?.activity_type ?? '—',
+    activityDuration: activities[0]?.activity_duration ?? '—',
+  };
   const navigate = useNavigate();
 
   const handleLogout = async () => {
