@@ -12,8 +12,31 @@ const Dashboard = () => {
   const {
     userName, totalCalories, totalProtein, totalCarbs,
     goal, totalBurn, caloriesRemaining, proteinRemaining, carbsRemaining, netBalance,
-    meals, activities, bioimpedance, hasClientRecord,
+    meals, activities, bioimpedance, hasClientRecord, clientId,
   } = useApp();
+  const [sendingReport, setSendingReport] = useState(false);
+
+  const handleSendDailyReport = async () => {
+    if (!clientId) {
+      toast.error('Sua conta ainda não está vinculada a um WhatsApp.');
+      return;
+    }
+    setSendingReport(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('daily-report', {
+        body: { client_id: clientId },
+      });
+      if (error) throw error;
+      const result = data?.results?.[0];
+      if (result?.sent) toast.success('Resumo do dia enviado para seu WhatsApp! 📊');
+      else if (result?.error) toast.error(`Falha ao enviar: ${result.error}`);
+      else toast.info('Resumo gerado, mas envio não confirmado.');
+    } catch (e) {
+      toast.error('Erro ao gerar resumo do dia.');
+    } finally {
+      setSendingReport(false);
+    }
+  };
 
   const totalExpenditure = totalBurn + bioimpedance.basalRate;
 
