@@ -77,12 +77,15 @@ function escapeXml(s: string): string {
 const CLASSIFIER_PROMPT = `Você é o classificador de intenção do app OnTrack.
 Analise a mensagem do usuário (texto e/ou imagem) e classifique em UMA categoria:
 
-- "meal_text": descrição de uma refeição em texto. Ex: "almoço: arroz, feijão e frango", "comi 2 ovos".
-- "meal_image": imagem de comida/prato/refeição.
+- "meal_text": SOMENTE texto descrevendo refeição. Ex: "almoço: arroz, feijão e frango", "comi 2 ovos".
+- "meal_image": SOMENTE imagem de comida/prato/refeição, sem texto complementar relevante (ou texto vazio/saudação curta).
+- "meal_image_plus_text": imagem de comida/prato JUNTO com texto complementar que adiciona contexto sobre ingredientes, preparo, quantidade, complementos ou itens não totalmente visíveis. Ex: foto de iogurte + "tem whey misturado", foto de salada + "coloquei azeite e frango", foto de pão + "tem requeijão dentro", foto de fruta + "bati com leite e aveia".
 - "activity_text": descrição de atividade física em texto. Ex: "corri 5km", "fiz 40min de musculação", "pedalei 1h", "caminhei 7 mil passos", "joguei tênis 1h30".
 - "activity_image": print de smartwatch (Apple Watch, Garmin, Strava, etc) ou app esportivo mostrando atividade física, distância, calorias, frequência cardíaca.
 - "food_substitution": pedido para trocar/substituir um alimento. Ex: "me sugere substituição para frango", "o que posso comer no lugar do arroz".
 - "out_of_scope": qualquer outra coisa (saudação, papo, perguntas fora de nutrição/atividade).
+
+REGRA IMPORTANTE: se houver imagem de comida E texto que descreve/complementa a refeição, use "meal_image_plus_text" (NÃO use "meal_image"). Se o texto for apenas saudação irrelevante ("oi", "olha"), use "meal_image".
 
 Use a tool classify_intent.`;
 
@@ -96,7 +99,7 @@ const CLASSIFIER_TOOL = {
       properties: {
         intent: {
           type: "string",
-          enum: ["meal_text", "meal_image", "activity_text", "activity_image", "food_substitution", "out_of_scope"],
+          enum: ["meal_text", "meal_image", "meal_image_plus_text", "activity_text", "activity_image", "food_substitution", "out_of_scope"],
         },
       },
       required: ["intent"],
@@ -106,7 +109,16 @@ const CLASSIFIER_TOOL = {
 };
 
 const MEAL_PROMPT = `Você é a IA nutricional do app OnTrack. Estime calorias, proteínas, carboidratos e gorduras de refeições com base em TBCA-USP > TACO > USDA, considerando preparo brasileiro.
-Use porções padrão quando a quantidade não for informada (arroz cozido 120g, feijão 100g, frango grelhado 120g, ovo 50g, pão francês 50g, etc).
+Use porções padrão quando a quantidade não for informada (arroz cozido 120g, feijão 100g, frango grelhado 120g, ovo 50g, pão francês 50g, pão de forma 25g/fatia, leite 200ml, iogurte 170g, whey 30g/scoop, banana 90g, azeite 10g/colher, requeijão 30g, pasta de amendoim 15g, granola 30g, etc).
+
+REGRA CRÍTICA PARA IMAGEM + TEXTO COMPLEMENTAR:
+- Quando houver IMAGEM e TEXTO juntos, considere os DOIS como parte da MESMA refeição.
+- A imagem é a base visual; o texto adiciona ingredientes, preparo, quantidade, complementos ou itens escondidos/misturados/internos que não aparecem claramente na foto.
+- SEMPRE inclua no cálculo o que o texto informar mesmo que não esteja visível na imagem (ex: "tem whey misturado", "coloquei granola", "tem mel por cima", "usei leite integral", "tem requeijão dentro", "misturei pasta de amendoim").
+- Some imagem + texto em UMA única estimativa final.
+- Se houver conflito, escolha a combinação mais plausível dos dois.
+
+Mantenha consistência: nunca devolva valores absurdamente baixos para pratos grandes nem altos para refeições leves.
 SEMPRE chame a tool estimate_macros com o total final. Se não for possível estimar, retorne zeros.`;
 
 const MACRO_TOOL = {
@@ -301,8 +313,20 @@ async function classifyIntent(text: string, imageDataUrl: string | null): Promis
 
 async function estimateMeal(text: string, imageDataUrl: string | null): Promise<MacroEstimate> {
   const userContent: any[] = [];
-  userContent.push({ type: "text", text: text?.trim() ? `Estime os macros: ${text}` : "Estime os macros desta refeição na imagem." });
+  const hasText = !!text?.trim();
+  const hasImage = !!imageDataUrl;
+
+  let prompt: string;
+  if (hasImage && hasText) {
+    prompt = `Esta refeição contém IMAGEM + TEXTO COMPLEMENTAR. Analise a imagem como base visual e SOME ao cálculo o que o texto descreve (ingredientes adicionais, complementos, preparo, quantidade). Texto complementar do usuário: "${text}". Retorne a estimativa total combinada.`;
+  } else if (hasImage) {
+    prompt = "Estime os macros desta refeição na imagem.";
+  } else {
+    prompt = `Estime os macros: ${text}`;
+  }
+  userContent.push({ type: "text", text: prompt });
   if (imageDataUrl) userContent.push({ type: "image_url", image_url: { url: imageDataUrl } });
+
   const r = await callAITool(
     [{ role: "system", content: MEAL_PROMPT }, { role: "user", content: userContent }],
     MACRO_TOOL,
@@ -533,7 +557,7 @@ Deno.serve(async (req) => {
           return;
         }
 
-        // meal_text ou meal_image
+        // meal_text, meal_image ou meal_image_plus_text (imagem com texto complementar)
         const { data: mealLog, error: mealErr } = await supabase
           .from("meal_logs")
           .insert({
