@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          activity_distance: string | null
+          activity_duration: string | null
+          activity_steps: number | null
+          activity_type: string | null
+          client_id: string | null
+          created_at: string | null
+          estimated_burn_kcal: number | null
+          id: string
+          image_path: string | null
+          media_content_type: string | null
+          media_url: string | null
+          original_text: string | null
+          raw_payload: Json | null
+          source: string | null
+          status: string | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          activity_distance?: string | null
+          activity_duration?: string | null
+          activity_steps?: number | null
+          activity_type?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          estimated_burn_kcal?: number | null
+          id?: string
+          image_path?: string | null
+          media_content_type?: string | null
+          media_url?: string | null
+          original_text?: string | null
+          raw_payload?: Json | null
+          source?: string | null
+          status?: string | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          activity_distance?: string | null
+          activity_duration?: string | null
+          activity_steps?: number | null
+          activity_type?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          estimated_burn_kcal?: number | null
+          id?: string
+          image_path?: string | null
+          media_content_type?: string | null
+          media_url?: string | null
+          original_text?: string | null
+          raw_payload?: Json | null
+          source?: string | null
+          status?: string | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string | null
@@ -46,6 +111,7 @@ export type Database = {
           carbs_consumed: number | null
           client_id: string | null
           id: string
+          kcal_burned: number | null
           kcal_consumed: number | null
           protein_consumed: number | null
           summary_date: string
@@ -55,6 +121,7 @@ export type Database = {
           carbs_consumed?: number | null
           client_id?: string | null
           id?: string
+          kcal_burned?: number | null
           kcal_consumed?: number | null
           protein_consumed?: number | null
           summary_date: string
@@ -64,6 +131,7 @@ export type Database = {
           carbs_consumed?: number | null
           client_id?: string | null
           id?: string
+          kcal_burned?: number | null
           kcal_consumed?: number | null
           protein_consumed?: number | null
           summary_date?: string

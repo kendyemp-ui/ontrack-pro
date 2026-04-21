@@ -1,7 +1,8 @@
 import BottomNav from '@/components/BottomNav';
-import { chatMessages } from '@/data/mockData';
 import { MessageCircle, Copy, Phone } from 'lucide-react';
 import { toast } from 'sonner';
+
+const chatMessages: Array<{ id: number; type: 'sent' | 'received'; text: string; image?: string; time: string }> = [];
 
 const WhatsAppChat = () => {
   const WHATSAPP_NUMBER_DISPLAY = '+1 415 523 8886';
