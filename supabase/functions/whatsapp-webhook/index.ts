@@ -222,16 +222,30 @@ Deno.serve(async (req) => {
     for (const [k, v] of formData.entries()) params[k] = v;
 
     // 2. Validar assinatura Twilio
+    // Twilio assina com a URL pública exata. Dentro da Edge Function, req.url
+    // aponta para edge-runtime.supabase.com — precisamos reconstruir a URL pública
+    // usando o project ref + nome da função.
     const signature = req.headers.get("X-Twilio-Signature") || "";
-    // Twilio assina com a URL pública exata. Reconstruir a partir do header forwarded.
-    const url = req.headers.get("x-forwarded-url") ||
-      `https://${req.headers.get("host")}${new URL(req.url).pathname}`;
+    const projectRef = (SUPABASE_URL.match(/^https?:\/\/([^.]+)\./) || [])[1];
+    const publicUrl = req.headers.get("x-forwarded-url")
+      || (projectRef ? `https://${projectRef}.supabase.co/functions/v1/whatsapp-webhook` : req.url);
 
     const skipValidation = Deno.env.get("TWILIO_SKIP_VALIDATION") === "true";
     if (!skipValidation) {
-      const valid = await isValidTwilioSignature(url, params, signature);
+      // Tenta com a URL pública e também com possíveis variações (com/sem query string)
+      let valid = await isValidTwilioSignature(publicUrl, params, signature);
       if (!valid) {
-        console.error("Assinatura Twilio inválida", { url, signature });
+        // fallback: tenta com a URL crua do request
+        valid = await isValidTwilioSignature(req.url, params, signature);
+      }
+      if (!valid) {
+        console.error("Assinatura Twilio inválida", {
+          publicUrl,
+          reqUrl: req.url,
+          signature,
+          forwardedHost: req.headers.get("x-forwarded-host"),
+          host: req.headers.get("host"),
+        });
         return new Response("Forbidden", { status: 403 });
       }
     }
