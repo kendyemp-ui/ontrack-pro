@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone_e164: string
+          professional_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone_e164: string
+          professional_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone_e164?: string
+          professional_id?: string | null
+        }
+        Relationships: []
+      }
+      daily_summary: {
+        Row: {
+          carbs_consumed: number | null
+          client_id: string | null
+          id: string
+          kcal_consumed: number | null
+          protein_consumed: number | null
+          summary_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          carbs_consumed?: number | null
+          client_id?: string | null
+          id?: string
+          kcal_consumed?: number | null
+          protein_consumed?: number | null
+          summary_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          carbs_consumed?: number | null
+          client_id?: string | null
+          id?: string
+          kcal_consumed?: number | null
+          protein_consumed?: number | null
+          summary_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_summary_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_logs: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          estimated_carbs: number | null
+          estimated_fat: number | null
+          estimated_kcal: number | null
+          estimated_protein: number | null
+          id: string
+          image_path: string | null
+          media_content_type: string | null
+          media_url: string | null
+          original_text: string | null
+          source: string | null
+          status: string | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          estimated_carbs?: number | null
+          estimated_fat?: number | null
+          estimated_kcal?: number | null
+          estimated_protein?: number | null
+          id?: string
+          image_path?: string | null
+          media_content_type?: string | null
+          media_url?: string | null
+          original_text?: string | null
+          source?: string | null
+          status?: string | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          estimated_carbs?: number | null
+          estimated_fat?: number | null
+          estimated_kcal?: number | null
+          estimated_protein?: number | null
+          id?: string
+          image_path?: string | null
+          media_content_type?: string | null
+          media_url?: string | null
+          original_text?: string | null
+          source?: string | null
+          status?: string | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pro_signups: {
         Row: {
           created_at: string
@@ -155,11 +279,56 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          direction: string
+          id: string
+          media_count: number | null
+          message_type: string
+          raw_payload: Json | null
+          text_body: string | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          direction: string
+          id?: string
+          media_count?: number | null
+          message_type: string
+          raw_payload?: Json | null
+          text_body?: string | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          direction?: string
+          id?: string
+          media_count?: number | null
+          message_type?: string
+          raw_payload?: Json | null
+          text_body?: string | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      current_client_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -168,6 +337,10 @@ export type Database = {
         Returns: boolean
       }
       is_subscription_active: { Args: { _email: string }; Returns: boolean }
+      recompute_daily_summary: {
+        Args: { _client_id: string; _date: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
