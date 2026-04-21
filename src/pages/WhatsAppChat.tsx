@@ -4,8 +4,13 @@ import { MessageCircle, Copy, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 const WhatsAppChat = () => {
+  const WHATSAPP_NUMBER_DISPLAY = '+1 415 523 8886';
+  const WHATSAPP_NUMBER_RAW = '14155238886';
+  const JOIN_CODE = 'join silent-frozen';
+  const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER_RAW}?text=${encodeURIComponent(JOIN_CODE)}`;
+
   const handleCopy = () => {
-    navigator.clipboard.writeText('+55 11 99999-0000');
+    navigator.clipboard.writeText(WHATSAPP_NUMBER_DISPLAY);
     toast.success('Número copiado!');
   };
 
@@ -26,19 +31,26 @@ const WhatsAppChat = () => {
               <MessageCircle size={22} className="text-primary-foreground" />
             </div>
             <div>
-              <p className="font-heading font-semibold text-foreground">OnTrack</p>
-              <p className="text-sm text-muted-foreground">+55 11 99999-0000</p>
+              <p className="font-heading font-semibold text-foreground">OnTrack (Sandbox)</p>
+              <p className="text-sm text-muted-foreground">{WHATSAPP_NUMBER_DISPLAY}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-warning/10">
-            <span className="text-xs text-warning font-medium">🔧 Integração em configuração</span>
+          <div className="px-3 py-2 rounded-xl bg-warning/10">
+            <p className="text-xs text-warning font-medium">
+              🧪 Sandbox Twilio — envie a mensagem <span className="font-semibold">{JOIN_CODE}</span> para ativar
+            </p>
           </div>
 
-          <button className="w-full h-11 rounded-xl bg-[#25D366] text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]">
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full h-11 rounded-xl bg-[#25D366] text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
+          >
             <Phone size={16} />
             Iniciar conversa no WhatsApp
-          </button>
+          </a>
 
           <button
             onClick={handleCopy}
