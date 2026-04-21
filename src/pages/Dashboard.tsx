@@ -1,16 +1,42 @@
+import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import NutritionRing from '@/components/NutritionRing';
-import { MessageCircle, Flame, Utensils, Zap, Activity, Heart } from 'lucide-react';
+import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
 
 const Dashboard = () => {
   const {
     userName, totalCalories, totalProtein, totalCarbs,
     goal, totalBurn, caloriesRemaining, proteinRemaining, carbsRemaining, netBalance,
-    meals, activities, bioimpedance, hasClientRecord,
+    meals, activities, bioimpedance, hasClientRecord, clientId,
   } = useApp();
+  const [sendingReport, setSendingReport] = useState(false);
+
+  const handleSendDailyReport = async () => {
+    if (!clientId) {
+      toast.error('Sua conta ainda não está vinculada a um WhatsApp.');
+      return;
+    }
+    setSendingReport(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('daily-report', {
+        body: { client_id: clientId },
+      });
+      if (error) throw error;
+      const result = data?.results?.[0];
+      if (result?.sent) toast.success('Resumo do dia enviado para seu WhatsApp! 📊');
+      else if (result?.error) toast.error(`Falha ao enviar: ${result.error}`);
+      else toast.info('Resumo gerado, mas envio não confirmado.');
+    } catch (e) {
+      toast.error('Erro ao gerar resumo do dia.');
+    } finally {
+      setSendingReport(false);
+    }
+  };
 
   const totalExpenditure = totalBurn + bioimpedance.basalRate;
 
@@ -182,6 +208,19 @@ const Dashboard = () => {
             />
           </div>
         </div>
+
+        {/* Enviar resumo no WhatsApp */}
+        {hasClientRecord && (
+          <button
+            onClick={handleSendDailyReport}
+            disabled={sendingReport}
+            className="w-full glass-card rounded-2xl p-4 flex items-center justify-center gap-2 text-sm font-medium text-foreground hover:bg-accent/5 transition-colors disabled:opacity-50 animate-slide-up"
+            style={{ animationDelay: '0.4s' }}
+          >
+            <Send size={16} strokeWidth={1.5} />
+            {sendingReport ? 'Enviando resumo...' : 'Enviar resumo do dia no WhatsApp'}
+          </button>
+        )}
       </div>
       <BottomNav />
     </div>
