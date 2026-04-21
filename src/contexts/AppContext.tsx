@@ -49,12 +49,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [fullName, setFullName] = useState<string>('');
+  const [userPhone, setUserPhone] = useState<string | null>(null);
 
   const [meals, setMeals] = useState<Meal[]>(todayMeals);
   const [goal, setGoal] = useState<DietGoal>(defaultGoal);
   const [burn] = useState<DailyBurn>(dailyBurn);
   const [bioimpedance, setBioimpedance] = useState<Bioimpedance>(defaultBioimpedance);
   const [races, setRaces] = useState<Race[]>(defaultRaces);
+
+  // Live meals from Supabase (fed by Make/Twilio/OpenAI flow)
+  const liveMeals = useTodayMeals(user?.id ?? null, userPhone);
 
   useEffect(() => {
     // Set up listener FIRST
@@ -73,21 +77,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch profile name when user logs in (deferred to avoid deadlock)
+  // Fetch profile (name + phone) when user logs in (deferred to avoid deadlock)
   useEffect(() => {
     if (!user) {
       setFullName('');
+      setUserPhone(null);
       return;
     }
     setTimeout(() => {
       supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, phone')
         .eq('id', user.id)
         .maybeSingle()
         .then(({ data }) => {
           if (data?.full_name) setFullName(data.full_name);
           else setFullName(user.email?.split('@')[0] ?? '');
+          setUserPhone(data?.phone ?? null);
         });
     }, 0);
   }, [user]);
@@ -102,7 +108,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addRace = (race: Race) => setRaces(prev => [...prev, race]);
   const removeRace = (id: string) => setRaces(prev => prev.filter(r => r.id !== id));
 
-  const todaysMeals = meals.filter(m => m.date === '2026-04-15');
+  // Decide which meals feed the rest of the app:
+  // - if the logged user has a real `clients` row, use live data (even if empty for today)
+  // - otherwise, keep the mock so the demo experience stays intact
+  const hasClientRecord = !!liveMeals.clientId;
+  const effectiveMeals: Meal[] = hasClientRecord ? liveMeals.meals : meals;
+
+  const todaysMeals = hasClientRecord
+    ? effectiveMeals
+    : effectiveMeals.filter(m => m.date === '2026-04-15');
   const totalCalories = todaysMeals.reduce((s, m) => s + m.calories, 0);
   const totalProtein = todaysMeals.reduce((s, m) => s + m.protein, 0);
   const totalCarbs = todaysMeals.reduce((s, m) => s + m.carbs, 0);
@@ -122,7 +136,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       user,
       session,
       userName,
-      meals, goal, burn, bioimpedance, races,
+      meals: effectiveMeals,
+      goal, burn, bioimpedance, races,
+      mealsLive: hasClientRecord,
+      mealsLoading: liveMeals.loading,
+      hasClientRecord,
       logout, addMeal, updateGoal, updateBioimpedance, addRace, removeRace,
       totalCalories, totalProtein, totalCarbs,
       caloriesRemaining, proteinRemaining, carbsRemaining, netBalance,
