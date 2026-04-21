@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Meal, DietGoal, DailyBurn, Bioimpedance, Race, defaultGoal, todayMeals, dailyBurn, defaultBioimpedance, defaultRaces } from '@/data/mockData';
+import { useTodayMeals } from '@/hooks/useTodayMeals';
 
 interface AppState {
   isLoggedIn: boolean;
@@ -14,6 +15,12 @@ interface AppState {
   burn: DailyBurn;
   bioimpedance: Bioimpedance;
   races: Race[];
+  /** True when meals are coming from the live Supabase fluxo (Make/Twilio). */
+  mealsLive: boolean;
+  /** Loading state of the live meals fetch. */
+  mealsLoading: boolean;
+  /** Whether the logged-in user has a matched `clients` row by phone. */
+  hasClientRecord: boolean;
   logout: () => Promise<void>;
   addMeal: (meal: Meal) => void;
   updateGoal: (goal: DietGoal) => void;
