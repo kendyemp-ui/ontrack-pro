@@ -313,8 +313,20 @@ async function classifyIntent(text: string, imageDataUrl: string | null): Promis
 
 async function estimateMeal(text: string, imageDataUrl: string | null): Promise<MacroEstimate> {
   const userContent: any[] = [];
-  userContent.push({ type: "text", text: text?.trim() ? `Estime os macros: ${text}` : "Estime os macros desta refeição na imagem." });
+  const hasText = !!text?.trim();
+  const hasImage = !!imageDataUrl;
+
+  let prompt: string;
+  if (hasImage && hasText) {
+    prompt = `Esta refeição contém IMAGEM + TEXTO COMPLEMENTAR. Analise a imagem como base visual e SOME ao cálculo o que o texto descreve (ingredientes adicionais, complementos, preparo, quantidade). Texto complementar do usuário: "${text}". Retorne a estimativa total combinada.`;
+  } else if (hasImage) {
+    prompt = "Estime os macros desta refeição na imagem.";
+  } else {
+    prompt = `Estime os macros: ${text}`;
+  }
+  userContent.push({ type: "text", text: prompt });
   if (imageDataUrl) userContent.push({ type: "image_url", image_url: { url: imageDataUrl } });
+
   const r = await callAITool(
     [{ role: "system", content: MEAL_PROMPT }, { role: "user", content: userContent }],
     MACRO_TOOL,
