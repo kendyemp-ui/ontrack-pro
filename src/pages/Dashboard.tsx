@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import NutritionRing from '@/components/NutritionRing';
+import HistoryChart from '@/components/HistoryChart';
 import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
