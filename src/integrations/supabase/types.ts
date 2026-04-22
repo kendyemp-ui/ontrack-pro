@@ -81,6 +81,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          basal_rate_kcal: number
           created_at: string | null
           email: string | null
           id: string
@@ -89,6 +90,7 @@ export type Database = {
           professional_id: string | null
         }
         Insert: {
+          basal_rate_kcal?: number
           created_at?: string | null
           email?: string | null
           id?: string
@@ -97,6 +99,7 @@ export type Database = {
           professional_id?: string | null
         }
         Update: {
+          basal_rate_kcal?: number
           created_at?: string | null
           email?: string | null
           id?: string
@@ -109,6 +112,7 @@ export type Database = {
       daily_summary: {
         Row: {
           activity_count: number | null
+          basal_kcal: number
           calorie_balance: number | null
           carbs_consumed: number | null
           client_id: string | null
@@ -119,10 +123,12 @@ export type Database = {
           meal_count: number | null
           protein_consumed: number | null
           summary_date: string
+          total_expenditure_kcal: number
           updated_at: string | null
         }
         Insert: {
           activity_count?: number | null
+          basal_kcal?: number
           calorie_balance?: number | null
           carbs_consumed?: number | null
           client_id?: string | null
@@ -133,10 +139,12 @@ export type Database = {
           meal_count?: number | null
           protein_consumed?: number | null
           summary_date: string
+          total_expenditure_kcal?: number
           updated_at?: string | null
         }
         Update: {
           activity_count?: number | null
+          basal_kcal?: number
           calorie_balance?: number | null
           carbs_consumed?: number | null
           client_id?: string | null
@@ -147,6 +155,7 @@ export type Database = {
           meal_count?: number | null
           protein_consumed?: number | null
           summary_date?: string
+          total_expenditure_kcal?: number
           updated_at?: string | null
         }
         Relationships: [
