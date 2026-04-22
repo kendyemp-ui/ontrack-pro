@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import NutritionRing from '@/components/NutritionRing';
+import HistoryChart from '@/components/HistoryChart';
 import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,6 +119,9 @@ const Dashboard = () => {
             <span className="text-[10px] text-muted-foreground">Atividade: <span className="text-foreground font-semibold">{totalBurn} kcal</span></span>
           </div>
         </div>
+
+        {/* Histórico semanal/mensal */}
+        <HistoryChart clientId={clientId} basalFallback={bioimpedance.basalRate} />
 
         {/* Atividades do dia */}
         <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.25s' }}>
