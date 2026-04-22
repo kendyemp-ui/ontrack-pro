@@ -120,6 +120,9 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Histórico semanal/mensal */}
+        <HistoryChart clientId={clientId} basalFallback={bioimpedance.basalRate} />
+
         {/* Atividades do dia */}
         <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.25s' }}>
           <div className="flex items-center justify-between mb-3">
