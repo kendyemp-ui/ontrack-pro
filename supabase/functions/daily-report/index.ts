@@ -40,11 +40,13 @@ interface Totals {
   carbs: number;
   fat: number;
   burn: number;
+  basal: number;
+  total_expenditure: number;
   meal_count: number;
   activity_count: number;
 }
 
-async function aggregateForClient(clientId: string, date: string): Promise<Totals> {
+async function aggregateForClient(clientId: string, date: string, basalRate: number): Promise<Totals> {
   const start = `${date}T00:00:00.000Z`;
   const end = `${date}T23:59:59.999Z`;
 
@@ -66,6 +68,8 @@ async function aggregateForClient(clientId: string, date: string): Promise<Total
 
   const totals: Totals = {
     kcal: 0, protein: 0, carbs: 0, fat: 0, burn: 0,
+    basal: basalRate,
+    total_expenditure: 0,
     meal_count: meals?.length ?? 0,
     activity_count: acts?.length ?? 0,
   };
@@ -78,6 +82,7 @@ async function aggregateForClient(clientId: string, date: string): Promise<Total
   for (const a of acts ?? []) {
     totals.burn += Number(a.estimated_burn_kcal ?? 0);
   }
+  totals.total_expenditure = totals.basal + totals.burn;
   return totals;
 }
 
@@ -103,19 +108,22 @@ function formatMessage(t: Totals): string {
 
   lines.push(``);
 
+  lines.push(`🏃 *Gasto calórico*`);
+  lines.push(`• 🛌 Gasto basal (TMB): ${Math.round(t.basal)} kcal`);
   if (t.activity_count > 0) {
-    lines.push(`🏃 *Gasto com atividades*`);
-    lines.push(`• ⚡ Calorias gastas: ${Math.round(t.burn)} kcal`);
+    lines.push(`• 🏋️ Atividade física: ${Math.round(t.burn)} kcal`);
   } else {
-    lines.push(`🏃 *Gasto com atividades*`);
-    lines.push(`• Nenhuma atividade registrada hoje.`);
+    lines.push(`• 🏋️ Atividade física: 0 kcal (nenhuma atividade registrada)`);
   }
+  lines.push(`• ⚡ Total gasto: ${Math.round(t.total_expenditure)} kcal`);
 
   lines.push(``);
+  const balance = Math.round(t.kcal - t.total_expenditure);
+  const balanceLabel = balance >= 0 ? 'superávit' : 'déficit';
   lines.push(`📉 *Saldo do dia*`);
-  lines.push(`• ${Math.round(t.kcal - t.burn)} kcal`);
+  lines.push(`• ${balance > 0 ? '+' : ''}${balance} kcal (${balanceLabel})`);
   lines.push(``);
-  lines.push(`📌 Resumo gerado com base nas refeições e atividades registradas hoje.`);
+  lines.push(`📌 Cálculo: consumido − (TMB + atividades).`);
   return lines.join("\n");
 }
 
@@ -143,8 +151,9 @@ async function sendWhatsApp(toPhone: string, body: string): Promise<{ ok: boolea
   return { ok: true };
 }
 
-async function processClient(client: { id: string; phone_e164: string; name: string }, date: string, dryRun: boolean) {
-  const totals = await aggregateForClient(client.id, date);
+async function processClient(client: { id: string; phone_e164: string; name: string; basal_rate_kcal?: number | null }, date: string, dryRun: boolean) {
+  const basal = Number(client.basal_rate_kcal ?? 1750);
+  const totals = await aggregateForClient(client.id, date, basal);
   const message = formatMessage(totals);
 
   // Upsert daily_summary so dashboard reflete
@@ -156,7 +165,9 @@ async function processClient(client: { id: string; phone_e164: string; name: str
     carbs_consumed: totals.carbs,
     fat_consumed: totals.fat,
     kcal_burned: totals.burn,
-    calorie_balance: totals.kcal - totals.burn,
+    basal_kcal: totals.basal,
+    total_expenditure_kcal: totals.total_expenditure,
+    calorie_balance: totals.kcal - totals.total_expenditure,
     meal_count: totals.meal_count,
     activity_count: totals.activity_count,
     updated_at: new Date().toISOString(),
@@ -187,16 +198,17 @@ Deno.serve(async (req) => {
     const date: string = body.date || todayInTZ();
     const dryRun: boolean = body.dry_run === true;
 
-    let clients: { id: string; phone_e164: string; name: string }[] = [];
+    let clients: { id: string; phone_e164: string; name: string; basal_rate_kcal: number | null }[] = [];
+    const SELECT_COLS = "id,phone_e164,name,basal_rate_kcal";
 
     if (body.client_id) {
       const { data } = await supabase
-        .from("clients").select("id,phone_e164,name").eq("id", body.client_id).limit(1);
-      clients = data ?? [];
+        .from("clients").select(SELECT_COLS).eq("id", body.client_id).limit(1);
+      clients = (data as any) ?? [];
     } else if (body.phone) {
       const { data } = await supabase
-        .from("clients").select("id,phone_e164,name").eq("phone_e164", body.phone).limit(1);
-      clients = data ?? [];
+        .from("clients").select(SELECT_COLS).eq("phone_e164", body.phone).limit(1);
+      clients = (data as any) ?? [];
     } else {
       // Cron mode: pega todos os clientes que tiveram pelo menos 1 registro no dia
       const start = `${date}T00:00:00.000Z`;
@@ -210,8 +222,8 @@ Deno.serve(async (req) => {
       for (const r of a ?? []) if (r.client_id) ids.add(r.client_id);
       if (ids.size > 0) {
         const { data } = await supabase
-          .from("clients").select("id,phone_e164,name").in("id", [...ids]);
-        clients = data ?? [];
+          .from("clients").select(SELECT_COLS).in("id", [...ids]);
+        clients = (data as any) ?? [];
       }
     }
 
