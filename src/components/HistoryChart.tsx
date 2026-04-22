@@ -22,6 +22,8 @@ interface DailyRow {
   basal_kcal: number | null;
   total_expenditure_kcal: number | null;
   calorie_balance: number | null;
+  meal_count: number | null;
+  activity_count: number | null;
 }
 
 interface Props {
@@ -58,7 +60,7 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
     setLoading(true);
     supabase
       .from('daily_summary')
-      .select('summary_date, kcal_consumed, kcal_burned, basal_kcal, total_expenditure_kcal, calorie_balance')
+      .select('summary_date, kcal_consumed, kcal_burned, basal_kcal, total_expenditure_kcal, calorie_balance, meal_count, activity_count')
       .eq('client_id', clientId)
       .gte('summary_date', sinceISO)
       .order('summary_date', { ascending: true })
@@ -78,6 +80,9 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
       consumed: number;
       expenditure: number;
       balance: number;
+      hasMeals: boolean;
+      hasActivity: boolean;
+      isTracked: boolean;
     }> = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -87,30 +92,41 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
       const iso = d.toISOString().slice(0, 10);
       const r = map.get(iso);
       const consumed = Math.round(Number(r?.kcal_consumed ?? 0));
+      const hasMeals = Number(r?.meal_count ?? 0) > 0;
+      const hasActivity = Number(r?.activity_count ?? 0) > 0;
+      const isTracked = hasMeals || hasActivity;
       const expenditure = Math.round(
-        Number(r?.total_expenditure_kcal ?? (Number(r?.basal_kcal ?? basalFallback) + Number(r?.kcal_burned ?? 0))),
+        isTracked
+          ? Number(r?.total_expenditure_kcal ?? (Number(r?.basal_kcal ?? basalFallback) + Number(r?.kcal_burned ?? 0)))
+          : 0,
       );
-      const balance = Math.round(Number(r?.calorie_balance ?? consumed - expenditure));
+      const balance = Math.round(
+        isTracked ? Number(r?.calorie_balance ?? consumed - expenditure) : 0,
+      );
       out.push({
         date: iso,
         label: period === 'week' ? formatWeekday(iso) : formatShortDate(iso),
         consumed,
         expenditure,
         balance,
+        hasMeals,
+        hasActivity,
+        isTracked,
       });
     }
     return out;
   }, [rows, period, basalFallback]);
 
   const stats = useMemo(() => {
-    const active = chartData.filter((d) => d.consumed > 0 || d.expenditure > 0);
+    const active = chartData.filter((d) => d.hasMeals);
     const n = active.length || 1;
     const avgConsumed = Math.round(active.reduce((s, d) => s + d.consumed, 0) / n);
     const avgExpenditure = Math.round(active.reduce((s, d) => s + d.expenditure, 0) / n);
     const avgBalance = Math.round(active.reduce((s, d) => s + d.balance, 0) / n);
     const deficitDays = active.filter((d) => d.balance < 0).length;
     const surplusDays = active.filter((d) => d.balance > 0).length;
-    return { avgConsumed, avgExpenditure, avgBalance, deficitDays, surplusDays, daysTracked: active.length };
+    const pendingDays = chartData.filter((d) => d.isTracked && !d.hasMeals).length;
+    return { avgConsumed, avgExpenditure, avgBalance, deficitDays, surplusDays, daysTracked: active.length, pendingDays };
   }, [chartData]);
 
   return (
@@ -170,7 +186,7 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
             {stats.avgBalance < 0 ? <TrendingDown size={10} strokeWidth={1.5} /> : <TrendingUp size={10} strokeWidth={1.5} />}
             <span className="text-[9px] font-medium uppercase tracking-wider">Saldo médio</span>
           </div>
-          <p className={`text-base font-heading font-bold ${stats.avgBalance < 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <p className={`text-base font-heading font-bold ${stats.avgBalance < 0 ? 'text-success' : 'text-destructive'}`}>
             {stats.avgBalance > 0 ? '+' : ''}{stats.avgBalance}
           </p>
           <p className="text-[9px] text-muted-foreground">
@@ -185,7 +201,7 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
             Carregando…
           </div>
-        ) : chartData.every((d) => d.consumed === 0 && d.expenditure === 0) ? (
+         ) : chartData.every((d) => !d.isTracked) ? (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground text-center px-4">
             Sem dados ainda. Registre refeições e atividades pelo WhatsApp para ver seu histórico.
           </div>
@@ -256,15 +272,22 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
       </div>
 
       {/* Resumo do período */}
-      {stats.daysTracked > 0 && (
-        <div className="mt-4 pt-4 border-t border-border/30 grid grid-cols-2 gap-2 text-[10px]">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/10 text-green-500">
+      {(stats.daysTracked > 0 || stats.pendingDays > 0) && (
+        <div className="mt-4 pt-4 border-t border-border/30 space-y-2 text-[10px]">
+          {stats.pendingDays > 0 && (
+            <div className="px-3 py-2 rounded-xl bg-muted/60 text-muted-foreground">
+              {stats.pendingDays} {stats.pendingDays === 1 ? 'dia com atividade sem refeição registrada ainda' : 'dias com atividade sem refeição registrada ainda'}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 text-success">
             <TrendingDown size={12} />
             <span className="font-medium">{stats.deficitDays} {stats.deficitDays === 1 ? 'dia' : 'dias'} em déficit</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 text-red-500">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/10 text-destructive">
             <TrendingUp size={12} />
             <span className="font-medium">{stats.surplusDays} {stats.surplusDays === 1 ? 'dia' : 'dias'} em superávit</span>
+          </div>
           </div>
         </div>
       )}
