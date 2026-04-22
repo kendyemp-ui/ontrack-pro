@@ -47,8 +47,8 @@ interface Totals {
 }
 
 async function aggregateForClient(clientId: string, date: string, basalRate: number): Promise<Totals> {
-  const start = `${date}T00:00:00.000Z`;
-  const end = `${date}T23:59:59.999Z`;
+  const start = new Date(`${date}T00:00:00-03:00`).toISOString();
+  const end = new Date(`${date}T23:59:59.999-03:00`).toISOString();
 
   const { data: meals } = await supabase
     .from("meal_logs")
@@ -211,8 +211,8 @@ Deno.serve(async (req) => {
       clients = (data as any) ?? [];
     } else {
       // Cron mode: pega todos os clientes que tiveram pelo menos 1 registro no dia
-      const start = `${date}T00:00:00.000Z`;
-      const end = `${date}T23:59:59.999Z`;
+      const start = new Date(`${date}T00:00:00-03:00`).toISOString();
+      const end = new Date(`${date}T23:59:59.999-03:00`).toISOString();
       const [{ data: m }, { data: a }] = await Promise.all([
         supabase.from("meal_logs").select("client_id").eq("status", "processed").gte("created_at", start).lte("created_at", end),
         supabase.from("activity_logs").select("client_id").eq("status", "processed").gte("created_at", start).lte("created_at", end),

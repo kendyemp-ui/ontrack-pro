@@ -125,8 +125,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const proteinRemaining = goal.proteinTarget - totalProtein;
   const carbsRemaining = goal.carbsTarget - totalCarbs;
 
+  const resolvedBasalRate = liveMeals.clientBasalRate ?? bioimpedance.basalRate;
+
   // Saldo diário = consumidas - (TMB + atividade)
-  const netBalance = totalCalories - (totalBurn + bioimpedance.basalRate);
+  const netBalance = totalCalories - (totalBurn + resolvedBasalRate);
 
   const userName = fullName?.split(' ')[0] || 'você';
 
@@ -139,7 +141,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       userName,
       meals,
       activities,
-      goal, bioimpedance, races,
+      goal, bioimpedance: { ...bioimpedance, basalRate: resolvedBasalRate }, races,
       hasClientRecord: !!liveMeals.clientId,
       mealsLoading: liveMeals.loading,
       activitiesLoading: liveActivities.loading,

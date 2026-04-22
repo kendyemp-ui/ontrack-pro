@@ -21,6 +21,7 @@ export interface MealLogRow {
 export interface TodayMealsState {
   loading: boolean;
   clientId: string | null;
+  clientBasalRate: number | null;
   rows: MealLogRow[];
   meals: Meal[]; // adapted to legacy Meal shape so existing UI keeps working
 }
@@ -64,13 +65,14 @@ export function useTodayMeals(userId: string | null, userPhone: string | null) {
   const [state, setState] = useState<TodayMealsState>({
     loading: true,
     clientId: null,
+    clientBasalRate: null,
     rows: [],
     meals: [],
   });
 
   useEffect(() => {
     if (!userId) {
-      setState({ loading: false, clientId: null, rows: [], meals: [] });
+      setState({ loading: false, clientId: null, clientBasalRate: null, rows: [], meals: [] });
       return;
     }
 
@@ -81,12 +83,13 @@ export function useTodayMeals(userId: string | null, userPhone: string | null) {
       // 1) Resolve client by phone match (RLS filters automatically)
       const { data: clients } = await supabase
         .from('clients')
-        .select('id, phone_e164')
+        .select('id, phone_e164, basal_rate_kcal')
         .limit(1);
 
       const clientId = clients?.[0]?.id ?? null;
+      const clientBasalRate = clients?.[0]?.basal_rate_kcal ?? null;
       if (!clientId) {
-        if (!cancelled) setState({ loading: false, clientId: null, rows: [], meals: [] });
+        if (!cancelled) setState({ loading: false, clientId: null, clientBasalRate: null, rows: [], meals: [] });
         return;
       }
 
@@ -106,6 +109,7 @@ export function useTodayMeals(userId: string | null, userPhone: string | null) {
         setState({
           loading: false,
           clientId,
+          clientBasalRate,
           rows: safeRows,
           meals: safeRows.filter(r => r.status === 'processed').map(rowToMeal),
         });
@@ -129,6 +133,7 @@ export function useTodayMeals(userId: string | null, userPhone: string | null) {
               setState({
                 loading: false,
                 clientId,
+                clientBasalRate,
                 rows: safe,
                 meals: safe.filter(r => r.status === 'processed').map(rowToMeal),
               });
