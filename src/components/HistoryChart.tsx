@@ -186,7 +186,7 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
             {stats.avgBalance < 0 ? <TrendingDown size={10} strokeWidth={1.5} /> : <TrendingUp size={10} strokeWidth={1.5} />}
             <span className="text-[9px] font-medium uppercase tracking-wider">Saldo médio</span>
           </div>
-          <p className={`text-base font-heading font-bold ${stats.avgBalance < 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <p className={`text-base font-heading font-bold ${stats.avgBalance < 0 ? 'text-success' : 'text-destructive'}`}>
             {stats.avgBalance > 0 ? '+' : ''}{stats.avgBalance}
           </p>
           <p className="text-[9px] text-muted-foreground">
@@ -280,11 +280,11 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
             </div>
           )}
           <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/10 text-green-500">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 text-success">
             <TrendingDown size={12} />
             <span className="font-medium">{stats.deficitDays} {stats.deficitDays === 1 ? 'dia' : 'dias'} em déficit</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 text-red-500">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/10 text-destructive">
             <TrendingUp size={12} />
             <span className="font-medium">{stats.surplusDays} {stats.surplusDays === 1 ? 'dia' : 'dias'} em superávit</span>
           </div>
