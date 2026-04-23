@@ -153,6 +153,7 @@ const Dashboard = () => {
         <HistoryChart
           clientId={clientId}
           basalFallback={bioimpedance.basalRate}
+          objective={goal.objective}
           currentDay={{
             date: todayIso,
             consumed: totalCalories,

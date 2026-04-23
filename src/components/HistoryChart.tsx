@@ -11,7 +11,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { Calendar, Flame, Utensils, Target } from 'lucide-react';
+import { Calendar, Flame, Utensils, Target, TrendingDown, TrendingUp } from 'lucide-react';
 import { getCalorieStatus, objectiveLabels } from '@/lib/goalStatus';
 import type { DietObjective } from '@/data/mockData';
 
@@ -59,7 +59,7 @@ const formatWeekday = (iso: string) => {
   return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
 };
 
-export default function HistoryChart({ clientId, basalFallback, currentDay }: Props) {
+export default function HistoryChart({ clientId, basalFallback, objective, currentDay }: Props) {
   const [period, setPeriod] = useState<Period>('week');
   const [rows, setRows] = useState<DailyRow[]>([]);
   const [loading, setLoading] = useState(false);
