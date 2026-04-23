@@ -11,7 +11,9 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { TrendingDown, TrendingUp, Calendar, Flame, Utensils } from 'lucide-react';
+import { Calendar, Flame, Utensils, Target } from 'lucide-react';
+import { getCalorieStatus, objectiveLabels } from '@/lib/goalStatus';
+import type { DietObjective } from '@/data/mockData';
 
 type Period = 'week' | 'month';
 
@@ -29,6 +31,7 @@ interface DailyRow {
 interface Props {
   clientId: string | null;
   basalFallback: number;
+  objective: DietObjective;
   currentDay: {
     date: string;
     consumed: number;
