@@ -63,6 +63,14 @@ const Dashboard = () => {
           <img src={logo} alt="OnTrack" className="h-10 object-contain invert dark:invert-0 -ml-1" />
           <h1 className="text-3xl font-heading font-bold text-foreground mt-3">Olá, {userName}</h1>
           <p className="text-sm text-muted-foreground mt-1 capitalize">{today}</p>
+          <Link
+            to="/diet"
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 hover:bg-card transition-colors"
+          >
+            <Target size={12} className="text-accent" strokeWidth={1.8} />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Objetivo</span>
+            <span className="text-[11px] font-semibold text-foreground">{objectiveLabels[goal.objective]}</span>
+          </Link>
         </div>
 
         {!hasClientRecord && (
