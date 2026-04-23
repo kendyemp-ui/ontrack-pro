@@ -159,11 +159,16 @@ export default function HistoryChart({ clientId, basalFallback, objective, curre
     const avgConsumed = Math.round(active.reduce((s, d) => s + d.consumed, 0) / n);
     const avgExpenditure = Math.round(active.reduce((s, d) => s + d.expenditure, 0) / n);
     const avgBalance = Math.round(active.reduce((s, d) => s + d.balance, 0) / n);
-    const deficitDays = active.filter((d) => d.balance < 0).length;
-    const surplusDays = active.filter((d) => d.balance > 0).length;
+    const alignedDays = active.filter((d) => getCalorieStatus(d.balance, objective).tone === 'success').length;
+    const offTrackDays = active.filter((d) => getCalorieStatus(d.balance, objective).tone === 'destructive').length;
     const pendingDays = chartData.filter((d) => d.isTracked && !d.hasMeals).length;
-    return { avgConsumed, avgExpenditure, avgBalance, deficitDays, surplusDays, daysTracked: active.length, pendingDays };
-  }, [chartData]);
+    return { avgConsumed, avgExpenditure, avgBalance, alignedDays, offTrackDays, daysTracked: active.length, pendingDays };
+  }, [chartData, objective]);
+
+  const avgStatus = useMemo(
+    () => getCalorieStatus(stats.avgBalance, objective),
+    [stats.avgBalance, objective],
+  );
 
   const trackedRows = useMemo(
     () => chartData.filter((d) => d.isTracked).reverse(),
