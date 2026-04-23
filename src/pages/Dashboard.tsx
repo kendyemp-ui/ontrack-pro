@@ -249,7 +249,7 @@ const Dashboard = () => {
 
 const SummaryItem = ({ text, isNegative }: { text: string; isNegative: boolean }) => (
   <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm ${
-    isNegative ? 'bg-destructive/10 text-destructive' : 'bg-accent/10 text-accent'
+    isNegative ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success'
   }`}>
     <span className="text-xs">{isNegative ? '▲' : '▼'}</span>
     <span className="font-medium text-xs">{text}</span>
