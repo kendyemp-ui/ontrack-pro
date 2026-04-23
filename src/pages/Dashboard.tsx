@@ -3,10 +3,11 @@ import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import NutritionRing from '@/components/NutritionRing';
 import HistoryChart from '@/components/HistoryChart';
-import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send } from 'lucide-react';
+import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getCalorieStatus, objectiveLabels } from '@/lib/goalStatus';
 import logo from '@/assets/logo.png';
 
 const Dashboard = () => {
