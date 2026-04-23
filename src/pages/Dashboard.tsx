@@ -41,6 +41,7 @@ const Dashboard = () => {
   };
 
   const totalExpenditure = totalBurn + bioimpedance.basalRate;
+  const balanceStatus = getCalorieStatus(netBalance, goal.objective);
   const todayIso = new Intl.DateTimeFormat('en-CA', {
     year: 'numeric',
     month: '2-digit',
