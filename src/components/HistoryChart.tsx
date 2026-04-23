@@ -11,7 +11,9 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { TrendingDown, TrendingUp, Calendar, Flame, Utensils } from 'lucide-react';
+import { Calendar, Flame, Utensils, Target, TrendingDown, TrendingUp } from 'lucide-react';
+import { getCalorieStatus, objectiveLabels } from '@/lib/goalStatus';
+import type { DietObjective } from '@/data/mockData';
 
 type Period = 'week' | 'month';
 
@@ -29,6 +31,7 @@ interface DailyRow {
 interface Props {
   clientId: string | null;
   basalFallback: number;
+  objective: DietObjective;
   currentDay: {
     date: string;
     consumed: number;
@@ -56,7 +59,7 @@ const formatWeekday = (iso: string) => {
   return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
 };
 
-export default function HistoryChart({ clientId, basalFallback, currentDay }: Props) {
+export default function HistoryChart({ clientId, basalFallback, objective, currentDay }: Props) {
   const [period, setPeriod] = useState<Period>('week');
   const [rows, setRows] = useState<DailyRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -156,11 +159,16 @@ export default function HistoryChart({ clientId, basalFallback, currentDay }: Pr
     const avgConsumed = Math.round(active.reduce((s, d) => s + d.consumed, 0) / n);
     const avgExpenditure = Math.round(active.reduce((s, d) => s + d.expenditure, 0) / n);
     const avgBalance = Math.round(active.reduce((s, d) => s + d.balance, 0) / n);
-    const deficitDays = active.filter((d) => d.balance < 0).length;
-    const surplusDays = active.filter((d) => d.balance > 0).length;
+    const alignedDays = active.filter((d) => getCalorieStatus(d.balance, objective).tone === 'success').length;
+    const offTrackDays = active.filter((d) => getCalorieStatus(d.balance, objective).tone === 'destructive').length;
     const pendingDays = chartData.filter((d) => d.isTracked && !d.hasMeals).length;
-    return { avgConsumed, avgExpenditure, avgBalance, deficitDays, surplusDays, daysTracked: active.length, pendingDays };
-  }, [chartData]);
+    return { avgConsumed, avgExpenditure, avgBalance, alignedDays, offTrackDays, daysTracked: active.length, pendingDays };
+  }, [chartData, objective]);
+
+  const avgStatus = useMemo(
+    () => getCalorieStatus(stats.avgBalance, objective),
+    [stats.avgBalance, objective],
+  );
 
   const trackedRows = useMemo(
     () => chartData.filter((d) => d.isTracked).reverse(),
@@ -226,14 +234,14 @@ export default function HistoryChart({ clientId, basalFallback, currentDay }: Pr
         </div>
         <div className="bg-foreground/5 rounded-xl p-2.5 space-y-0.5">
           <div className="flex items-center gap-1 text-muted-foreground">
-            {stats.avgBalance < 0 ? <TrendingDown size={10} strokeWidth={1.5} /> : <TrendingUp size={10} strokeWidth={1.5} />}
+            <Target size={10} strokeWidth={1.5} />
             <span className="text-[9px] font-medium uppercase tracking-wider">Saldo médio</span>
           </div>
-          <p className={`text-base font-heading font-bold ${stats.avgBalance < 0 ? 'text-destructive' : 'text-success'}`}>
+          <p className={`text-base font-heading font-bold ${avgStatus.textClass}`}>
             {stats.avgBalance > 0 ? '+' : ''}{stats.avgBalance}
           </p>
-          <p className="text-[9px] text-muted-foreground">
-            {stats.avgBalance < 0 ? 'déficit' : 'superávit'}
+          <p className="text-[9px] text-muted-foreground truncate">
+            {avgStatus.label.toLowerCase()}
           </p>
         </div>
       </div>
@@ -317,20 +325,26 @@ export default function HistoryChart({ clientId, basalFallback, currentDay }: Pr
       {/* Resumo do período */}
       {(stats.daysTracked > 0 || stats.pendingDays > 0) && (
         <div className="mt-4 pt-4 border-t border-border/30 space-y-2 text-[10px]">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Target size={11} className="text-accent" />
+            <span>
+              Avaliação baseada no objetivo: <span className="text-foreground font-medium">{objectiveLabels[objective]}</span>
+            </span>
+          </div>
           {stats.pendingDays > 0 && (
             <div className="px-3 py-2 rounded-xl bg-muted/60 text-muted-foreground">
               {stats.pendingDays} {stats.pendingDays === 1 ? 'dia com atividade sem refeição registrada ainda' : 'dias com atividade sem refeição registrada ainda'}
             </div>
           )}
           <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/10 text-destructive">
-            <TrendingDown size={12} />
-            <span className="font-medium">{stats.deficitDays} {stats.deficitDays === 1 ? 'dia' : 'dias'} em déficit</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 text-success">
-            <TrendingUp size={12} />
-            <span className="font-medium">{stats.surplusDays} {stats.surplusDays === 1 ? 'dia' : 'dias'} em superávit</span>
-          </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 text-success">
+              <TrendingUp size={12} />
+              <span className="font-medium">{stats.alignedDays} {stats.alignedDays === 1 ? 'dia alinhado' : 'dias alinhados'}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/10 text-destructive">
+              <TrendingDown size={12} />
+              <span className="font-medium">{stats.offTrackDays} {stats.offTrackDays === 1 ? 'dia fora da meta' : 'dias fora da meta'}</span>
+            </div>
           </div>
         </div>
       )}
@@ -349,28 +363,31 @@ export default function HistoryChart({ clientId, basalFallback, currentDay }: Pr
               <span className="text-right">Saldo</span>
             </div>
             <div className="divide-y divide-border/30">
-              {trackedRows.map((day) => (
-                <div key={day.date} className="grid grid-cols-[0.9fr_1fr_1fr_0.9fr] gap-2 px-3 py-2.5 text-[11px] text-foreground">
-                  <div>
-                    <p className="font-medium">{day.label}</p>
-                    <p className="text-[9px] text-muted-foreground">{formatShortDate(day.date)}</p>
+              {trackedRows.map((day) => {
+                const dayStatus = getCalorieStatus(day.balance, objective);
+                return (
+                  <div key={day.date} className="grid grid-cols-[0.9fr_1fr_1fr_0.9fr] gap-2 px-3 py-2.5 text-[11px] text-foreground">
+                    <div>
+                      <p className="font-medium">{day.label}</p>
+                      <p className="text-[9px] text-muted-foreground">{formatShortDate(day.date)}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">{day.consumed} kcal</p>
+                      <p className="text-[9px] text-muted-foreground">refeições {day.hasMeals ? 'lançadas' : 'pendentes'}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">{day.expenditure} kcal</p>
+                      <p className="text-[9px] text-muted-foreground">{day.basal} TMB + {day.activity} ativ.</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-medium ${dayStatus.textClass}`}>
+                        {day.balance > 0 ? '+' : ''}{day.balance}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground truncate">{dayStatus.label.toLowerCase()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{day.consumed} kcal</p>
-                    <p className="text-[9px] text-muted-foreground">refeições {day.hasMeals ? 'lançadas' : 'pendentes'}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium">{day.expenditure} kcal</p>
-                    <p className="text-[9px] text-muted-foreground">{day.basal} TMB + {day.activity} ativ.</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-medium ${day.balance < 0 ? 'text-destructive' : 'text-success'}`}>
-                      {day.balance > 0 ? '+' : ''}{day.balance}
-                    </p>
-                    <p className="text-[9px] text-muted-foreground">{day.balance < 0 ? 'déficit' : 'superávit'}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

@@ -3,10 +3,11 @@ import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import NutritionRing from '@/components/NutritionRing';
 import HistoryChart from '@/components/HistoryChart';
-import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send } from 'lucide-react';
+import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getCalorieStatus, objectiveLabels } from '@/lib/goalStatus';
 import logo from '@/assets/logo.png';
 
 const Dashboard = () => {
@@ -40,6 +41,7 @@ const Dashboard = () => {
   };
 
   const totalExpenditure = totalBurn + bioimpedance.basalRate;
+  const balanceStatus = getCalorieStatus(netBalance, goal.objective);
   const todayIso = new Intl.DateTimeFormat('en-CA', {
     year: 'numeric',
     month: '2-digit',
@@ -62,6 +64,14 @@ const Dashboard = () => {
           <img src={logo} alt="OnTrack" className="h-10 object-contain invert dark:invert-0 -ml-1" />
           <h1 className="text-3xl font-heading font-bold text-foreground mt-3">Olá, {userName}</h1>
           <p className="text-sm text-muted-foreground mt-1 capitalize">{today}</p>
+          <Link
+            to="/diet"
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 hover:bg-card transition-colors"
+          >
+            <Target size={12} className="text-accent" strokeWidth={1.8} />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Objetivo</span>
+            <span className="text-[11px] font-semibold text-foreground">{objectiveLabels[goal.objective]}</span>
+          </Link>
         </div>
 
         {!hasClientRecord && (
@@ -104,12 +114,26 @@ const Dashboard = () => {
               <Zap size={12} strokeWidth={1.5} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Saldo</span>
             </div>
-            <p className={`text-xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+            <p className={`text-xl font-heading font-bold tracking-tight ${balanceStatus.textClass}`}>
               {netBalance > 0 ? '+' : ''}{netBalance}
             </p>
             <p className="text-[10px] text-muted-foreground">
-              {netBalance < 0 ? 'déficit' : 'superávit'}
+              {balanceStatus.label.toLowerCase()}
             </p>
+          </div>
+        </div>
+
+        {/* Status do objetivo */}
+        <div
+          className={`rounded-2xl border px-4 py-3 animate-slide-up ${balanceStatus.bgClass} border-current/20`}
+          style={{ animationDelay: '0.17s' }}
+        >
+          <div className="flex items-start gap-2.5">
+            <Target size={14} className="mt-0.5 shrink-0" strokeWidth={2} />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold leading-tight">{balanceStatus.label}</p>
+              <p className="text-[11px] mt-1 leading-snug opacity-90">{balanceStatus.message}</p>
+            </div>
           </div>
         </div>
 
@@ -129,6 +153,7 @@ const Dashboard = () => {
         <HistoryChart
           clientId={clientId}
           basalFallback={bioimpedance.basalRate}
+          objective={goal.objective}
           currentDay={{
             date: todayIso,
             consumed: totalCalories,
@@ -211,20 +236,20 @@ const Dashboard = () => {
           <div className="space-y-2">
             <SummaryItem
               text={caloriesRemaining < 0 ? `Excedeu ${Math.abs(caloriesRemaining)} kcal da meta` : `Faltam ${caloriesRemaining} kcal para sua meta`}
-              isNegative={caloriesRemaining < 0}
+              tone="neutral"
             />
             <SummaryItem
               text={proteinRemaining < 0 ? `Excedeu ${Math.abs(proteinRemaining)}g de proteína` : `Faltam ${proteinRemaining}g de proteína`}
-              isNegative={proteinRemaining < 0}
+              tone="neutral"
             />
             <SummaryItem
               text={carbsRemaining < 0 ? `Excedeu ${Math.abs(carbsRemaining)}g de carboidrato` : `Faltam ${carbsRemaining}g de carboidrato`}
-              isNegative={carbsRemaining < 0}
+              tone="neutral"
             />
-            <SummaryItem text={`TMB: ${bioimpedance.basalRate} kcal + Atividade: ${totalBurn} kcal = ${totalExpenditure} kcal`} isNegative={false} />
+            <SummaryItem text={`TMB: ${bioimpedance.basalRate} kcal + Atividade: ${totalBurn} kcal = ${totalExpenditure} kcal`} tone="neutral" />
             <SummaryItem
-              text={`Saldo: ${netBalance > 0 ? '+' : ''}${netBalance} kcal (${netBalance < 0 ? 'déficit' : 'superávit'})`}
-              isNegative={netBalance < 0}
+              text={`${balanceStatus.label} — Saldo ${netBalance > 0 ? '+' : ''}${netBalance} kcal`}
+              tone={balanceStatus.tone}
             />
           </div>
         </div>
@@ -247,11 +272,18 @@ const Dashboard = () => {
   );
 };
 
-const SummaryItem = ({ text, isNegative }: { text: string; isNegative: boolean }) => (
-  <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm ${
-    isNegative ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success'
-  }`}>
-    <span className="text-xs">{isNegative ? '▲' : '▼'}</span>
+type SummaryTone = 'success' | 'warning' | 'destructive' | 'neutral';
+
+const toneClass: Record<SummaryTone, string> = {
+  success: 'bg-success/10 text-success',
+  warning: 'bg-warning/10 text-warning',
+  destructive: 'bg-destructive/10 text-destructive',
+  neutral: 'bg-foreground/5 text-foreground',
+};
+
+const SummaryItem = ({ text, tone }: { text: string; tone: SummaryTone }) => (
+  <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm ${toneClass[tone]}`}>
+    <span className="text-xs">•</span>
     <span className="font-medium text-xs">{text}</span>
   </div>
 );
