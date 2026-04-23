@@ -11,6 +11,8 @@ export interface Meal {
   date: string;
 }
 
+export type DietObjective = 'lose' | 'maintain' | 'gain';
+
 export interface DietGoal {
   name: string;
   caloriesTarget: number;
@@ -18,6 +20,7 @@ export interface DietGoal {
   carbsTarget: number;
   startDate: string;
   notes: string;
+  objective: DietObjective;
 }
 
 export interface DailyBurn {
@@ -73,6 +76,7 @@ export const defaultGoal: DietGoal = {
   carbsTarget: 180,
   startDate: '2026-04-01',
   notes: 'Foco em ganho de massa magra com controle calórico.',
+  objective: 'maintain',
 };
 
 export const todayMeals: Meal[] = [
