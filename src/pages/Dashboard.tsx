@@ -271,11 +271,18 @@ const Dashboard = () => {
   );
 };
 
-const SummaryItem = ({ text, isNegative }: { text: string; isNegative: boolean }) => (
-  <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm ${
-    isNegative ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success'
-  }`}>
-    <span className="text-xs">{isNegative ? '▲' : '▼'}</span>
+type SummaryTone = 'success' | 'warning' | 'destructive' | 'neutral';
+
+const toneClass: Record<SummaryTone, string> = {
+  success: 'bg-success/10 text-success',
+  warning: 'bg-warning/10 text-warning',
+  destructive: 'bg-destructive/10 text-destructive',
+  neutral: 'bg-foreground/5 text-foreground',
+};
+
+const SummaryItem = ({ text, tone }: { text: string; tone: SummaryTone }) => (
+  <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm ${toneClass[tone]}`}>
+    <span className="text-xs">•</span>
     <span className="font-medium text-xs">{text}</span>
   </div>
 );
