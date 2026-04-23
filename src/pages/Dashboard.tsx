@@ -40,6 +40,7 @@ const Dashboard = () => {
   };
 
   const totalExpenditure = totalBurn + bioimpedance.basalRate;
+  const todayIso = new Date().toISOString().slice(0, 10);
 
   // Estimativa de gordura: 25% das kcal da meta / 9
   const fatsTarget = Math.round((goal.caloriesTarget * 0.25) / 9);
@@ -99,7 +100,7 @@ const Dashboard = () => {
               <Zap size={12} strokeWidth={1.5} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Saldo</span>
             </div>
-            <p className={`text-xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p className={`text-xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
               {netBalance > 0 ? '+' : ''}{netBalance}
             </p>
             <p className="text-[10px] text-muted-foreground">
@@ -121,7 +122,18 @@ const Dashboard = () => {
         </div>
 
         {/* Histórico semanal/mensal */}
-        <HistoryChart clientId={clientId} basalFallback={bioimpedance.basalRate} />
+        <HistoryChart
+          clientId={clientId}
+          basalFallback={bioimpedance.basalRate}
+          currentDay={{
+            date: todayIso,
+            consumed: totalCalories,
+            activity: totalBurn,
+            basal: bioimpedance.basalRate,
+            mealCount: meals.length,
+            activityCount: activities.length,
+          }}
+        />
 
         {/* Atividades do dia */}
         <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.25s' }}>
