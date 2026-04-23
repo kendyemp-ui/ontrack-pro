@@ -29,6 +29,14 @@ interface DailyRow {
 interface Props {
   clientId: string | null;
   basalFallback: number;
+  currentDay: {
+    date: string;
+    consumed: number;
+    activity: number;
+    basal: number;
+    mealCount: number;
+    activityCount: number;
+  };
 }
 
 const formatShortDate = (iso: string) => {
@@ -41,7 +49,7 @@ const formatWeekday = (iso: string) => {
   return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
 };
 
-export default function HistoryChart({ clientId, basalFallback }: Props) {
+export default function HistoryChart({ clientId, basalFallback, currentDay }: Props) {
   const [period, setPeriod] = useState<Period>('week');
   const [rows, setRows] = useState<DailyRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,10 +82,24 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
   const chartData = useMemo(() => {
     const days = period === 'week' ? 7 : 30;
     const map = new Map(rows.map((r) => [r.summary_date, r]));
+    if (currentDay.mealCount > 0 || currentDay.activityCount > 0) {
+      map.set(currentDay.date, {
+        summary_date: currentDay.date,
+        kcal_consumed: currentDay.consumed,
+        kcal_burned: currentDay.activity,
+        basal_kcal: currentDay.basal,
+        total_expenditure_kcal: currentDay.basal + currentDay.activity,
+        calorie_balance: currentDay.consumed - (currentDay.basal + currentDay.activity),
+        meal_count: currentDay.mealCount,
+        activity_count: currentDay.activityCount,
+      });
+    }
     const out: Array<{
       date: string;
       label: string;
       consumed: number;
+      basal: number;
+      activity: number;
       expenditure: number;
       balance: number;
       hasMeals: boolean;
@@ -95,9 +117,11 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
       const hasMeals = Number(r?.meal_count ?? 0) > 0;
       const hasActivity = Number(r?.activity_count ?? 0) > 0;
       const isTracked = hasMeals || hasActivity;
+      const basal = Math.round(Number(r?.basal_kcal ?? basalFallback));
+      const activity = Math.round(Number(r?.kcal_burned ?? 0));
       const expenditure = Math.round(
         isTracked
-          ? Number(r?.total_expenditure_kcal ?? (Number(r?.basal_kcal ?? basalFallback) + Number(r?.kcal_burned ?? 0)))
+          ? Number(r?.total_expenditure_kcal ?? (basal + activity))
           : 0,
       );
       const balance = Math.round(
@@ -107,6 +131,8 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
         date: iso,
         label: period === 'week' ? formatWeekday(iso) : formatShortDate(iso),
         consumed,
+        basal,
+        activity,
         expenditure,
         balance,
         hasMeals,
@@ -115,7 +141,7 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
       });
     }
     return out;
-  }, [rows, period, basalFallback]);
+  }, [rows, period, basalFallback, currentDay]);
 
   const stats = useMemo(() => {
     const active = chartData.filter((d) => d.hasMeals);
@@ -129,6 +155,11 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
     return { avgConsumed, avgExpenditure, avgBalance, deficitDays, surplusDays, daysTracked: active.length, pendingDays };
   }, [chartData]);
 
+  const trackedRows = useMemo(
+    () => chartData.filter((d) => d.isTracked).reverse(),
+    [chartData],
+  );
+
   return (
     <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.22s' }}>
       {/* Header com filtro */}
@@ -138,6 +169,11 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
           <h2 className="text-xs font-heading font-semibold text-foreground uppercase tracking-wider">
             Histórico
           </h2>
+          {stats.daysTracked > 0 && (
+            <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+              {stats.daysTracked} {stats.daysTracked === 1 ? 'dia útil na média' : 'dias úteis na média'}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1 bg-foreground/5 rounded-full p-0.5">
           <button
@@ -288,6 +324,47 @@ export default function HistoryChart({ clientId, basalFallback }: Props) {
             <TrendingUp size={12} />
             <span className="font-medium">{stats.surplusDays} {stats.surplusDays === 1 ? 'dia' : 'dias'} em superávit</span>
           </div>
+          </div>
+        </div>
+      )}
+
+      {trackedRows.length > 0 && (
+        <div className="mt-4 border-t border-border/30 pt-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Dias analisados</h3>
+            <span className="text-[10px] text-muted-foreground">Gasto = TMB + atividade</span>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-border/40 bg-foreground/5">
+            <div className="grid grid-cols-[0.9fr_1fr_1fr_0.9fr] gap-2 border-b border-border/40 px-3 py-2 text-[9px] uppercase tracking-wider text-muted-foreground">
+              <span>Dia</span>
+              <span>Consumo</span>
+              <span>Gasto</span>
+              <span className="text-right">Saldo</span>
+            </div>
+            <div className="divide-y divide-border/30">
+              {trackedRows.map((day) => (
+                <div key={day.date} className="grid grid-cols-[0.9fr_1fr_1fr_0.9fr] gap-2 px-3 py-2.5 text-[11px] text-foreground">
+                  <div>
+                    <p className="font-medium">{day.label}</p>
+                    <p className="text-[9px] text-muted-foreground">{formatShortDate(day.date)}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">{day.consumed} kcal</p>
+                    <p className="text-[9px] text-muted-foreground">refeições {day.hasMeals ? 'lançadas' : 'pendentes'}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">{day.expenditure} kcal</p>
+                    <p className="text-[9px] text-muted-foreground">{day.basal} TMB + {day.activity} ativ.</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-medium ${day.balance < 0 ? 'text-destructive' : 'text-success'}`}>
+                      {day.balance > 0 ? '+' : ''}{day.balance}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">{day.balance < 0 ? 'déficit' : 'superávit'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
