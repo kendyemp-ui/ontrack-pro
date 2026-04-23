@@ -114,12 +114,26 @@ const Dashboard = () => {
               <Zap size={12} strokeWidth={1.5} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Saldo</span>
             </div>
-            <p className={`text-xl font-heading font-bold tracking-tight ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+            <p className={`text-xl font-heading font-bold tracking-tight ${balanceStatus.textClass}`}>
               {netBalance > 0 ? '+' : ''}{netBalance}
             </p>
             <p className="text-[10px] text-muted-foreground">
-              {netBalance < 0 ? 'déficit' : 'superávit'}
+              {balanceStatus.label.toLowerCase()}
             </p>
+          </div>
+        </div>
+
+        {/* Status do objetivo */}
+        <div
+          className={`rounded-2xl border px-4 py-3 animate-slide-up ${balanceStatus.bgClass} border-current/20`}
+          style={{ animationDelay: '0.17s' }}
+        >
+          <div className="flex items-start gap-2.5">
+            <Target size={14} className="mt-0.5 shrink-0" strokeWidth={2} />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold leading-tight">{balanceStatus.label}</p>
+              <p className="text-[11px] mt-1 leading-snug opacity-90">{balanceStatus.message}</p>
+            </div>
           </div>
         </div>
 
@@ -221,20 +235,20 @@ const Dashboard = () => {
           <div className="space-y-2">
             <SummaryItem
               text={caloriesRemaining < 0 ? `Excedeu ${Math.abs(caloriesRemaining)} kcal da meta` : `Faltam ${caloriesRemaining} kcal para sua meta`}
-              isNegative={caloriesRemaining < 0}
+              tone="neutral"
             />
             <SummaryItem
               text={proteinRemaining < 0 ? `Excedeu ${Math.abs(proteinRemaining)}g de proteína` : `Faltam ${proteinRemaining}g de proteína`}
-              isNegative={proteinRemaining < 0}
+              tone="neutral"
             />
             <SummaryItem
               text={carbsRemaining < 0 ? `Excedeu ${Math.abs(carbsRemaining)}g de carboidrato` : `Faltam ${carbsRemaining}g de carboidrato`}
-              isNegative={carbsRemaining < 0}
+              tone="neutral"
             />
-            <SummaryItem text={`TMB: ${bioimpedance.basalRate} kcal + Atividade: ${totalBurn} kcal = ${totalExpenditure} kcal`} isNegative={false} />
+            <SummaryItem text={`TMB: ${bioimpedance.basalRate} kcal + Atividade: ${totalBurn} kcal = ${totalExpenditure} kcal`} tone="neutral" />
             <SummaryItem
-              text={`Saldo: ${netBalance > 0 ? '+' : ''}${netBalance} kcal (${netBalance < 0 ? 'déficit' : 'superávit'})`}
-              isNegative={netBalance < 0}
+              text={`${balanceStatus.label} — Saldo ${netBalance > 0 ? '+' : ''}${netBalance} kcal`}
+              tone={balanceStatus.tone}
             />
           </div>
         </div>
