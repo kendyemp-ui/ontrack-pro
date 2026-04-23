@@ -40,7 +40,11 @@ const Dashboard = () => {
   };
 
   const totalExpenditure = totalBurn + bioimpedance.basalRate;
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 
   // Estimativa de gordura: 25% das kcal da meta / 9
   const fatsTarget = Math.round((goal.caloriesTarget * 0.25) / 9);
