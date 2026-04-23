@@ -44,6 +44,13 @@ const formatShortDate = (iso: string) => {
   return `${d}/${m}`;
 };
 
+const toLocalISODate = (date: Date) =>
+  new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+
 const formatWeekday = (iso: string) => {
   const date = new Date(`${iso}T12:00:00`);
   return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
@@ -61,9 +68,9 @@ export default function HistoryChart({ clientId, basalFallback, currentDay }: Pr
     }
     const days = period === 'week' ? 7 : 30;
     const since = new Date();
-    since.setHours(0, 0, 0, 0);
+    since.setHours(12, 0, 0, 0);
     since.setDate(since.getDate() - (days - 1));
-    const sinceISO = since.toISOString().slice(0, 10);
+    const sinceISO = toLocalISODate(since);
 
     setLoading(true);
     supabase
@@ -107,11 +114,11 @@ export default function HistoryChart({ clientId, basalFallback, currentDay }: Pr
       isTracked: boolean;
     }> = [];
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(12, 0, 0, 0);
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = toLocalISODate(d);
       const r = map.get(iso);
       const consumed = Math.round(Number(r?.kcal_consumed ?? 0));
       const hasMeals = Number(r?.meal_count ?? 0) > 0;
