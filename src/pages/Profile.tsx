@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 import BottomNav from '@/components/BottomNav';
-import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut } from 'lucide-react';
+import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut, FileText, Upload, Loader2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { integrations } from '@/data/mockData';
