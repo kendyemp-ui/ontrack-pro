@@ -177,7 +177,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const proteinRemaining = goal.proteinTarget - totalProtein;
   const carbsRemaining = goal.carbsTarget - totalCarbs;
 
-  const resolvedBasalRate = liveMeals.clientBasalRate ?? bioimpedance.basalRate;
+  // Prioriza a TMB salva pelo usuário (bioimpedância) sobre a do registro de cliente,
+  // pois o usuário pode ter atualizado o valor mais recentemente.
+  const resolvedBasalRate = bioimpedance.basalRate && bioimpedance.basalRate > 0
+    ? bioimpedance.basalRate
+    : (liveMeals.clientBasalRate ?? bioimpedance.basalRate);
 
   // Saldo diário = consumidas - (TMB + atividade)
   const netBalance = totalCalories - (totalBurn + resolvedBasalRate);
