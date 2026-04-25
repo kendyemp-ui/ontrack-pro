@@ -87,13 +87,25 @@ Analise a mensagem do usuário (texto e/ou imagem) e classifique em UMA categori
 
 REGRA IMPORTANTE: se houver imagem de comida E texto que descreve/complementa a refeição, use "meal_image_plus_text" (NÃO use "meal_image"). Se o texto for apenas saudação irrelevante ("oi", "olha"), use "meal_image".
 
+DETECÇÃO DE DATA RETROATIVA (CRÍTICO):
+Se o usuário indicar EXPLICITAMENTE uma data passada para o registro (refeição ou atividade), extraia essa data em formato ISO YYYY-MM-DD no campo "target_date".
+Exemplos que ativam target_date:
+- "Ontem jantar: ..." → target_date = ontem
+- "Anteontem almocei ..." → target_date = anteontem (2 dias atrás)
+- "Segunda-feira comi ..." → target_date = última segunda-feira
+- "Dia 22/04 jantar ..." → target_date = 2026-04-22
+- "Ontem corri 5km" → target_date = ontem
+A data ATUAL de referência é {TODAY} (timezone America/Sao_Paulo).
+Se NÃO houver indicação explícita de data passada, deixe target_date = null (será usado o dia de hoje).
+NUNCA invente datas. Só preencha quando o usuário sinalizar claramente.
+
 Use a tool classify_intent.`;
 
 const CLASSIFIER_TOOL = {
   type: "function" as const,
   function: {
     name: "classify_intent",
-    description: "Classifica a intenção da mensagem do usuário.",
+    description: "Classifica a intenção da mensagem do usuário e detecta data retroativa, se houver.",
     parameters: {
       type: "object",
       properties: {
@@ -101,8 +113,12 @@ const CLASSIFIER_TOOL = {
           type: "string",
           enum: ["meal_text", "meal_image", "meal_image_plus_text", "activity_text", "activity_image", "food_substitution", "out_of_scope"],
         },
+        target_date: {
+          type: ["string", "null"],
+          description: "Data retroativa indicada pelo usuário, em formato YYYY-MM-DD. Use null se a mensagem não indicar data passada explícita.",
+        },
       },
-      required: ["intent"],
+      required: ["intent", "target_date"],
       additionalProperties: false,
     },
   },
@@ -294,21 +310,51 @@ async function downloadTwilioImageAsDataUrl(imageUrl: string, contentType: strin
   return `data:${contentType};base64,${btoa(binary)}`;
 }
 
-async function classifyIntent(text: string, imageDataUrl: string | null): Promise<string> {
+function todayInSaoPaulo(): string {
+  // Returns YYYY-MM-DD for current date in America/Sao_Paulo
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(new Date());
+}
+
+async function classifyIntent(text: string, imageDataUrl: string | null): Promise<{ intent: string; target_date: string | null }> {
   const userContent: any[] = [];
   if (text?.trim()) userContent.push({ type: "text", text });
   else userContent.push({ type: "text", text: "(mensagem sem texto)" });
   if (imageDataUrl) userContent.push({ type: "image_url", image_url: { url: imageDataUrl } });
 
+  const today = todayInSaoPaulo();
+  const systemPrompt = CLASSIFIER_PROMPT.replace("{TODAY}", today);
+
   const result = await callAITool(
     [
-      { role: "system", content: CLASSIFIER_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "user", content: userContent },
     ],
     CLASSIFIER_TOOL,
     "classify_intent",
   );
-  return result.intent;
+
+  // Validate target_date format and ensure it's not in the future
+  let targetDate: string | null = null;
+  if (result.target_date && /^\d{4}-\d{2}-\d{2}$/.test(result.target_date)) {
+    if (result.target_date <= today) targetDate = result.target_date;
+  }
+  return { intent: result.intent, target_date: targetDate };
+}
+
+// Builds an ISO timestamp at 12:00 (noon) America/Sao_Paulo for the given YYYY-MM-DD,
+// so that the UTC date conversion used by recompute_daily_summary lands on the intended day.
+function targetDateToTimestamp(targetDate: string): string {
+  // 12:00 -03:00 → 15:00 UTC, safely inside the same UTC day
+  return `${targetDate}T12:00:00-03:00`;
+}
+
+function formatDateBR(targetDate: string): string {
+  const [y, m, d] = targetDate.split("-");
+  return `${d}/${m}/${y}`;
 }
 
 async function estimateMeal(text: string, imageDataUrl: string | null): Promise<MacroEstimate> {
@@ -481,9 +527,10 @@ Deno.serve(async (req) => {
           imageDataUrl = await downloadTwilioImageAsDataUrl(mediaUrl, mediaContentType);
         }
 
-        // 1) Classificação de intenção
-        const intent = await classifyIntent(body, imageDataUrl);
-        console.log("Intent classificada:", intent);
+        // 1) Classificação de intenção (+ detecção de data retroativa)
+        const { intent, target_date } = await classifyIntent(body, imageDataUrl);
+        console.log("Intent classificada:", intent, "target_date:", target_date);
+        const overrideCreatedAt = target_date ? targetDateToTimestamp(target_date) : null;
 
         // 2) Roteamento
         if (intent === "out_of_scope") {
@@ -513,17 +560,19 @@ Deno.serve(async (req) => {
 
         if (intent === "activity_text" || intent === "activity_image") {
           // Insert pending activity
+          const activityInsert: Record<string, unknown> = {
+            client_id: client.id,
+            source: intent === "activity_image" ? "whatsapp_activity_image" : "whatsapp_activity_text",
+            status: "pending",
+            original_text: body || null,
+            media_url: mediaUrl,
+            media_content_type: mediaContentType,
+            twilio_message_sid: messageSid,
+          };
+          if (overrideCreatedAt) activityInsert.created_at = overrideCreatedAt;
           const { data: actLog, error: actErr } = await supabase
             .from("activity_logs")
-            .insert({
-              client_id: client.id,
-              source: intent === "activity_image" ? "whatsapp_activity_image" : "whatsapp_activity_text",
-              status: "pending",
-              original_text: body || null,
-              media_url: mediaUrl,
-              media_content_type: mediaContentType,
-              twilio_message_sid: messageSid,
-            })
+            .insert(activityInsert)
             .select("id")
             .single();
           if (actErr || !actLog) throw actErr || new Error("Falha ao criar activity_log");
@@ -544,11 +593,14 @@ Deno.serve(async (req) => {
           if (est.activity_steps) detailsLines.push(`• Passos: ${est.activity_steps.toLocaleString("pt-BR")}`);
           detailsLines.push(`• Gasto calórico estimado: ${Math.round(est.estimated_burn_kcal)} kcal`);
 
+          const dateSuffix = overrideCreatedAt
+            ? `\n\n📅 Registrada na data informada: ${formatDateBR(target_date!)}`
+            : "";
           const msg =
             `✅ *Atividade registrada com sucesso!*\n\n` +
             `🏃 *Resumo da atividade:*\n` +
             detailsLines.join("\n") + `\n\n` +
-            `📌 Esse valor é estimado com base nas informações enviadas.`;
+            `📌 Esse valor é estimado com base nas informações enviadas.` + dateSuffix;
 
           await sendWhatsApp(fromPhone, toPhone, msg);
           await supabase.from("whatsapp_messages").insert({
@@ -558,17 +610,19 @@ Deno.serve(async (req) => {
         }
 
         // meal_text, meal_image ou meal_image_plus_text (imagem com texto complementar)
+        const mealInsert: Record<string, unknown> = {
+          client_id: client.id,
+          source: "whatsapp",
+          status: "pending",
+          original_text: body || null,
+          media_url: mediaUrl,
+          media_content_type: mediaContentType,
+          twilio_message_sid: messageSid,
+        };
+        if (overrideCreatedAt) mealInsert.created_at = overrideCreatedAt;
         const { data: mealLog, error: mealErr } = await supabase
           .from("meal_logs")
-          .insert({
-            client_id: client.id,
-            source: "whatsapp",
-            status: "pending",
-            original_text: body || null,
-            media_url: mediaUrl,
-            media_content_type: mediaContentType,
-            twilio_message_sid: messageSid,
-          })
+          .insert(mealInsert)
           .select("id")
           .single();
         if (mealErr || !mealLog) throw mealErr || new Error("Falha ao criar meal_log");
@@ -582,13 +636,16 @@ Deno.serve(async (req) => {
           status: "processed",
         }).eq("id", mealLog.id);
 
+        const dateSuffixMeal = overrideCreatedAt
+          ? `\n\n📅 Registrada na data informada: ${formatDateBR(target_date!)}`
+          : "";
         const finalMsg =
           `✅ *Refeição registrada com sucesso!*\n\n` +
           `🍽️ *Estimativa nutricional:*\n` +
           `• Calorias: ${Math.round(macros.estimated_kcal)} kcal\n` +
           `• Proteínas: ${macros.estimated_protein.toFixed(1)} g\n` +
           `• Carboidratos: ${macros.estimated_carbs.toFixed(1)} g\n` +
-          `• Gorduras: ${macros.estimated_fat.toFixed(1)} g`;
+          `• Gorduras: ${macros.estimated_fat.toFixed(1)} g` + dateSuffixMeal;
 
         await sendWhatsApp(fromPhone, toPhone, finalMsg);
         await supabase.from("whatsapp_messages").insert({
