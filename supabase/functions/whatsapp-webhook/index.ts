@@ -555,17 +555,19 @@ Deno.serve(async (req) => {
 
         if (intent === "activity_text" || intent === "activity_image") {
           // Insert pending activity
+          const activityInsert: Record<string, unknown> = {
+            client_id: client.id,
+            source: intent === "activity_image" ? "whatsapp_activity_image" : "whatsapp_activity_text",
+            status: "pending",
+            original_text: body || null,
+            media_url: mediaUrl,
+            media_content_type: mediaContentType,
+            twilio_message_sid: messageSid,
+          };
+          if (overrideCreatedAt) activityInsert.created_at = overrideCreatedAt;
           const { data: actLog, error: actErr } = await supabase
             .from("activity_logs")
-            .insert({
-              client_id: client.id,
-              source: intent === "activity_image" ? "whatsapp_activity_image" : "whatsapp_activity_text",
-              status: "pending",
-              original_text: body || null,
-              media_url: mediaUrl,
-              media_content_type: mediaContentType,
-              twilio_message_sid: messageSid,
-            })
+            .insert(activityInsert)
             .select("id")
             .single();
           if (actErr || !actLog) throw actErr || new Error("Falha ao criar activity_log");
