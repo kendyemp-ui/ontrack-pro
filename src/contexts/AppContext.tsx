@@ -142,6 +142,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         ...(pdfPath ? { pdf_path: pdfPath } : {}),
       }, { onConflict: 'user_id' });
     if (error) console.error('updateBioimpedance error', error);
+
+    // Sincroniza o gasto basal no registro de cliente para que o daily_summary
+    // use a TMB atualizada nos cálculos de saldo calórico.
+    if (liveMeals.clientId && bio.basalRate && bio.basalRate > 0) {
+      const { error: clientErr } = await supabase
+        .from('clients')
+        .update({ basal_rate_kcal: bio.basalRate })
+        .eq('id', liveMeals.clientId);
+      if (clientErr) console.error('updateBioimpedance: client sync error', clientErr);
+    }
   };
   const addRace = (race: Race) => setRaces(prev => [...prev, race]);
   const removeRace = (id: string) => setRaces(prev => prev.filter(r => r.id !== id));
@@ -167,7 +177,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const proteinRemaining = goal.proteinTarget - totalProtein;
   const carbsRemaining = goal.carbsTarget - totalCarbs;
 
-  const resolvedBasalRate = liveMeals.clientBasalRate ?? bioimpedance.basalRate;
+  // Prioriza a TMB salva pelo usuário (bioimpedância) sobre a do registro de cliente,
+  // pois o usuário pode ter atualizado o valor mais recentemente.
+  const resolvedBasalRate = bioimpedance.basalRate && bioimpedance.basalRate > 0
+    ? bioimpedance.basalRate
+    : (liveMeals.clientBasalRate ?? bioimpedance.basalRate);
 
   // Saldo diário = consumidas - (TMB + atividade)
   const netBalance = totalCalories - (totalBurn + resolvedBasalRate);
