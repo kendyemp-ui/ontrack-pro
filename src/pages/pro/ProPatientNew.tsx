@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { ProLayout } from '@/components/pro/ProLayout';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,11 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePro } from '@/contexts/ProContext';
 import { PatientStatus } from '@/data/proMockData';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export default function ProPatientNew() {
   const navigate = useNavigate();
   const { addPatient } = usePro();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', goal: '',
     caloriesTarget: 2000, proteinTarget: 130, carbsTarget: 220,
@@ -24,21 +26,24 @@ export default function ProPatientNew() {
 
   const update = (k: keyof typeof form, v: any) => setForm(p => ({ ...p, [k]: v }));
 
-  const submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.phone) {
-      toast({ title: 'Campos obrigatórios', description: 'Nome e WhatsApp são necessários.', variant: 'destructive' });
+      toast.error('Nome e WhatsApp são obrigatórios.');
       return;
     }
-    const p = await addPatient({ name: form.name, phone: form.phone, email: form.email });
-    if (!p) return;
-    toast({ title: 'Paciente cadastrado', description: `${p.name} foi adicionado à sua carteira.` });
-    navigate('/pro/dashboard');
+    setLoading(true);
+    const result = await addPatient({ name: form.name, phone: form.phone, email: form.email });
+    setLoading(false);
+    if (result) {
+      toast.success('Paciente adicionado com sucesso!');
+      navigate(`/pro/pacientes/${result.id}`);
+    }
   };
 
   return (
     <ProLayout title="Novo paciente" subtitle="Cadastre um novo cliente na sua carteira">
-      <form onSubmit={submit} className="max-w-3xl">
+      <form onSubmit={handleSubmit} className="max-w-3xl">
         <Card className="p-6 glass-card space-y-6">
           <div>
             <h3 className="text-sm font-semibold mb-4 uppercase tracking-wider text-muted-foreground">Identificação</h3>
@@ -106,8 +111,11 @@ export default function ProPatientNew() {
           </div>
 
           <div className="flex gap-2 justify-end pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => navigate('/pro/dashboard')}>Cancelar</Button>
-            <Button type="submit">Salvar paciente</Button>
+            <Button type="button" variant="outline" onClick={() => navigate('/pro/dashboard')} disabled={loading}>Cancelar</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Salvar paciente
+            </Button>
           </div>
         </Card>
       </form>
