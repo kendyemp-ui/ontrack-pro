@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Meal, DietGoal, Bioimpedance, Race, defaultGoal, defaultBioimpedance, defaultRaces } from '@/data/mockData';
+import { Meal, DietGoal, DietObjective, Bioimpedance, Race, defaultGoal, defaultBioimpedance, defaultRaces } from '@/data/mockData';
 import { useTodayMeals } from '@/hooks/useTodayMeals';
 import { useTodayActivities, ActivityLogRow } from '@/hooks/useTodayActivities';
 
@@ -22,7 +22,7 @@ interface AppState {
   activitiesLoading: boolean;
   clientId: string | null;
   logout: () => Promise<void>;
-  updateGoal: (goal: DietGoal) => void;
+  updateGoal: (goal: DietGoal) => Promise<void>;
   updateBioimpedance: (bio: Bioimpedance, source?: string, pdfPath?: string) => Promise<void>;
   addRace: (race: Race) => void;
   removeRace: (id: string) => void;
@@ -114,6 +114,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             });
           }
         });
+
+      supabase
+        .from('diet_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setGoal({
+              name: data.name,
+              caloriesTarget: Number(data.calories_target),
+              proteinTarget: Number(data.protein_target),
+              carbsTarget: Number(data.carbs_target),
+              objective: data.objective as DietObjective,
+              startDate: data.start_date ?? '',
+              notes: data.notes ?? '',
+            });
+          }
+        });
     }, 0);
   }, [user]);
 
@@ -121,7 +140,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
-  const updateGoal = (newGoal: DietGoal) => setGoal(newGoal);
+  const updateGoal = async (newGoal: DietGoal) => {
+    setGoal(newGoal);
+    if (!user) return;
+    const { error } = await supabase.from('diet_goals').upsert({
+      user_id: user.id,
+      name: newGoal.name,
+      calories_target: newGoal.caloriesTarget,
+      protein_target: newGoal.proteinTarget,
+      carbs_target: newGoal.carbsTarget,
+      objective: newGoal.objective,
+      start_date: newGoal.startDate || null,
+      notes: newGoal.notes,
+    }, { onConflict: 'user_id' });
+    if (error) console.error('updateGoal error', error);
+  };
   const updateBioimpedance = async (bio: Bioimpedance, source: string = 'manual', pdfPath?: string) => {
     setBioimpedance(bio);
     if (!user) return;
