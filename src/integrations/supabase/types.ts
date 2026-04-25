@@ -79,6 +79,60 @@ export type Database = {
           },
         ]
       }
+      bioimpedance: {
+        Row: {
+          basal_rate: number | null
+          body_fat: number | null
+          body_water: number | null
+          bone_mass: number | null
+          created_at: string
+          height: number | null
+          id: string
+          metabolic_age: number | null
+          muscle_mass: number | null
+          pdf_path: string | null
+          source: string | null
+          updated_at: string
+          user_id: string
+          visceral_fat: number | null
+          weight: number | null
+        }
+        Insert: {
+          basal_rate?: number | null
+          body_fat?: number | null
+          body_water?: number | null
+          bone_mass?: number | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          metabolic_age?: number | null
+          muscle_mass?: number | null
+          pdf_path?: string | null
+          source?: string | null
+          updated_at?: string
+          user_id: string
+          visceral_fat?: number | null
+          weight?: number | null
+        }
+        Update: {
+          basal_rate?: number | null
+          body_fat?: number | null
+          body_water?: number | null
+          bone_mass?: number | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          metabolic_age?: number | null
+          muscle_mass?: number | null
+          pdf_path?: string | null
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+          visceral_fat?: number | null
+          weight?: number | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           basal_rate_kcal: number
