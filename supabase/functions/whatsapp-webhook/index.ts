@@ -610,17 +610,19 @@ Deno.serve(async (req) => {
         }
 
         // meal_text, meal_image ou meal_image_plus_text (imagem com texto complementar)
+        const mealInsert: Record<string, unknown> = {
+          client_id: client.id,
+          source: "whatsapp",
+          status: "pending",
+          original_text: body || null,
+          media_url: mediaUrl,
+          media_content_type: mediaContentType,
+          twilio_message_sid: messageSid,
+        };
+        if (overrideCreatedAt) mealInsert.created_at = overrideCreatedAt;
         const { data: mealLog, error: mealErr } = await supabase
           .from("meal_logs")
-          .insert({
-            client_id: client.id,
-            source: "whatsapp",
-            status: "pending",
-            original_text: body || null,
-            media_url: mediaUrl,
-            media_content_type: mediaContentType,
-            twilio_message_sid: messageSid,
-          })
+          .insert(mealInsert)
           .select("id")
           .single();
         if (mealErr || !mealLog) throw mealErr || new Error("Falha ao criar meal_log");
@@ -634,13 +636,16 @@ Deno.serve(async (req) => {
           status: "processed",
         }).eq("id", mealLog.id);
 
+        const dateSuffixMeal = overrideCreatedAt
+          ? `\n\n📅 Registrada na data informada: ${formatDateBR(target_date!)}`
+          : "";
         const finalMsg =
           `✅ *Refeição registrada com sucesso!*\n\n` +
           `🍽️ *Estimativa nutricional:*\n` +
           `• Calorias: ${Math.round(macros.estimated_kcal)} kcal\n` +
           `• Proteínas: ${macros.estimated_protein.toFixed(1)} g\n` +
           `• Carboidratos: ${macros.estimated_carbs.toFixed(1)} g\n` +
-          `• Gorduras: ${macros.estimated_fat.toFixed(1)} g`;
+          `• Gorduras: ${macros.estimated_fat.toFixed(1)} g` + dateSuffixMeal;
 
         await sendWhatsApp(fromPhone, toPhone, finalMsg);
         await supabase.from("whatsapp_messages").insert({
