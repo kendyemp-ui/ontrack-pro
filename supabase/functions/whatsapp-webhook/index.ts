@@ -310,21 +310,46 @@ async function downloadTwilioImageAsDataUrl(imageUrl: string, contentType: strin
   return `data:${contentType};base64,${btoa(binary)}`;
 }
 
-async function classifyIntent(text: string, imageDataUrl: string | null): Promise<string> {
+function todayInSaoPaulo(): string {
+  // Returns YYYY-MM-DD for current date in America/Sao_Paulo
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(new Date());
+}
+
+async function classifyIntent(text: string, imageDataUrl: string | null): Promise<{ intent: string; target_date: string | null }> {
   const userContent: any[] = [];
   if (text?.trim()) userContent.push({ type: "text", text });
   else userContent.push({ type: "text", text: "(mensagem sem texto)" });
   if (imageDataUrl) userContent.push({ type: "image_url", image_url: { url: imageDataUrl } });
 
+  const today = todayInSaoPaulo();
+  const systemPrompt = CLASSIFIER_PROMPT.replace("{TODAY}", today);
+
   const result = await callAITool(
     [
-      { role: "system", content: CLASSIFIER_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "user", content: userContent },
     ],
     CLASSIFIER_TOOL,
     "classify_intent",
   );
-  return result.intent;
+
+  // Validate target_date format and ensure it's not in the future
+  let targetDate: string | null = null;
+  if (result.target_date && /^\d{4}-\d{2}-\d{2}$/.test(result.target_date)) {
+    if (result.target_date <= today) targetDate = result.target_date;
+  }
+  return { intent: result.intent, target_date: targetDate };
+}
+
+// Builds an ISO timestamp at 12:00 (noon) America/Sao_Paulo for the given YYYY-MM-DD,
+// so that the UTC date conversion used by recompute_daily_summary lands on the intended day.
+function targetDateToTimestamp(targetDate: string): string {
+  // 12:00 -03:00 → 15:00 UTC, safely inside the same UTC day
+  return `${targetDate}T12:00:00-03:00`;
 }
 
 async function estimateMeal(text: string, imageDataUrl: string | null): Promise<MacroEstimate> {
