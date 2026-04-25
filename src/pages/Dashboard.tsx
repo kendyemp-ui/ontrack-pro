@@ -124,18 +124,30 @@ const Dashboard = () => {
         </div>
 
         {/* Status do objetivo */}
-        <div
-          className={`rounded-2xl border px-4 py-3 animate-slide-up ${balanceStatus.bgClass} border-current/20`}
-          style={{ animationDelay: '0.17s' }}
-        >
-          <div className="flex items-start gap-2.5">
-            <Target size={14} className="mt-0.5 shrink-0" strokeWidth={2} />
-            <div className="min-w-0">
-              <p className="text-xs font-semibold leading-tight">{balanceStatus.label}</p>
-              <p className="text-[11px] mt-1 leading-snug opacity-90">{balanceStatus.message}</p>
+        {bioimpedance.basalRate === 0 ? (
+          <div className="rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 animate-slide-up" style={{ animationDelay: '0.17s' }}>
+            <p className="text-xs font-semibold text-warning">Configure sua TMB para ver o saldo calórico</p>
+            <p className="text-[11px] mt-1 text-warning/80 leading-snug">
+              Acesse o Perfil e informe seu Gasto Basal (TMB) para que o dashboard calcule corretamente seu déficit ou superávit.
+            </p>
+            <Link to="/profile" className="text-[11px] font-semibold underline text-warning mt-1 inline-block">
+              Configurar agora →
+            </Link>
+          </div>
+        ) : (
+          <div
+            className={`rounded-2xl border px-4 py-3 animate-slide-up ${balanceStatus.bgClass} border-current/20`}
+            style={{ animationDelay: '0.17s' }}
+          >
+            <div className="flex items-start gap-2.5">
+              <Target size={14} className="mt-0.5 shrink-0" strokeWidth={2} />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold leading-tight">{balanceStatus.label}</p>
+                <p className="text-[11px] mt-1 leading-snug opacity-90">{balanceStatus.message}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Basal info */}
         <div className="flex items-center justify-between px-1 animate-slide-up" style={{ animationDelay: '0.18s' }}>
