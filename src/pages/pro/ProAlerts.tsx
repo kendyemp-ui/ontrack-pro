@@ -69,9 +69,9 @@ const blocks: AlertBlock[] = [
     description: 'Mais de 24h sem comunicação no WhatsApp',
     icon: MessageCircleOff,
     color: 'text-muted-foreground', bg: 'bg-secondary',
-    filter: p => Date.now() - new Date(p.lastInteractionAt).getTime() > 24 * 3600000,
+    filter: p => !p.lastInteractionAt || Date.now() - new Date(p.lastInteractionAt).getTime() > 24 * 3600000,
     reason: p => `Última interação ${p.lastInteraction}`,
-    priority: p => Date.now() - new Date(p.lastInteractionAt).getTime() > 48 * 3600000 ? 'alta' : 'baixa',
+    priority: p => !p.lastInteractionAt || Date.now() - new Date(p.lastInteractionAt).getTime() > 48 * 3600000 ? 'alta' : 'baixa',
   },
 ];
 

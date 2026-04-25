@@ -24,13 +24,14 @@ export default function ProPatientNew() {
 
   const update = (k: keyof typeof form, v: any) => setForm(p => ({ ...p, [k]: v }));
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.phone) {
       toast({ title: 'Campos obrigatórios', description: 'Nome e WhatsApp são necessários.', variant: 'destructive' });
       return;
     }
-    const p = addPatient(form);
+    const p = await addPatient({ name: form.name, phone: form.phone, email: form.email });
+    if (!p) return;
     toast({ title: 'Paciente cadastrado', description: `${p.name} foi adicionado à sua carteira.` });
     navigate('/pro/dashboard');
   };
