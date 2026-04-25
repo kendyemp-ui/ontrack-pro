@@ -588,11 +588,14 @@ Deno.serve(async (req) => {
           if (est.activity_steps) detailsLines.push(`• Passos: ${est.activity_steps.toLocaleString("pt-BR")}`);
           detailsLines.push(`• Gasto calórico estimado: ${Math.round(est.estimated_burn_kcal)} kcal`);
 
+          const dateSuffix = overrideCreatedAt
+            ? `\n\n📅 Registrada na data informada: ${formatDateBR(target_date!)}`
+            : "";
           const msg =
             `✅ *Atividade registrada com sucesso!*\n\n` +
             `🏃 *Resumo da atividade:*\n` +
             detailsLines.join("\n") + `\n\n` +
-            `📌 Esse valor é estimado com base nas informações enviadas.`;
+            `📌 Esse valor é estimado com base nas informações enviadas.` + dateSuffix;
 
           await sendWhatsApp(fromPhone, toPhone, msg);
           await supabase.from("whatsapp_messages").insert({
