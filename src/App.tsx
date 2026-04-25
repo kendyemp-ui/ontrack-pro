@@ -54,8 +54,7 @@ const FullScreenLoader = () => (
 );
 
 const ProProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn } = usePro();
-  const { authLoading } = useApp();
+  const { isLoggedIn, authLoading } = usePro();
   if (authLoading) return <FullScreenLoader />;
   if (!isLoggedIn) return <Navigate to="/pro/login" replace />;
   return <>{children}</>;
@@ -78,7 +77,8 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const ProLoginRedirect = () => {
-  const { isLoggedIn } = usePro();
+  const { isLoggedIn, authLoading } = usePro();
+  if (authLoading) return <FullScreenLoader />;
   if (isLoggedIn) return <Navigate to="/pro/dashboard" replace />;
   return <ProLogin />;
 };
