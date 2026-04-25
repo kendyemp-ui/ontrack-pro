@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 import BottomNav from '@/components/BottomNav';
-import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut } from 'lucide-react';
+import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut, FileText, Upload, Loader2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { integrations } from '@/data/mockData';
 
 const Profile = () => {
-  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout, totalBurn, activities } = useApp();
+  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout, totalBurn, activities, user } = useApp();
   const dailyBurn = {
     total: totalBurn,
     steps: activities.reduce((s, a) => s + Number(a.activity_steps ?? 0), 0),
@@ -25,6 +26,9 @@ const Profile = () => {
 
   const [bio, setBio] = useState({ ...bioimpedance });
   const [editingBio, setEditingBio] = useState(false);
+  const [showPdfUpload, setShowPdfUpload] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [showAddRace, setShowAddRace] = useState(false);
   const [newRace, setNewRace] = useState({ name: '', type: 'Maratona', date: '', location: '', distance: '' });
@@ -32,10 +36,81 @@ const Profile = () => {
 
   const raceTypes = ['Maratona', 'Meia Maratona', 'Ironman', 'Ironman 70.3', 'Triathlon Olímpico', 'Triathlon Sprint', 'Ultra Maratona', '10K', '5K', 'Trail Run', 'Outro'];
 
-  const handleSaveBio = () => {
-    updateBioimpedance(bio);
-    setEditingBio(false);
-    toast({ title: 'Bioimpedância atualizada', description: 'Seus dados foram salvos com sucesso.' });
+  const handleEditToggle = () => {
+    if (!editingBio) {
+      // Ao entrar em modo edição, sincroniza com o valor atual do contexto
+      setBio({ ...bioimpedance });
+    }
+    setEditingBio(!editingBio);
+  };
+
+  const handleSaveBio = async () => {
+    try {
+      await updateBioimpedance(bio, 'manual');
+      setEditingBio(false);
+      toast({ title: 'Bioimpedância atualizada', description: 'Seus dados foram salvos com sucesso.' });
+    } catch (e) {
+      toast({ title: 'Erro ao salvar', description: 'Tente novamente em instantes.', variant: 'destructive' });
+    }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!user) {
+      toast({ title: 'Faça login para enviar o PDF', variant: 'destructive' });
+      return;
+    }
+    if (file.type !== 'application/pdf') {
+      toast({ title: 'Arquivo inválido', description: 'Envie um PDF do laudo de bioimpedância.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'PDF muito grande', description: 'Tamanho máximo: 10 MB.', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingPdf(true);
+    try {
+      const path = `${user.id}/${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`;
+      const { error: upErr } = await supabase.storage
+        .from('bioimpedance-pdfs')
+        .upload(path, file, { contentType: 'application/pdf', upsert: false });
+      if (upErr) throw upErr;
+
+      const { data: parseData, error: parseErr } = await supabase.functions.invoke('parse-bioimpedance-pdf', {
+        body: { pdfPath: path },
+      });
+      if (parseErr) throw parseErr;
+      if (parseData?.error) throw new Error(parseData.error);
+
+      const extracted = parseData?.data ?? {};
+      const merged = {
+        basalRate: extracted.basalRate ?? bio.basalRate,
+        weight: extracted.weight ?? bio.weight,
+        height: extracted.height ?? bio.height,
+        bodyFat: extracted.bodyFat ?? bio.bodyFat,
+        muscleMass: extracted.muscleMass ?? bio.muscleMass,
+        bodyWater: extracted.bodyWater ?? bio.bodyWater,
+        boneMass: extracted.boneMass ?? bio.boneMass,
+        visceralFat: extracted.visceralFat ?? bio.visceralFat,
+        metabolicAge: extracted.metabolicAge ?? bio.metabolicAge,
+      };
+      setBio(merged);
+      await updateBioimpedance(merged, 'pdf', path);
+      setShowPdfUpload(false);
+      setEditingBio(true);
+      toast({
+        title: 'PDF analisado com sucesso!',
+        description: 'Confira os campos preenchidos pela IA e ajuste se necessário antes de salvar.',
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao processar PDF';
+      toast({ title: 'Falha ao ler PDF', description: msg, variant: 'destructive' });
+    } finally {
+      setUploadingPdf(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleAddRace = () => {
@@ -81,7 +156,7 @@ const Profile = () => {
               <h2 className="text-base font-heading font-semibold text-foreground">Bioimpedância</h2>
             </div>
             <button
-              onClick={() => setEditingBio(!editingBio)}
+              onClick={handleEditToggle}
               className="text-xs flex items-center gap-1 text-primary font-medium"
             >
               <Pencil size={13} />
@@ -89,24 +164,83 @@ const Profile = () => {
             </button>
           </div>
 
+          {/* Upload PDF com IA */}
+          {!editingBio && (
+            <div className="mb-4">
+              {!showPdfUpload ? (
+                <button
+                  onClick={() => setShowPdfUpload(true)}
+                  className="w-full h-11 rounded-xl border border-primary/30 bg-primary/5 text-primary font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/10 transition-all active:scale-[0.98]"
+                >
+                  <Sparkles size={15} /> Importar laudo PDF com IA
+                </button>
+              ) : (
+                <div className="bg-secondary/50 rounded-xl p-4 space-y-3 border border-primary/20">
+                  <div className="flex items-start gap-2">
+                    <FileText size={16} className="text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Enviar laudo de bioimpedância</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        A IA extrai automaticamente TMB, peso, % de gordura, massa muscular e mais.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPdfUpload(false)}
+                      disabled={uploadingPdf}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfUpload}
+                    disabled={uploadingPdf}
+                    className="hidden"
+                    id="bio-pdf-input"
+                  />
+                  <label
+                    htmlFor="bio-pdf-input"
+                    className={`w-full h-11 rounded-xl gradient-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 cursor-pointer hover:opacity-90 transition-all ${uploadingPdf ? 'opacity-60 pointer-events-none' : 'active:scale-[0.98]'}`}
+                  >
+                    {uploadingPdf ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Analisando PDF…
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={16} /> Selecionar PDF
+                      </>
+                    )}
+                  </label>
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    PDF até 10 MB · seus dados ficam privados.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-3">
-            <BioField label="Gasto Basal (TMB)" value={bio.basalRate} unit="kcal/dia" editing={editingBio}
+            <BioField label="Gasto Basal (TMB)" value={editingBio ? bio.basalRate : bioimpedance.basalRate} unit="kcal/dia" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, basalRate: Number(v) }))} highlight />
-            <BioField label="Peso" value={bio.weight} unit="kg" editing={editingBio}
+            <BioField label="Peso" value={editingBio ? bio.weight : bioimpedance.weight} unit="kg" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, weight: Number(v) }))} />
-            <BioField label="Altura" value={bio.height} unit="cm" editing={editingBio}
+            <BioField label="Altura" value={editingBio ? bio.height : bioimpedance.height} unit="cm" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, height: Number(v) }))} />
-            <BioField label="Gordura Corporal" value={bio.bodyFat} unit="%" editing={editingBio}
+            <BioField label="Gordura Corporal" value={editingBio ? bio.bodyFat : bioimpedance.bodyFat} unit="%" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, bodyFat: Number(v) }))} />
-            <BioField label="Massa Muscular" value={bio.muscleMass} unit="kg" editing={editingBio}
+            <BioField label="Massa Muscular" value={editingBio ? bio.muscleMass : bioimpedance.muscleMass} unit="kg" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, muscleMass: Number(v) }))} />
-            <BioField label="Água Corporal" value={bio.bodyWater} unit="%" editing={editingBio}
+            <BioField label="Água Corporal" value={editingBio ? bio.bodyWater : bioimpedance.bodyWater} unit="%" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, bodyWater: Number(v) }))} />
-            <BioField label="Massa Óssea" value={bio.boneMass} unit="kg" editing={editingBio}
+            <BioField label="Massa Óssea" value={editingBio ? bio.boneMass : bioimpedance.boneMass} unit="kg" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, boneMass: Number(v) }))} />
-            <BioField label="Gordura Visceral" value={bio.visceralFat} unit="" editing={editingBio}
+            <BioField label="Gordura Visceral" value={editingBio ? bio.visceralFat : bioimpedance.visceralFat} unit="" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, visceralFat: Number(v) }))} />
-            <BioField label="Idade Metabólica" value={bio.metabolicAge} unit="anos" editing={editingBio}
+            <BioField label="Idade Metabólica" value={editingBio ? bio.metabolicAge : bioimpedance.metabolicAge} unit="anos" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, metabolicAge: Number(v) }))} />
           </div>
 
