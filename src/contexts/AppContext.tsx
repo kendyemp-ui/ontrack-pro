@@ -79,6 +79,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!user) {
       setFullName('');
       setUserPhone(null);
+      setBioimpedance(defaultBioimpedance);
       return;
     }
     setTimeout(() => {
@@ -92,6 +93,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           else setFullName(user.email?.split('@')[0] ?? '');
           setUserPhone(data?.phone ?? null);
         });
+
+      supabase
+        .from('bioimpedance')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setBioimpedance({
+              basalRate: Number(data.basal_rate ?? defaultBioimpedance.basalRate),
+              weight: Number(data.weight ?? defaultBioimpedance.weight),
+              height: Number(data.height ?? defaultBioimpedance.height),
+              bodyFat: Number(data.body_fat ?? defaultBioimpedance.bodyFat),
+              muscleMass: Number(data.muscle_mass ?? defaultBioimpedance.muscleMass),
+              bodyWater: Number(data.body_water ?? defaultBioimpedance.bodyWater),
+              boneMass: Number(data.bone_mass ?? defaultBioimpedance.boneMass),
+              visceralFat: Number(data.visceral_fat ?? defaultBioimpedance.visceralFat),
+              metabolicAge: Number(data.metabolic_age ?? defaultBioimpedance.metabolicAge),
+            });
+          }
+        });
     }, 0);
   }, [user]);
 
@@ -100,7 +122,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateGoal = (newGoal: DietGoal) => setGoal(newGoal);
-  const updateBioimpedance = (bio: Bioimpedance) => setBioimpedance(bio);
+  const updateBioimpedance = async (bio: Bioimpedance, source: string = 'manual', pdfPath?: string) => {
+    setBioimpedance(bio);
+    if (!user) return;
+    const payload: Record<string, unknown> = {
+      user_id: user.id,
+      basal_rate: bio.basalRate,
+      weight: bio.weight,
+      height: bio.height,
+      body_fat: bio.bodyFat,
+      muscle_mass: bio.muscleMass,
+      body_water: bio.bodyWater,
+      bone_mass: bio.boneMass,
+      visceral_fat: bio.visceralFat,
+      metabolic_age: bio.metabolicAge,
+      source,
+    };
+    if (pdfPath) payload.pdf_path = pdfPath;
+    const { error } = await supabase
+      .from('bioimpedance')
+      .upsert(payload, { onConflict: 'user_id' });
+    if (error) console.error('updateBioimpedance error', error);
+  };
   const addRace = (race: Race) => setRaces(prev => [...prev, race]);
   const removeRace = (id: string) => setRaces(prev => prev.filter(r => r.id !== id));
 
