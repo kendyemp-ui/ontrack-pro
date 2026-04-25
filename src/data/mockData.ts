@@ -52,30 +52,26 @@ export interface Race {
 }
 
 export const defaultBioimpedance: Bioimpedance = {
-  basalRate: 1750,
-  weight: 78,
-  height: 178,
-  bodyFat: 16.5,
-  muscleMass: 35.2,
-  bodyWater: 58,
-  boneMass: 3.2,
-  visceralFat: 8,
-  metabolicAge: 28,
+  basalRate: 0,
+  weight: 0,
+  height: 0,
+  bodyFat: 0,
+  muscleMass: 0,
+  bodyWater: 0,
+  boneMass: 0,
+  visceralFat: 0,
+  metabolicAge: 0,
 };
 
-export const defaultRaces: Race[] = [
-  { id: '1', name: 'Maratona de São Paulo', type: 'Maratona', date: '2026-10-18', location: 'São Paulo, Brasil', distance: '42.195 km' },
-  { id: '2', name: 'Ironman 70.3 Florianópolis', type: 'Ironman 70.3', date: '2026-07-12', location: 'Florianópolis, Brasil', distance: '113 km' },
-  { id: '3', name: 'Meia Maratona do Rio', type: 'Meia Maratona', date: '2026-06-07', location: 'Rio de Janeiro, Brasil', distance: '21.1 km' },
-];
+export const defaultRaces: Race[] = [];
 
 export const defaultGoal: DietGoal = {
-  name: 'Plano Performance',
-  caloriesTarget: 2000,
-  proteinTarget: 160,
-  carbsTarget: 180,
-  startDate: '2026-04-01',
-  notes: 'Foco em ganho de massa magra com controle calórico.',
+  name: 'Minha Meta',
+  caloriesTarget: 0,
+  proteinTarget: 0,
+  carbsTarget: 0,
+  startDate: '',
+  notes: '',
   objective: 'maintain',
 };
 
