@@ -352,6 +352,11 @@ function targetDateToTimestamp(targetDate: string): string {
   return `${targetDate}T12:00:00-03:00`;
 }
 
+function formatDateBR(targetDate: string): string {
+  const [y, m, d] = targetDate.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 async function estimateMeal(text: string, imageDataUrl: string | null): Promise<MacroEstimate> {
   const userContent: any[] = [];
   const hasText = !!text?.trim();
