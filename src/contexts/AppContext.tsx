@@ -125,23 +125,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateBioimpedance = async (bio: Bioimpedance, source: string = 'manual', pdfPath?: string) => {
     setBioimpedance(bio);
     if (!user) return;
-    const payload: Record<string, unknown> = {
-      user_id: user.id,
-      basal_rate: bio.basalRate,
-      weight: bio.weight,
-      height: bio.height,
-      body_fat: bio.bodyFat,
-      muscle_mass: bio.muscleMass,
-      body_water: bio.bodyWater,
-      bone_mass: bio.boneMass,
-      visceral_fat: bio.visceralFat,
-      metabolic_age: bio.metabolicAge,
-      source,
-    };
-    if (pdfPath) payload.pdf_path = pdfPath;
     const { error } = await supabase
       .from('bioimpedance')
-      .upsert(payload, { onConflict: 'user_id' });
+      .upsert({
+        user_id: user.id,
+        basal_rate: bio.basalRate,
+        weight: bio.weight,
+        height: bio.height,
+        body_fat: bio.bodyFat,
+        muscle_mass: bio.muscleMass,
+        body_water: bio.bodyWater,
+        bone_mass: bio.boneMass,
+        visceral_fat: bio.visceralFat,
+        metabolic_age: bio.metabolicAge,
+        source,
+        ...(pdfPath ? { pdf_path: pdfPath } : {}),
+      }, { onConflict: 'user_id' });
     if (error) console.error('updateBioimpedance error', error);
   };
   const addRace = (race: Race) => setRaces(prev => [...prev, race]);
