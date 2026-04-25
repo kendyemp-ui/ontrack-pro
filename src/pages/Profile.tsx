@@ -156,7 +156,7 @@ const Profile = () => {
               <h2 className="text-base font-heading font-semibold text-foreground">Bioimpedância</h2>
             </div>
             <button
-              onClick={() => setEditingBio(!editingBio)}
+              onClick={handleEditToggle}
               className="text-xs flex items-center gap-1 text-primary font-medium"
             >
               <Pencil size={13} />
@@ -164,24 +164,83 @@ const Profile = () => {
             </button>
           </div>
 
+          {/* Upload PDF com IA */}
+          {!editingBio && (
+            <div className="mb-4">
+              {!showPdfUpload ? (
+                <button
+                  onClick={() => setShowPdfUpload(true)}
+                  className="w-full h-11 rounded-xl border border-primary/30 bg-primary/5 text-primary font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/10 transition-all active:scale-[0.98]"
+                >
+                  <Sparkles size={15} /> Importar laudo PDF com IA
+                </button>
+              ) : (
+                <div className="bg-secondary/50 rounded-xl p-4 space-y-3 border border-primary/20">
+                  <div className="flex items-start gap-2">
+                    <FileText size={16} className="text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Enviar laudo de bioimpedância</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        A IA extrai automaticamente TMB, peso, % de gordura, massa muscular e mais.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPdfUpload(false)}
+                      disabled={uploadingPdf}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfUpload}
+                    disabled={uploadingPdf}
+                    className="hidden"
+                    id="bio-pdf-input"
+                  />
+                  <label
+                    htmlFor="bio-pdf-input"
+                    className={`w-full h-11 rounded-xl gradient-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 cursor-pointer hover:opacity-90 transition-all ${uploadingPdf ? 'opacity-60 pointer-events-none' : 'active:scale-[0.98]'}`}
+                  >
+                    {uploadingPdf ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Analisando PDF…
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={16} /> Selecionar PDF
+                      </>
+                    )}
+                  </label>
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    PDF até 10 MB · seus dados ficam privados.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-3">
-            <BioField label="Gasto Basal (TMB)" value={bio.basalRate} unit="kcal/dia" editing={editingBio}
+            <BioField label="Gasto Basal (TMB)" value={editingBio ? bio.basalRate : bioimpedance.basalRate} unit="kcal/dia" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, basalRate: Number(v) }))} highlight />
-            <BioField label="Peso" value={bio.weight} unit="kg" editing={editingBio}
+            <BioField label="Peso" value={editingBio ? bio.weight : bioimpedance.weight} unit="kg" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, weight: Number(v) }))} />
-            <BioField label="Altura" value={bio.height} unit="cm" editing={editingBio}
+            <BioField label="Altura" value={editingBio ? bio.height : bioimpedance.height} unit="cm" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, height: Number(v) }))} />
-            <BioField label="Gordura Corporal" value={bio.bodyFat} unit="%" editing={editingBio}
+            <BioField label="Gordura Corporal" value={editingBio ? bio.bodyFat : bioimpedance.bodyFat} unit="%" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, bodyFat: Number(v) }))} />
-            <BioField label="Massa Muscular" value={bio.muscleMass} unit="kg" editing={editingBio}
+            <BioField label="Massa Muscular" value={editingBio ? bio.muscleMass : bioimpedance.muscleMass} unit="kg" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, muscleMass: Number(v) }))} />
-            <BioField label="Água Corporal" value={bio.bodyWater} unit="%" editing={editingBio}
+            <BioField label="Água Corporal" value={editingBio ? bio.bodyWater : bioimpedance.bodyWater} unit="%" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, bodyWater: Number(v) }))} />
-            <BioField label="Massa Óssea" value={bio.boneMass} unit="kg" editing={editingBio}
+            <BioField label="Massa Óssea" value={editingBio ? bio.boneMass : bioimpedance.boneMass} unit="kg" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, boneMass: Number(v) }))} />
-            <BioField label="Gordura Visceral" value={bio.visceralFat} unit="" editing={editingBio}
+            <BioField label="Gordura Visceral" value={editingBio ? bio.visceralFat : bioimpedance.visceralFat} unit="" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, visceralFat: Number(v) }))} />
-            <BioField label="Idade Metabólica" value={bio.metabolicAge} unit="anos" editing={editingBio}
+            <BioField label="Idade Metabólica" value={editingBio ? bio.metabolicAge : bioimpedance.metabolicAge} unit="anos" editing={editingBio}
               onChange={v => setBio(prev => ({ ...prev, metabolicAge: Number(v) }))} />
           </div>
 
