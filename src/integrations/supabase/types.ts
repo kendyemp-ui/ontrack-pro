@@ -133,6 +133,50 @@ export type Database = {
         }
         Relationships: []
       }
+      client_goals: {
+        Row: {
+          calories_target: number | null
+          carbs_target: number | null
+          client_id: string
+          id: string
+          notes: string | null
+          objective: string | null
+          professional_id: string
+          protein_target: number | null
+          updated_at: string
+        }
+        Insert: {
+          calories_target?: number | null
+          carbs_target?: number | null
+          client_id: string
+          id?: string
+          notes?: string | null
+          objective?: string | null
+          professional_id: string
+          protein_target?: number | null
+          updated_at?: string
+        }
+        Update: {
+          calories_target?: number | null
+          carbs_target?: number | null
+          client_id?: string
+          id?: string
+          notes?: string | null
+          objective?: string | null
+          professional_id?: string
+          protein_target?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           basal_rate_kcal: number
@@ -371,6 +415,38 @@ export type Database = {
         }
         Relationships: []
       }
+      professional_notes: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          id: string
+          professional_id: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          id?: string
+          professional_id: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          professional_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -528,7 +604,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "profissional"
       pro_signup_status: "pending" | "approved" | "rejected"
       subscription_status:
         | "active"
@@ -664,7 +740,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "profissional"],
       pro_signup_status: ["pending", "approved", "rejected"],
       subscription_status: [
         "active",

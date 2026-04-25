@@ -1,28 +1,31 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Activity } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { usePro } from '@/contexts/ProContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
 
 export default function ProLogin() {
-  const [email, setEmail] = useState('profissional@teste.com');
-  const [password, setPassword] = useState('123456');
-  const [keepConnected, setKeepConnected] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = usePro();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
+    setLoading(true);
+    const ok = await login(email, password);
+    setLoading(false);
+    if (ok) {
+      toast.success('Bem-vindo!');
       navigate('/pro/dashboard');
     } else {
-      toast({ title: 'Credenciais inválidas', description: 'Verifique e tente novamente.', variant: 'destructive' });
+      toast.error('Acesso negado. Verifique suas credenciais ou solicite acesso ao suporte.');
     }
   };
 
@@ -47,27 +50,40 @@ export default function ProLogin() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">E-mail profissional</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                required
+                autoComplete="email"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="keep" checked={keepConnected} onCheckedChange={v => setKeepConnected(!!v)} />
-              <Label htmlFor="keep" className="text-sm font-normal cursor-pointer">Continuar conectado</Label>
-            </div>
-            <Button type="submit" className="w-full" size="lg">Entrar na plataforma</Button>
-          </form>
 
-          <div className="mt-6 pt-4 border-t border-border text-xs text-muted-foreground">
-            <p className="font-medium text-foreground mb-1">Acesso de demonstração</p>
-            <p>profissional@teste.com / 123456</p>
-          </div>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Entrar na plataforma
+            </Button>
+          </form>
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Evolução que acompanha você — e cada paciente.
+          Não tem acesso ainda?{' '}
+          <Link to="/pro/cadastro" className="text-foreground font-medium underline">
+            Solicite seu cadastro
+          </Link>
         </p>
       </div>
     </div>
