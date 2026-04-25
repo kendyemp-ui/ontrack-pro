@@ -80,6 +80,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setFullName('');
       setUserPhone(null);
       setBioimpedance(defaultBioimpedance);
+      setGoal(defaultGoal);
       return;
     }
     setTimeout(() => {
