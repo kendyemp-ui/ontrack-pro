@@ -128,7 +128,7 @@ const Profile = () => {
   };
 
   const daysUntil = (date: string) => {
-    const diff = Math.ceil((new Date(date).getTime() - new Date('2026-04-15').getTime()) / (1000 * 60 * 60 * 24));
+    const diff = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : 0;
   };
 
