@@ -23,7 +23,7 @@ interface AppState {
   clientId: string | null;
   logout: () => Promise<void>;
   updateGoal: (goal: DietGoal) => void;
-  updateBioimpedance: (bio: Bioimpedance) => void;
+  updateBioimpedance: (bio: Bioimpedance, source?: string, pdfPath?: string) => Promise<void>;
   addRace: (race: Race) => void;
   removeRace: (id: string) => void;
   deleteMeal: (id: string) => Promise<void>;
