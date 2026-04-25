@@ -1,32 +1,115 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ProLayout } from '@/components/pro/ProLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/pro/StatusBadge';
 import { usePro } from '@/contexts/ProContext';
-import { weeklyAdherenceTrend, monthlyAdherenceTrend, patientTimeline, TimelineItem } from '@/data/proMockData';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Flame, TrendingDown, Beef, Wheat, Utensils, MessageCircle, ArrowLeft,
-  Image as ImageIcon, Bot, AlertTriangle, RefreshCw, NotebookPen, Calendar,
+  NotebookPen, Calendar, Loader2,
 } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, ReferenceLine, CartesianGrid,
 } from 'recharts';
 import { cn } from '@/lib/utils';
-
-const timelineIcon: Record<TimelineItem['type'], { icon: any; color: string; bg: string }> = {
-  meal_photo: { icon: ImageIcon, color: 'text-accent', bg: 'bg-accent/10' },
-  auto_response: { icon: Bot, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  alert: { icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  substitution: { icon: RefreshCw, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  professional_note: { icon: NotebookPen, color: 'text-foreground', bg: 'bg-secondary' },
-};
+import { toast } from 'sonner';
 
 export default function ProPatientProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getPatient } = usePro();
+  const { getPatient, professionalId } = usePro();
   const patient = id ? getPatient(id) : undefined;
+
+  // Observações
+  const [noteText, setNoteText] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [notes, setNotes] = useState<{ id: string; content: string; created_at: string }[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+
+  // Dados de gráfico
+  const [weeklyData, setWeeklyData] = useState<{ dia: string; adesao: number; meta: number }[]>([]);
+  const [monthlyData, setMonthlyData] = useState<{ semana: string; adesao: number }[]>([]);
+
+  useEffect(() => {
+    if (!patient?.id) return;
+    const loadNotes = async () => {
+      setNotesLoading(true);
+      const { data } = await supabase
+        .from('professional_notes')
+        .select('id, content, created_at')
+        .eq('client_id', patient.id)
+        .order('created_at', { ascending: false });
+      setNotes(data || []);
+      setNotesLoading(false);
+    };
+    loadNotes();
+  }, [patient?.id]);
+
+  useEffect(() => {
+    if (!patient?.id) return;
+    const loadChartData = async () => {
+      const today = new Date();
+
+      // Últimos 7 dias
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today);
+        d.setDate(d.getDate() - (6 - i));
+        return d.toISOString().split('T')[0];
+      });
+      const { data: summaries } = await supabase
+        .from('daily_summary')
+        .select('summary_date, meal_count')
+        .eq('client_id', patient.id)
+        .in('summary_date', days);
+      const summaryMap = Object.fromEntries((summaries || []).map((s: any) => [s.summary_date, s.meal_count || 0]));
+      setWeeklyData(days.map(d => ({
+        dia: new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short' }),
+        adesao: (summaryMap[d] || 0) > 0 ? 100 : 0,
+        meta: 100,
+      })));
+
+      // Últimas 4 semanas
+      const weeks = Array.from({ length: 4 }, (_, i) => {
+        const start = new Date(today);
+        start.setDate(start.getDate() - (3 - i) * 7 - 6);
+        const end = new Date(today);
+        end.setDate(end.getDate() - (3 - i) * 7);
+        return { label: `S${i + 1}`, start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
+      });
+      const weekResults = await Promise.all(weeks.map(async w => {
+        const { data } = await supabase
+          .from('daily_summary')
+          .select('meal_count')
+          .eq('client_id', patient.id)
+          .gte('summary_date', w.start)
+          .lte('summary_date', w.end);
+        const activeDays = (data || []).filter((d: any) => (d.meal_count || 0) > 0).length;
+        return { semana: w.label, adesao: Math.round((activeDays / 7) * 100) };
+      }));
+      setMonthlyData(weekResults);
+    };
+    loadChartData();
+  }, [patient?.id]);
+
+  const handleSaveNote = async () => {
+    if (!noteText.trim() || !patient || !professionalId) return;
+    setSavingNote(true);
+    const { data, error } = await supabase
+      .from('professional_notes')
+      .insert({ client_id: patient.id, professional_id: professionalId, content: noteText.trim() })
+      .select()
+      .single();
+    if (!error && data) {
+      setNotes(prev => [data, ...prev]);
+      setNoteText('');
+      toast.success('Observação registrada');
+    } else {
+      toast.error('Erro ao salvar observação');
+    }
+    setSavingNote(false);
+  };
 
   if (!patient) {
     return (
@@ -37,10 +120,7 @@ export default function ProPatientProfile() {
   }
 
   const balance = patient.caloriesToday - patient.burnToday;
-  const weekly = weeklyAdherenceTrend(patient.weeklyAdherence);
-  const monthly = monthlyAdherenceTrend(patient.weeklyAdherence);
-  const timeline = patientTimeline(patient.id);
-  const diasNaMeta = weekly.filter(w => w.adesao >= 80).length;
+  const diasNaMeta = weeklyData.filter(w => w.adesao >= 80).length;
   const diasFora = 7 - diasNaMeta;
   const consistencia = Math.round((diasNaMeta / 7) * 100);
 
@@ -76,7 +156,7 @@ export default function ProPatientProfile() {
             <p className="text-sm text-muted-foreground mb-2">{patient.goal}</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" /> {patient.phone}</span>
-              <span>{patient.email}</span>
+              {patient.email && <span>{patient.email}</span>}
               <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Início {new Date(patient.startDate).toLocaleDateString('pt-BR')}</span>
             </div>
           </div>
@@ -116,16 +196,14 @@ export default function ProPatientProfile() {
         <Card className="p-5 glass-card">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold">Adesão semanal</h3>
-            <span className="text-xs text-muted-foreground">% por dia</span>
+            <span className="text-xs text-muted-foreground">% por dia (últimos 7)</span>
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={weekly}>
+            <BarChart data={weeklyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+              <XAxis dataKey="dia" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
-              />
+              <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
               <ReferenceLine y={80} stroke="hsl(var(--accent))" strokeDasharray="3 3" />
               <Bar dataKey="adesao" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
             </BarChart>
@@ -134,18 +212,16 @@ export default function ProPatientProfile() {
 
         <Card className="p-5 glass-card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">Evolução mensal</h3>
-            <span className="text-xs text-muted-foreground">últimos 30 dias</span>
+            <h3 className="text-sm font-semibold">Evolução por semana</h3>
+            <span className="text-xs text-muted-foreground">últimas 4 semanas</span>
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={monthly}>
+            <LineChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="dia" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+              <XAxis dataKey="semana" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
-              />
-              <Line type="monotone" dataKey="adesao" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+              <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+              <Line type="monotone" dataKey="adesao" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -166,42 +242,43 @@ export default function ProPatientProfile() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Timeline */}
-        <Card className="p-5 glass-card lg:col-span-2">
-          <h3 className="text-sm font-semibold mb-4">Timeline de interações via WhatsApp</h3>
-          <div className="space-y-4">
-            {timeline.map(item => {
-              const ic = timelineIcon[item.type];
-              return (
-                <div key={item.id} className="flex gap-3">
-                  <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center shrink-0', ic.bg)}>
-                    <ic.icon className={cn('h-4 w-4', ic.color)} />
-                  </div>
-                  <div className="flex-1 min-w-0 pb-4 border-b border-border last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <p className="text-sm font-medium">{item.title}</p>
-                      <span className="text-[10px] text-muted-foreground shrink-0">{item.time}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* Notes */}
-        <Card className="p-5 glass-card">
-          <h3 className="text-sm font-semibold mb-3">Observações do profissional</h3>
-          <div className="text-sm text-muted-foreground bg-secondary/50 rounded-lg p-3 mb-3 leading-relaxed">
-            {patient.notes || 'Sem observações registradas.'}
-          </div>
-          <Button variant="outline" size="sm" className="w-full">
-            <NotebookPen className="h-3.5 w-3.5 mr-1.5" /> Registrar nova observação
+      {/* Observações profissionais */}
+      <Card className="p-5 glass-card">
+        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+          <NotebookPen className="h-4 w-4" /> Observações profissionais
+        </h3>
+        <div className="space-y-3 mb-4">
+          <textarea
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            placeholder="Registre uma observação sobre este paciente..."
+            className="w-full rounded-lg border border-border bg-secondary/30 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20"
+            rows={3}
+          />
+          <Button onClick={handleSaveNote} disabled={savingNote || !noteText.trim()} size="sm">
+            {savingNote ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+            Salvar observação
           </Button>
-        </Card>
-      </div>
+        </div>
+        {notesLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <Loader2 className="animate-spin h-4 w-4" /> Carregando...
+          </div>
+        ) : notes.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma observação registrada ainda.</p>
+        ) : (
+          <div className="space-y-3">
+            {notes.map(n => (
+              <div key={n.id} className="bg-secondary/30 rounded-lg p-3">
+                <p className="text-sm">{n.content}</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  {new Date(n.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </ProLayout>
   );
 }
