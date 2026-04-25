@@ -222,6 +222,48 @@ export type Database = {
           },
         ]
       }
+      diet_goals: {
+        Row: {
+          calories_target: number
+          carbs_target: number
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          objective: string
+          protein_target: number
+          start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories_target?: number
+          carbs_target?: number
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          objective?: string
+          protein_target?: number
+          start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories_target?: number
+          carbs_target?: number
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          objective?: string
+          protein_target?: number
+          start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       meal_logs: {
         Row: {
           client_id: string | null
