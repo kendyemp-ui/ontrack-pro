@@ -522,9 +522,10 @@ Deno.serve(async (req) => {
           imageDataUrl = await downloadTwilioImageAsDataUrl(mediaUrl, mediaContentType);
         }
 
-        // 1) Classificação de intenção
-        const intent = await classifyIntent(body, imageDataUrl);
-        console.log("Intent classificada:", intent);
+        // 1) Classificação de intenção (+ detecção de data retroativa)
+        const { intent, target_date } = await classifyIntent(body, imageDataUrl);
+        console.log("Intent classificada:", intent, "target_date:", target_date);
+        const overrideCreatedAt = target_date ? targetDateToTimestamp(target_date) : null;
 
         // 2) Roteamento
         if (intent === "out_of_scope") {
