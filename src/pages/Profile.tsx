@@ -9,7 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { integrations } from '@/data/mockData';
 
 const Profile = () => {
-  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout, totalBurn, activities } = useApp();
+  const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout, totalBurn, activities, user } = useApp();
   const dailyBurn = {
     total: totalBurn,
     steps: activities.reduce((s, a) => s + Number(a.activity_steps ?? 0), 0),
@@ -26,6 +26,9 @@ const Profile = () => {
 
   const [bio, setBio] = useState({ ...bioimpedance });
   const [editingBio, setEditingBio] = useState(false);
+  const [showPdfUpload, setShowPdfUpload] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [showAddRace, setShowAddRace] = useState(false);
   const [newRace, setNewRace] = useState({ name: '', type: 'Maratona', date: '', location: '', distance: '' });
@@ -33,10 +36,81 @@ const Profile = () => {
 
   const raceTypes = ['Maratona', 'Meia Maratona', 'Ironman', 'Ironman 70.3', 'Triathlon Olímpico', 'Triathlon Sprint', 'Ultra Maratona', '10K', '5K', 'Trail Run', 'Outro'];
 
-  const handleSaveBio = () => {
-    updateBioimpedance(bio);
-    setEditingBio(false);
-    toast({ title: 'Bioimpedância atualizada', description: 'Seus dados foram salvos com sucesso.' });
+  const handleEditToggle = () => {
+    if (!editingBio) {
+      // Ao entrar em modo edição, sincroniza com o valor atual do contexto
+      setBio({ ...bioimpedance });
+    }
+    setEditingBio(!editingBio);
+  };
+
+  const handleSaveBio = async () => {
+    try {
+      await updateBioimpedance(bio, 'manual');
+      setEditingBio(false);
+      toast({ title: 'Bioimpedância atualizada', description: 'Seus dados foram salvos com sucesso.' });
+    } catch (e) {
+      toast({ title: 'Erro ao salvar', description: 'Tente novamente em instantes.', variant: 'destructive' });
+    }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!user) {
+      toast({ title: 'Faça login para enviar o PDF', variant: 'destructive' });
+      return;
+    }
+    if (file.type !== 'application/pdf') {
+      toast({ title: 'Arquivo inválido', description: 'Envie um PDF do laudo de bioimpedância.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'PDF muito grande', description: 'Tamanho máximo: 10 MB.', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingPdf(true);
+    try {
+      const path = `${user.id}/${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`;
+      const { error: upErr } = await supabase.storage
+        .from('bioimpedance-pdfs')
+        .upload(path, file, { contentType: 'application/pdf', upsert: false });
+      if (upErr) throw upErr;
+
+      const { data: parseData, error: parseErr } = await supabase.functions.invoke('parse-bioimpedance-pdf', {
+        body: { pdfPath: path },
+      });
+      if (parseErr) throw parseErr;
+      if (parseData?.error) throw new Error(parseData.error);
+
+      const extracted = parseData?.data ?? {};
+      const merged = {
+        basalRate: extracted.basalRate ?? bio.basalRate,
+        weight: extracted.weight ?? bio.weight,
+        height: extracted.height ?? bio.height,
+        bodyFat: extracted.bodyFat ?? bio.bodyFat,
+        muscleMass: extracted.muscleMass ?? bio.muscleMass,
+        bodyWater: extracted.bodyWater ?? bio.bodyWater,
+        boneMass: extracted.boneMass ?? bio.boneMass,
+        visceralFat: extracted.visceralFat ?? bio.visceralFat,
+        metabolicAge: extracted.metabolicAge ?? bio.metabolicAge,
+      };
+      setBio(merged);
+      await updateBioimpedance(merged, 'pdf', path);
+      setShowPdfUpload(false);
+      setEditingBio(true);
+      toast({
+        title: 'PDF analisado com sucesso!',
+        description: 'Confira os campos preenchidos pela IA e ajuste se necessário antes de salvar.',
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao processar PDF';
+      toast({ title: 'Falha ao ler PDF', description: msg, variant: 'destructive' });
+    } finally {
+      setUploadingPdf(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleAddRace = () => {
