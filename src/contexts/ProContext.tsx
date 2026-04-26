@@ -197,14 +197,48 @@ export const ProProvider = ({ children }: { children: ReactNode }) => {
 
   const addPatient = async (data: { name: string; phone: string; email?: string }): Promise<Patient | null> => {
     if (!professionalId) return null;
-    const phone_e164 = data.phone.replace(/\D/g, '');
-    const { data: inserted, error } = await supabase
+    // Normaliza para E.164 BR (ex.: 5543991092929 -> +5543991092929).
+    // O trigger no banco também normaliza, mas mantemos aqui para a busca abaixo.
+    const digits = data.phone.replace(/\D/g, '');
+    const phone_e164 = digits.startsWith('55') ? `+${digits}` : `+55${digits}`;
+
+    // Se já existe um client com esse telefone (B2C puro ou de outro nutri), vinculamos
+    // ao profissional atual em vez de criar um duplicado — assim o histórico do B2C
+    // aparece automaticamente na visão Pró.
+    const { data: existing } = await supabase
       .from('clients')
-      .insert({ name: data.name, phone_e164, email: data.email || null, professional_id: professionalId })
-      .select()
-      .single();
-    if (error) {
-      toast.error('Erro ao adicionar paciente: ' + error.message);
+      .select('id, professional_id')
+      .eq('phone_e164', phone_e164)
+      .maybeSingle();
+
+    let inserted: any = null;
+    let error: any = null;
+
+    if (existing) {
+      if (existing.professional_id && existing.professional_id !== professionalId) {
+        toast.error('Esse telefone já está vinculado a outro profissional.');
+        return null;
+      }
+      const upd = await supabase
+        .from('clients')
+        .update({ name: data.name, email: data.email || null, professional_id: professionalId })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      inserted = upd.data;
+      error = upd.error;
+    } else {
+      const ins = await supabase
+        .from('clients')
+        .insert({ name: data.name, phone_e164, email: data.email || null, professional_id: professionalId })
+        .select()
+        .single();
+      inserted = ins.data;
+      error = ins.error;
+    }
+
+    if (error || !inserted) {
+      toast.error('Erro ao adicionar paciente: ' + (error?.message ?? 'desconhecido'));
       return null;
     }
     const newPatient: Patient = {

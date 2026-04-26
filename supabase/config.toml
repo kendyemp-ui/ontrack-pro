@@ -1,10 +1,4 @@
 project_id = "ljmxyfmbotgprqjznuzq"
 
-[functions.kiwify-webhook]
-verify_jwt = false
-
-[functions.whatsapp-webhook]
-verify_jwt = false
-
-[functions.daily-report]
+[functions.admin-create-pedro]
 verify_jwt = false
