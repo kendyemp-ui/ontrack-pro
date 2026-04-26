@@ -15,12 +15,15 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import ProDietPlanEditor from '@/components/pro/ProDietPlanEditor';
 
 export default function ProPatientProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPatient, professionalId } = usePro();
   const patient = id ? getPatient(id) : undefined;
+
+  const [activeTab, setActiveTab] = useState<'resumo' | 'dieta' | 'observacoes'>('resumo');
 
   // Observações
   const [noteText, setNoteText] = useState('');
@@ -170,115 +173,143 @@ export default function ProPatientProfile() {
         </div>
       </Card>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-        {stats.map((s, i) => (
-          <Card key={i} className="p-4 glass-card">
-            <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center mb-2', s.bg)}>
-              <s.icon className={cn('h-4 w-4', s.color)} />
-            </div>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{s.label}</p>
-            {s.isText ? (
-              <p className="text-sm font-semibold truncate">{s.value}</p>
-            ) : (
-              <p className={cn('text-lg font-semibold tabular-nums', s.color)}>
-                {s.signed && typeof s.value === 'number' && s.value > 0 && '+'}
-                {s.value}
-                <span className="text-xs text-muted-foreground font-normal ml-1">{s.suffix}</span>
-              </p>
-            )}
-          </Card>
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 mb-6 rounded-xl bg-secondary/40 border border-border">
+        {[
+          { id: 'resumo', label: 'Resumo' },
+          { id: 'dieta', label: 'Plano Alimentar' },
+          { id: 'observacoes', label: 'Observações' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === tab.id ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab.label}
+          </button>
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card className="p-5 glass-card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">Adesão semanal</h3>
-            <span className="text-xs text-muted-foreground">% por dia (últimos 7)</span>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={weeklyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="dia" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
-              <ReferenceLine y={80} stroke="hsl(var(--accent))" strokeDasharray="3 3" />
-              <Bar dataKey="adesao" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-5 glass-card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">Evolução por semana</h3>
-            <span className="text-xs text-muted-foreground">últimas 4 semanas</span>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="semana" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
-              <Line type="monotone" dataKey="adesao" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        <Card className="p-4 glass-card">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Dias dentro da meta</p>
-          <p className="text-2xl font-semibold text-emerald-400 tabular-nums">{diasNaMeta} / 7</p>
-        </Card>
-        <Card className="p-4 glass-card">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Dias fora da meta</p>
-          <p className="text-2xl font-semibold text-red-400 tabular-nums">{diasFora} / 7</p>
-        </Card>
-        <Card className="p-4 glass-card">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Consistência</p>
-          <p className="text-2xl font-semibold tabular-nums">{consistencia}%</p>
-        </Card>
-      </div>
-
-      {/* Observações profissionais */}
-      <Card className="p-5 glass-card">
-        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-          <NotebookPen className="h-4 w-4" /> Observações profissionais
-        </h3>
-        <div className="space-y-3 mb-4">
-          <textarea
-            value={noteText}
-            onChange={e => setNoteText(e.target.value)}
-            placeholder="Registre uma observação sobre este paciente..."
-            className="w-full rounded-lg border border-border bg-secondary/30 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20"
-            rows={3}
-          />
-          <Button onClick={handleSaveNote} disabled={savingNote || !noteText.trim()} size="sm">
-            {savingNote ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
-            Salvar observação
-          </Button>
-        </div>
-        {notesLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Loader2 className="animate-spin h-4 w-4" /> Carregando...
-          </div>
-        ) : notes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma observação registrada ainda.</p>
-        ) : (
-          <div className="space-y-3">
-            {notes.map(n => (
-              <div key={n.id} className="bg-secondary/30 rounded-lg p-3">
-                <p className="text-sm">{n.content}</p>
-                <p className="text-[10px] text-muted-foreground mt-1.5">
-                  {new Date(n.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
+      {activeTab === 'resumo' && (
+        <>
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+            {stats.map((s, i) => (
+              <Card key={i} className="p-4 glass-card">
+                <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center mb-2', s.bg)}>
+                  <s.icon className={cn('h-4 w-4', s.color)} />
+                </div>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{s.label}</p>
+                {s.isText ? (
+                  <p className="text-sm font-semibold truncate">{s.value}</p>
+                ) : (
+                  <p className={cn('text-lg font-semibold tabular-nums', s.color)}>
+                    {s.signed && typeof s.value === 'number' && s.value > 0 && '+'}
+                    {s.value}
+                    <span className="text-xs text-muted-foreground font-normal ml-1">{s.suffix}</span>
+                  </p>
+                )}
+              </Card>
             ))}
           </div>
-        )}
-      </Card>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <Card className="p-5 glass-card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold">Adesão semanal</h3>
+                <span className="text-xs text-muted-foreground">% por dia (últimos 7)</span>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="dia" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                  <ReferenceLine y={80} stroke="hsl(var(--accent))" strokeDasharray="3 3" />
+                  <Bar dataKey="adesao" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card className="p-5 glass-card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold">Evolução por semana</h3>
+                <span className="text-xs text-muted-foreground">últimas 4 semanas</span>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="semana" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                  <Line type="monotone" dataKey="adesao" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+            <Card className="p-4 glass-card">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Dias dentro da meta</p>
+              <p className="text-2xl font-semibold text-emerald-400 tabular-nums">{diasNaMeta} / 7</p>
+            </Card>
+            <Card className="p-4 glass-card">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Dias fora da meta</p>
+              <p className="text-2xl font-semibold text-red-400 tabular-nums">{diasFora} / 7</p>
+            </Card>
+            <Card className="p-4 glass-card">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Consistência</p>
+              <p className="text-2xl font-semibold tabular-nums">{consistencia}%</p>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'dieta' && (
+        <ProDietPlanEditor clientId={patient.id} />
+      )}
+
+      {activeTab === 'observacoes' && (
+        <Card className="p-5 glass-card">
+          <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+            <NotebookPen className="h-4 w-4" /> Observações profissionais
+          </h3>
+          <div className="space-y-3 mb-4">
+            <textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="Registre uma observação sobre este paciente..."
+              className="w-full rounded-lg border border-border bg-secondary/30 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20"
+              rows={3}
+            />
+            <Button onClick={handleSaveNote} disabled={savingNote || !noteText.trim()} size="sm">
+              {savingNote ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+              Salvar observação
+            </Button>
+          </div>
+          {notesLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="animate-spin h-4 w-4" /> Carregando...
+            </div>
+          ) : notes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma observação registrada ainda.</p>
+          ) : (
+            <div className="space-y-3">
+              {notes.map(n => (
+                <div key={n.id} className="bg-secondary/30 rounded-lg p-3">
+                  <p className="text-sm">{n.content}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">
+                    {new Date(n.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
     </ProLayout>
   );
 }
