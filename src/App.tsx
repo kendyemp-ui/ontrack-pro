@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import WhatsAppChat from "./pages/WhatsAppChat";
 import MealRegistration from "./pages/MealRegistration";
 import DietGoals from "./pages/DietGoals";
+import DietPlan from "./pages/DietPlan";
 import MealHistory from "./pages/MealHistory";
 import Integrations from "./pages/Integrations";
 import Profile from "./pages/Profile";
@@ -102,6 +103,7 @@ const App = () => (
               <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppChat /></ProtectedRoute>} />
               <Route path="/meal" element={<ProtectedRoute><MealRegistration /></ProtectedRoute>} />
               <Route path="/diet" element={<ProtectedRoute><DietGoals /></ProtectedRoute>} />
+              <Route path="/plano-alimentar" element={<ProtectedRoute><DietPlan /></ProtectedRoute>} />
               <Route path="/history" element={<ProtectedRoute><MealHistory /></ProtectedRoute>} />
               <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

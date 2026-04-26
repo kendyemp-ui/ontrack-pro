@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
 import { useApp } from '@/contexts/AppContext';
-import { Save, Check, Target } from 'lucide-react';
+import { Save, Check, Target, UtensilsCrossed, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { objectiveLabels } from '@/lib/goalStatus';
 import type { DietObjective } from '@/data/mockData';
@@ -14,6 +15,7 @@ const objectiveOptions: { value: DietObjective; label: string; hint: string }[] 
 
 const DietGoals = () => {
   const { goal, updateGoal } = useApp();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ ...goal });
   const [saved, setSaved] = useState(false);
 
@@ -41,6 +43,23 @@ const DietGoals = () => {
           <h1 className="text-2xl font-heading font-bold text-foreground">Dieta / Meta Nutricional</h1>
           <p className="text-sm text-muted-foreground mt-1">Configure sua meta diária para acompanhar pelo dashboard</p>
         </div>
+
+        {/* Acesso ao Plano Alimentar */}
+        <button
+          onClick={() => navigate('/plano-alimentar')}
+          className="w-full glass-card rounded-2xl p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors animate-fade-in"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+              <UtensilsCrossed size={18} className="text-accent" strokeWidth={1.5} />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-foreground">Plano Alimentar</p>
+              <p className="text-[11px] text-muted-foreground">Veja o plano do seu nutricionista ou monte o seu</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+        </button>
 
         {/* Objetivo atual */}
         <div className="glass-card rounded-2xl p-5 space-y-4 animate-slide-up">
