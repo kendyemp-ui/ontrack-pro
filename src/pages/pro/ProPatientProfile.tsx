@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ProDietPlanEditor from '@/components/pro/ProDietPlanEditor';
+import PatientDashboardTab from '@/components/pro/PatientDashboardTab';
 
 export default function ProPatientProfile() {
   const { id } = useParams<{ id: string }>();
