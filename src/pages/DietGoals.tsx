@@ -15,6 +15,7 @@ const objectiveOptions: { value: DietObjective; label: string; hint: string }[] 
 
 const DietGoals = () => {
   const { goal, updateGoal } = useApp();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ ...goal });
   const [saved, setSaved] = useState(false);
 
