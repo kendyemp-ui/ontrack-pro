@@ -1,5 +1,6 @@
-// One-shot admin endpoint to create Pedro Tramontina B2C + Pro accounts.
-// Safe to re-run: uses upserts / "if not exists" semantics.
+// One-shot admin endpoint to create Pedro Tramontina account.
+// One single login that works as B2C patient AND as Pro nutritionist (same as demo@ontrack.com).
+// Safe to re-run: uses upsert / "if not exists" semantics.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -17,60 +18,83 @@ const PEDRO = {
   phone: "+5543996937351",
 };
 
-const NUTRI = {
-  email: "pedrohtramontina+nutri@gmail.com",
-  password: "nutri123",
-  full_name: "Dr. Pedro Tramontina",
-  phone: "+5543996937351",
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
   const log: string[] = [];
 
-  async function ensureUser(u: { email: string; password: string; full_name: string; phone: string }) {
-    const { data: list } = await sb.auth.admin.listUsers();
-    const existing = list.users.find((x) => x.email?.toLowerCase() === u.email.toLowerCase());
-    if (existing) {
-      log.push(`user exists: ${u.email} (${existing.id})`);
-      return existing.id;
-    }
-    const { data, error } = await sb.auth.admin.createUser({
-      email: u.email,
-      password: u.password,
-      email_confirm: true,
-      user_metadata: { full_name: u.full_name, phone: u.phone },
-    });
-    if (error) throw new Error(`createUser ${u.email}: ${error.message}`);
-    log.push(`user created: ${u.email} (${data.user!.id})`);
-    return data.user!.id;
-  }
-
   try {
-    // 1) B2C user (paciente)
-    const pedroId = await ensureUser(PEDRO);
-
-    // Garante assinatura ativa (necessário para login B2C)
-    await sb.from("subscriptions").upsert(
-      { email: PEDRO.email, status: "active", plan: "demo", provider: "manual" },
-      { onConflict: "email" },
+    // 1) Create or fetch the auth user
+    const { data: list } = await sb.auth.admin.listUsers();
+    let userId: string;
+    const existing = list.users.find(
+      (x) => x.email?.toLowerCase() === PEDRO.email.toLowerCase(),
     );
-    log.push(`subscription active for ${PEDRO.email}`);
+    if (existing) {
+      userId = existing.id;
+      log.push(`user exists: ${PEDRO.email} (${userId})`);
+      // make sure password matches what was requested
+      await sb.auth.admin.updateUserById(userId, {
+        password: PEDRO.password,
+        email_confirm: true,
+        user_metadata: { full_name: PEDRO.full_name, phone: PEDRO.phone },
+      });
+    } else {
+      const { data, error } = await sb.auth.admin.createUser({
+        email: PEDRO.email,
+        password: PEDRO.password,
+        email_confirm: true,
+        user_metadata: { full_name: PEDRO.full_name, phone: PEDRO.phone },
+      });
+      if (error) throw new Error(`createUser: ${error.message}`);
+      userId = data.user!.id;
+      log.push(`user created: ${PEDRO.email} (${userId})`);
+    }
 
-    // 2) Nutricionista (Pró)
-    const nutriId = await ensureUser(NUTRI);
+    // 2) Make sure profile has the right phone (trigger handles E.164)
+    await sb
+      .from("profiles")
+      .upsert({ id: userId, full_name: PEDRO.full_name, phone: PEDRO.phone });
+    log.push("profile upserted");
 
-    // Role profissional
-    await sb.from("user_roles").upsert(
-      { user_id: nutriId, role: "profissional" },
-      { onConflict: "user_id,role" },
-    );
-    log.push(`role profissional assigned to ${NUTRI.email}`);
+    // 3) Active subscription so B2C login works
+    const { data: sub } = await sb
+      .from("subscriptions")
+      .select("id")
+      .ilike("email", PEDRO.email)
+      .maybeSingle();
+    if (sub) {
+      await sb
+        .from("subscriptions")
+        .update({ status: "active", plan: "demo", provider: "manual" })
+        .eq("id", sub.id);
+      log.push("subscription updated to active");
+    } else {
+      await sb.from("subscriptions").insert({
+        email: PEDRO.email,
+        status: "active",
+        plan: "demo",
+        provider: "manual",
+      });
+      log.push("subscription inserted (active)");
+    }
 
-    // 3) Vincula o Pedro como paciente do nutricionista Pedro
-    // (o trigger profiles_sync_to_client já criou um client B2C; vamos garantir vínculo)
+    // 4) Pro role
+    const { data: existingRole } = await sb
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("role", "profissional")
+      .maybeSingle();
+    if (!existingRole) {
+      await sb.from("user_roles").insert({ user_id: userId, role: "profissional" });
+      log.push("role profissional assigned");
+    } else {
+      log.push("role profissional already present");
+    }
+
+    // 5) Make Pedro his own patient too — link the auto-created B2C client to himself as professional
     const { data: client } = await sb
       .from("clients")
       .select("id, professional_id")
@@ -78,15 +102,15 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (client) {
-      if (client.professional_id !== nutriId) {
-        await sb
-          .from("clients")
-          .update({ professional_id: nutriId, name: PEDRO.full_name, email: PEDRO.email })
-          .eq("id", client.id);
-        log.push(`client ${client.id} linked to nutri ${nutriId}`);
-      } else {
-        log.push(`client ${client.id} already linked`);
-      }
+      await sb
+        .from("clients")
+        .update({
+          professional_id: userId,
+          name: PEDRO.full_name,
+          email: PEDRO.email,
+        })
+        .eq("id", client.id);
+      log.push(`client ${client.id} linked as own patient`);
     } else {
       const { data: ins, error: insErr } = await sb
         .from("clients")
@@ -94,7 +118,7 @@ Deno.serve(async (req) => {
           name: PEDRO.full_name,
           phone_e164: PEDRO.phone,
           email: PEDRO.email,
-          professional_id: nutriId,
+          professional_id: userId,
         })
         .select()
         .single();
@@ -102,7 +126,7 @@ Deno.serve(async (req) => {
       log.push(`client created ${ins.id}`);
     }
 
-    return new Response(JSON.stringify({ ok: true, log }, null, 2), {
+    return new Response(JSON.stringify({ ok: true, userId, log }, null, 2), {
       headers: { ...corsHeaders, "content-type": "application/json" },
     });
   } catch (e) {
