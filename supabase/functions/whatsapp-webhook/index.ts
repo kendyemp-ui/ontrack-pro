@@ -134,23 +134,33 @@ REGRA CRÍTICA PARA IMAGEM + TEXTO COMPLEMENTAR:
 - Some imagem + texto em UMA única estimativa final.
 - Se houver conflito, escolha a combinação mais plausível dos dois.
 
+DESCRIÇÃO DA REFEIÇÃO (OBRIGATÓRIA):
+- SEMPRE preencha o campo "meal_description" com uma descrição CURTA (máx 120 caracteres) e objetiva do que foi consumido, em português, listando os principais alimentos identificados (na imagem e/ou no texto).
+- Exemplos: "Arroz, feijão, frango grelhado e salada de alface", "Iogurte com granola, banana e mel", "Pão francês com requeijão e café com leite".
+- Não inclua quantidades exatas nem macros nessa descrição — apenas os alimentos.
+- Se realmente não for possível identificar nada na imagem, use "Refeição não identificada".
+
 Mantenha consistência: nunca devolva valores absurdamente baixos para pratos grandes nem altos para refeições leves.
-SEMPRE chame a tool estimate_macros com o total final. Se não for possível estimar, retorne zeros.`;
+SEMPRE chame a tool estimate_macros com o total final. Se não for possível estimar macros, retorne zeros — mas tente sempre preencher meal_description.`;
 
 const MACRO_TOOL = {
   type: "function" as const,
   function: {
     name: "estimate_macros",
-    description: "Retorna a estimativa nutricional total da refeição.",
+    description: "Retorna a estimativa nutricional total da refeição e uma descrição curta dos alimentos identificados.",
     parameters: {
       type: "object",
       properties: {
+        meal_description: {
+          type: "string",
+          description: "Descrição curta (até 120 caracteres) dos principais alimentos identificados na refeição.",
+        },
         estimated_kcal: { type: "number" },
         estimated_protein: { type: "number" },
         estimated_carbs: { type: "number" },
         estimated_fat: { type: "number" },
       },
-      required: ["estimated_kcal", "estimated_protein", "estimated_carbs", "estimated_fat"],
+      required: ["meal_description", "estimated_kcal", "estimated_protein", "estimated_carbs", "estimated_fat"],
       additionalProperties: false,
     },
   },
@@ -246,6 +256,7 @@ const OUT_OF_SCOPE_MSG =
 // ============================================================
 
 interface MacroEstimate {
+  meal_description: string;
   estimated_kcal: number;
   estimated_protein: number;
   estimated_carbs: number;
@@ -378,7 +389,10 @@ async function estimateMeal(text: string, imageDataUrl: string | null): Promise<
     MACRO_TOOL,
     "estimate_macros",
   );
+  const rawDesc = typeof r.meal_description === "string" ? r.meal_description.trim() : "";
+  const meal_description = rawDesc.length > 0 ? rawDesc.slice(0, 140) : "Refeição não identificada";
   return {
+    meal_description,
     estimated_kcal: Number(r.estimated_kcal) || 0,
     estimated_protein: Number(r.estimated_protein) || 0,
     estimated_carbs: Number(r.estimated_carbs) || 0,
@@ -628,7 +642,14 @@ Deno.serve(async (req) => {
         if (mealErr || !mealLog) throw mealErr || new Error("Falha ao criar meal_log");
 
         const macros = await estimateMeal(body, imageDataUrl);
+
+        // Se o usuário não enviou texto (somente foto), grava a descrição gerada pela IA
+        // como original_text para que paciente e nutricionista vejam do que se trata a refeição.
+        const userText = (body || "").trim();
+        const finalOriginalText = userText.length > 0 ? userText : macros.meal_description;
+
         await supabase.from("meal_logs").update({
+          original_text: finalOriginalText,
           estimated_kcal: macros.estimated_kcal,
           estimated_protein: macros.estimated_protein,
           estimated_carbs: macros.estimated_carbs,
@@ -639,8 +660,13 @@ Deno.serve(async (req) => {
         const dateSuffixMeal = overrideCreatedAt
           ? `\n\n📅 Registrada na data informada: ${formatDateBR(target_date!)}`
           : "";
+        // Mostra o que a IA identificou apenas quando a foto veio sem texto do usuário
+        const identifiedLine = userText.length === 0 && isImage
+          ? `📸 *Identifiquei:* ${macros.meal_description}\n\n`
+          : "";
         const finalMsg =
           `✅ *Refeição registrada com sucesso!*\n\n` +
+          identifiedLine +
           `🍽️ *Estimativa nutricional:*\n` +
           `• Calorias: ${Math.round(macros.estimated_kcal)} kcal\n` +
           `• Proteínas: ${macros.estimated_protein.toFixed(1)} g\n` +
