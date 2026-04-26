@@ -194,6 +194,10 @@ export default function ProPatientProfile() {
         ))}
       </div>
 
+      {activeTab === 'dashboard' && (
+        <PatientDashboardTab clientId={patient.id} />
+      )}
+
       {activeTab === 'resumo' && (
         <>
           {/* Stats grid */}
