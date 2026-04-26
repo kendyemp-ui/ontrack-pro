@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import WhatsAppChat from "./pages/WhatsAppChat";
 import MealRegistration from "./pages/MealRegistration";
 import DietGoals from "./pages/DietGoals";
+import DietPlan from "./pages/DietPlan";
 import MealHistory from "./pages/MealHistory";
 import Integrations from "./pages/Integrations";
 import Profile from "./pages/Profile";
