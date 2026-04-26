@@ -177,6 +177,7 @@ export default function ProPatientProfile() {
       {/* Tabs */}
       <div className="flex gap-1 p-1 mb-6 rounded-xl bg-secondary/40 border border-border">
         {[
+          { id: 'dashboard', label: 'Dashboard' },
           { id: 'resumo', label: 'Resumo' },
           { id: 'dieta', label: 'Plano Alimentar' },
           { id: 'observacoes', label: 'Observações' },
