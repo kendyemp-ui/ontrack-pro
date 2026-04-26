@@ -389,7 +389,10 @@ async function estimateMeal(text: string, imageDataUrl: string | null): Promise<
     MACRO_TOOL,
     "estimate_macros",
   );
+  const rawDesc = typeof r.meal_description === "string" ? r.meal_description.trim() : "";
+  const meal_description = rawDesc.length > 0 ? rawDesc.slice(0, 140) : "Refeição não identificada";
   return {
+    meal_description,
     estimated_kcal: Number(r.estimated_kcal) || 0,
     estimated_protein: Number(r.estimated_protein) || 0,
     estimated_carbs: Number(r.estimated_carbs) || 0,
