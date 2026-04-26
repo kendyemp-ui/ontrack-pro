@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
 import { useApp } from '@/contexts/AppContext';
-import { Save, Check, Target } from 'lucide-react';
+import { Save, Check, Target, UtensilsCrossed, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { objectiveLabels } from '@/lib/goalStatus';
 import type { DietObjective } from '@/data/mockData';
