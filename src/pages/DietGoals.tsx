@@ -44,6 +44,23 @@ const DietGoals = () => {
           <p className="text-sm text-muted-foreground mt-1">Configure sua meta diária para acompanhar pelo dashboard</p>
         </div>
 
+        {/* Acesso ao Plano Alimentar */}
+        <button
+          onClick={() => navigate('/plano-alimentar')}
+          className="w-full glass-card rounded-2xl p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors animate-fade-in"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+              <UtensilsCrossed size={18} className="text-accent" strokeWidth={1.5} />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-foreground">Plano Alimentar</p>
+              <p className="text-[11px] text-muted-foreground">Veja o plano do seu nutricionista ou monte o seu</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+        </button>
+
         {/* Objetivo atual */}
         <div className="glass-card rounded-2xl p-5 space-y-4 animate-slide-up">
           <div className="flex items-center gap-2">
