@@ -24,7 +24,7 @@ export default function ProPatientProfile() {
   const { getPatient, professionalId } = usePro();
   const patient = id ? getPatient(id) : undefined;
 
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dieta' | 'observacoes'>('resumo');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'resumo' | 'dieta' | 'observacoes'>('dashboard');
 
   // Observações
   const [noteText, setNoteText] = useState('');
