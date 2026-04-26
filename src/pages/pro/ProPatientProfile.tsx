@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ProDietPlanEditor from '@/components/pro/ProDietPlanEditor';
+import PatientDashboardTab from '@/components/pro/PatientDashboardTab';
 
 export default function ProPatientProfile() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +24,7 @@ export default function ProPatientProfile() {
   const { getPatient, professionalId } = usePro();
   const patient = id ? getPatient(id) : undefined;
 
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dieta' | 'observacoes'>('resumo');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'resumo' | 'dieta' | 'observacoes'>('dashboard');
 
   // Observações
   const [noteText, setNoteText] = useState('');
@@ -176,6 +177,7 @@ export default function ProPatientProfile() {
       {/* Tabs */}
       <div className="flex gap-1 p-1 mb-6 rounded-xl bg-secondary/40 border border-border">
         {[
+          { id: 'dashboard', label: 'Dashboard' },
           { id: 'resumo', label: 'Resumo' },
           { id: 'dieta', label: 'Plano Alimentar' },
           { id: 'observacoes', label: 'Observações' },
@@ -191,6 +193,10 @@ export default function ProPatientProfile() {
           </button>
         ))}
       </div>
+
+      {activeTab === 'dashboard' && (
+        <PatientDashboardTab clientId={patient.id} />
+      )}
 
       {activeTab === 'resumo' && (
         <>
