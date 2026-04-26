@@ -103,6 +103,7 @@ const App = () => (
               <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppChat /></ProtectedRoute>} />
               <Route path="/meal" element={<ProtectedRoute><MealRegistration /></ProtectedRoute>} />
               <Route path="/diet" element={<ProtectedRoute><DietGoals /></ProtectedRoute>} />
+              <Route path="/plano-alimentar" element={<ProtectedRoute><DietPlan /></ProtectedRoute>} />
               <Route path="/history" element={<ProtectedRoute><MealHistory /></ProtectedRoute>} />
               <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
