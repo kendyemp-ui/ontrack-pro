@@ -256,6 +256,7 @@ const OUT_OF_SCOPE_MSG =
 // ============================================================
 
 interface MacroEstimate {
+  meal_description: string;
   estimated_kcal: number;
   estimated_protein: number;
   estimated_carbs: number;
