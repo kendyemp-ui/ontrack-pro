@@ -745,6 +745,7 @@ export type Database = {
         Returns: boolean
       }
       is_subscription_active: { Args: { _email: string }; Returns: boolean }
+      normalize_phone_e164: { Args: { _phone: string }; Returns: string }
       recompute_daily_summary: {
         Args: { _client_id: string; _date: string }
         Returns: undefined
