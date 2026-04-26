@@ -80,14 +80,36 @@ export function useTodayMeals(userId: string | null, userPhone: string | null) {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     (async () => {
-      // 1) Resolve client by phone match (RLS filters automatically)
-      const { data: clients } = await supabase
-        .from('clients')
-        .select('id, phone_e164, basal_rate_kcal')
-        .limit(1);
+      // 1) Resolve the exact client linked to the logged-in user.
+      // Avoid fetching an arbitrary visible client (important for admin/pro demo accounts).
+      let clientId: string | null = null;
+      let clientBasalRate: number | null = null;
 
-      const clientId = clients?.[0]?.id ?? null;
-      const clientBasalRate = clients?.[0]?.basal_rate_kcal ?? null;
+      const { data: rpcClientId, error: rpcError } = await supabase.rpc('current_client_id');
+
+      if (!rpcError && rpcClientId) {
+        clientId = rpcClientId;
+
+        const { data: clientRow } = await supabase
+          .from('clients')
+          .select('id, basal_rate_kcal')
+          .eq('id', rpcClientId)
+          .maybeSingle();
+
+        clientBasalRate = clientRow?.basal_rate_kcal ?? null;
+      }
+
+      if (!clientId && userPhone) {
+        const { data: clientByPhone } = await supabase
+          .from('clients')
+          .select('id, basal_rate_kcal')
+          .eq('phone_e164', userPhone)
+          .maybeSingle();
+
+        clientId = clientByPhone?.id ?? null;
+        clientBasalRate = clientByPhone?.basal_rate_kcal ?? null;
+      }
+
       if (!clientId) {
         if (!cancelled) setState({ loading: false, clientId: null, clientBasalRate: null, rows: [], meals: [] });
         return;
