@@ -642,7 +642,14 @@ Deno.serve(async (req) => {
         if (mealErr || !mealLog) throw mealErr || new Error("Falha ao criar meal_log");
 
         const macros = await estimateMeal(body, imageDataUrl);
+
+        // Se o usuário não enviou texto (somente foto), grava a descrição gerada pela IA
+        // como original_text para que paciente e nutricionista vejam do que se trata a refeição.
+        const userText = (body || "").trim();
+        const finalOriginalText = userText.length > 0 ? userText : macros.meal_description;
+
         await supabase.from("meal_logs").update({
+          original_text: finalOriginalText,
           estimated_kcal: macros.estimated_kcal,
           estimated_protein: macros.estimated_protein,
           estimated_carbs: macros.estimated_carbs,
@@ -653,8 +660,13 @@ Deno.serve(async (req) => {
         const dateSuffixMeal = overrideCreatedAt
           ? `\n\n📅 Registrada na data informada: ${formatDateBR(target_date!)}`
           : "";
+        // Mostra o que a IA identificou apenas quando a foto veio sem texto do usuário
+        const identifiedLine = userText.length === 0 && isImage
+          ? `📸 *Identifiquei:* ${macros.meal_description}\n\n`
+          : "";
         const finalMsg =
           `✅ *Refeição registrada com sucesso!*\n\n` +
+          identifiedLine +
           `🍽️ *Estimativa nutricional:*\n` +
           `• Calorias: ${Math.round(macros.estimated_kcal)} kcal\n` +
           `• Proteínas: ${macros.estimated_protein.toFixed(1)} g\n` +
