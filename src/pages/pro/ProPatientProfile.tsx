@@ -15,12 +15,15 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import ProDietPlanEditor from '@/components/pro/ProDietPlanEditor';
 
 export default function ProPatientProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPatient, professionalId } = usePro();
   const patient = id ? getPatient(id) : undefined;
+
+  const [activeTab, setActiveTab] = useState<'resumo' | 'dieta' | 'observacoes'>('resumo');
 
   // Observações
   const [noteText, setNoteText] = useState('');
