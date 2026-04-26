@@ -308,6 +308,153 @@ export type Database = {
         }
         Relationships: []
       }
+      diet_plan_foods: {
+        Row: {
+          carbs: number | null
+          fat: number | null
+          food_name: string
+          id: string
+          kcal: number | null
+          meal_id: string
+          protein: number | null
+          quantity: number | null
+          unit: string | null
+        }
+        Insert: {
+          carbs?: number | null
+          fat?: number | null
+          food_name: string
+          id?: string
+          kcal?: number | null
+          meal_id: string
+          protein?: number | null
+          quantity?: number | null
+          unit?: string | null
+        }
+        Update: {
+          carbs?: number | null
+          fat?: number | null
+          food_name?: string
+          id?: string
+          kcal?: number | null
+          meal_id?: string
+          protein?: number | null
+          quantity?: number | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_plan_foods_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "diet_plan_meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diet_plan_meals: {
+        Row: {
+          id: string
+          meal_order: number | null
+          name: string
+          plan_id: string
+          target_carbs: number | null
+          target_fat: number | null
+          target_kcal: number | null
+          target_protein: number | null
+          time_suggestion: string | null
+        }
+        Insert: {
+          id?: string
+          meal_order?: number | null
+          name: string
+          plan_id: string
+          target_carbs?: number | null
+          target_fat?: number | null
+          target_kcal?: number | null
+          target_protein?: number | null
+          time_suggestion?: string | null
+        }
+        Update: {
+          id?: string
+          meal_order?: number | null
+          name?: string
+          plan_id?: string
+          target_carbs?: number | null
+          target_fat?: number | null
+          target_kcal?: number | null
+          target_protein?: number | null
+          time_suggestion?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_plan_meals_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "diet_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diet_plans: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          objective: string | null
+          professional_id: string | null
+          total_carbs: number | null
+          total_fat: number | null
+          total_kcal: number | null
+          total_protein: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          objective?: string | null
+          professional_id?: string | null
+          total_carbs?: number | null
+          total_fat?: number | null
+          total_kcal?: number | null
+          total_protein?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          objective?: string | null
+          professional_id?: string | null
+          total_carbs?: number | null
+          total_fat?: number | null
+          total_kcal?: number | null
+          total_protein?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_logs: {
         Row: {
           client_id: string | null
