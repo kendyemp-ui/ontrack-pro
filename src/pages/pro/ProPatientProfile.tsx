@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ProDietPlanEditor from '@/components/pro/ProDietPlanEditor';
 import PatientDashboardTab from '@/components/pro/PatientDashboardTab';
+import { usePatientDashboard } from '@/hooks/usePatientDashboard';
 
 export default function ProPatientProfile() {
   const { id } = useParams<{ id: string }>();
@@ -115,6 +116,9 @@ export default function ProPatientProfile() {
     setSavingNote(false);
   };
 
+  // Real data from daily_summary for Resumo tab stats
+  const { todaySummary, goals } = usePatientDashboard(patient?.id);
+
   if (!patient) {
     return (
       <ProLayout title="Paciente não encontrado">
@@ -123,18 +127,23 @@ export default function ProPatientProfile() {
     );
   }
 
-  const balance = patient.caloriesToday - patient.burnToday;
+  const kcalConsumed = todaySummary?.kcal_consumed ?? 0;
+  const kcalGasto = todaySummary?.total_expenditure_kcal ?? 0;
+  const balance = todaySummary?.calorie_balance ?? 0;
+  const proteinConsumed = todaySummary?.protein_consumed ?? 0;
+  const carbsConsumed = todaySummary?.carbs_consumed ?? 0;
+  const mealsCount = todaySummary?.meal_count ?? 0;
   const diasNaMeta = weeklyData.filter(w => w.adesao >= 80).length;
   const diasFora = 7 - diasNaMeta;
   const consistencia = Math.round((diasNaMeta / 7) * 100);
 
   const stats = [
-    { label: 'Calorias hoje', value: patient.caloriesToday, suffix: 'kcal', icon: Flame, color: 'text-accent', bg: 'bg-accent/10' },
-    { label: 'Gasto total', value: patient.burnToday, suffix: 'kcal', icon: TrendingDown, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+    { label: 'Calorias hoje', value: kcalConsumed, suffix: 'kcal', icon: Flame, color: 'text-accent', bg: 'bg-accent/10' },
+    { label: 'Gasto total', value: kcalGasto, suffix: 'kcal', icon: TrendingDown, color: 'text-orange-400', bg: 'bg-orange-500/10' },
     { label: 'Saldo do dia', value: balance, suffix: 'kcal', icon: Flame, color: balance < 0 ? 'text-red-400' : 'text-emerald-400', bg: balance < 0 ? 'bg-red-500/10' : 'bg-emerald-500/10', signed: true },
-    { label: 'Proteína', value: `${patient.proteinToday}/${patient.proteinTarget}`, suffix: 'g', icon: Beef, color: 'text-red-400', bg: 'bg-red-500/10' },
-    { label: 'Carboidrato', value: `${patient.carbsToday}/${patient.carbsTarget}`, suffix: 'g', icon: Wheat, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'Refeições', value: patient.mealsToday, suffix: 'hoje', icon: Utensils, color: 'text-foreground', bg: 'bg-secondary' },
+    { label: 'Proteína', value: `${Math.round(proteinConsumed)}/${goals.protein_target}`, suffix: 'g', icon: Beef, color: 'text-red-400', bg: 'bg-red-500/10' },
+    { label: 'Carboidrato', value: `${Math.round(carbsConsumed)}/${goals.carbs_target}`, suffix: 'g', icon: Wheat, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { label: 'Refeições', value: mealsCount, suffix: 'hoje', icon: Utensils, color: 'text-foreground', bg: 'bg-secondary' },
     { label: 'Última interação', value: patient.lastInteraction, suffix: '', icon: MessageCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', isText: true },
   ];
 
