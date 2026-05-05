@@ -4,8 +4,13 @@ import { usePro } from '@/contexts/ProContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, UtensilsCrossed } from 'lucide-react';
+import {
+  Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp,
+  UtensilsCrossed, Sparkles, X, Check,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
+// ── types ─────────────────────────────────────────────────────────────────────
 interface Food {
   id?: string;
   food_name: string;
@@ -34,37 +39,123 @@ interface Plan {
   meals: Meal[];
 }
 
-const UNITS = ['g', 'ml', 'unidade', 'colher de sopa', 'xícara'];
+// ── constants ─────────────────────────────────────────────────────────────────
+const UNITS = ['g', 'ml', 'unidade', 'fatia', 'colher de sopa', 'xícara'];
 const OBJECTIVES = [
-  { value: 'lose', label: 'Perda de gordura' },
+  { value: 'lose',     label: 'Perda de gordura' },
   { value: 'maintain', label: 'Manutenção' },
-  { value: 'gain', label: 'Ganho de massa' },
+  { value: 'gain',     label: 'Ganho de massa' },
 ];
 const DEFAULT_MEALS = ['Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar'];
+const KCAL_LEVELS = [1500, 1750, 2000, 2500, 3000, 4000] as const;
 
+// ── diet templates ────────────────────────────────────────────────────────────
+function buildTemplate(targetKcal: number): Plan {
+  const s = targetKcal / 2000;
+  const sc = (n: number) => Math.max(0, Math.round(n * s));
+
+  return {
+    name: `Plano ${targetKcal} kcal`,
+    objective: targetKcal <= 1750 ? 'lose' : targetKcal <= 2200 ? 'maintain' : 'gain',
+    notes: `Plano base de ${targetKcal} kcal/dia. Ajuste os alimentos e quantidades conforme a necessidade e preferências do paciente.`,
+    meals: [
+      {
+        name: 'Café da manhã', time_suggestion: '07:00', meal_order: 0, expanded: true,
+        foods: [
+          { food_name: 'Ovos mexidos',   quantity: Math.max(1, sc(2)),   unit: 'unidade', kcal: sc(140), protein: sc(12), carbs: sc(1),  fat: sc(10) },
+          { food_name: 'Aveia',          quantity: sc(40),               unit: 'g',       kcal: sc(148), protein: sc(5),  carbs: sc(27), fat: sc(3)  },
+          { food_name: 'Leite desnatado',quantity: sc(200),              unit: 'ml',      kcal: sc(70),  protein: sc(7),  carbs: sc(10), fat: 0      },
+          { food_name: 'Banana',         quantity: Math.max(0, sc(1)),   unit: 'unidade', kcal: sc(89),  protein: sc(1),  carbs: sc(23), fat: 0      },
+        ].filter(f => f.quantity > 0 && f.kcal > 0),
+      },
+      {
+        name: 'Lanche da manhã', time_suggestion: '10:00', meal_order: 1, expanded: false,
+        foods: [
+          { food_name: 'Iogurte grego',   quantity: sc(170), unit: 'g',  kcal: sc(100), protein: sc(17), carbs: sc(6),  fat: 0     },
+          { food_name: 'Granola',         quantity: sc(25),  unit: 'g',  kcal: sc(100), protein: sc(2),  carbs: sc(17), fat: sc(3) },
+          { food_name: 'Frutas vermelhas',quantity: sc(80),  unit: 'g',  kcal: sc(40),  protein: sc(1),  carbs: sc(10), fat: 0     },
+        ].filter(f => f.quantity > 0 && f.kcal > 0),
+      },
+      {
+        name: 'Almoço', time_suggestion: '12:30', meal_order: 2, expanded: false,
+        foods: [
+          { food_name: 'Arroz integral',   quantity: sc(150), unit: 'g',  kcal: sc(195), protein: sc(4),  carbs: sc(43), fat: sc(2)  },
+          { food_name: 'Feijão carioca',   quantity: sc(100), unit: 'g',  kcal: sc(75),  protein: sc(5),  carbs: sc(14), fat: 0      },
+          { food_name: 'Frango grelhado',  quantity: sc(160), unit: 'g',  kcal: sc(267), protein: sc(50), carbs: 0,      fat: sc(6)  },
+          { food_name: 'Salada verde',     quantity: 100,     unit: 'g',  kcal: 25,      protein: 2,      carbs: 5,      fat: 0      },
+          { food_name: 'Azeite de oliva',  quantity: sc(10),  unit: 'ml', kcal: sc(90),  protein: 0,      carbs: 0,      fat: sc(10) },
+        ].filter(f => f.quantity > 0 && f.kcal > 0),
+      },
+      {
+        name: 'Lanche da tarde', time_suggestion: '16:00', meal_order: 3, expanded: false,
+        foods: [
+          { food_name: 'Whey protein',     quantity: 30,     unit: 'g',       kcal: sc(120), protein: sc(24), carbs: sc(4),  fat: sc(2)  },
+          { food_name: 'Banana',           quantity: Math.max(1, sc(1)), unit: 'unidade', kcal: sc(89),  protein: sc(1),  carbs: sc(23), fat: 0     },
+          { food_name: 'Pasta de amendoim',quantity: sc(20), unit: 'g',       kcal: sc(120), protein: sc(5),  carbs: sc(4),  fat: sc(10) },
+        ].filter(f => f.quantity > 0 && f.kcal > 0),
+      },
+      {
+        name: 'Jantar', time_suggestion: '19:30', meal_order: 4, expanded: false,
+        foods: [
+          { food_name: 'Filé de frango',   quantity: sc(160), unit: 'g',  kcal: sc(267), protein: sc(50), carbs: 0,      fat: sc(6)  },
+          { food_name: 'Batata doce',      quantity: sc(180), unit: 'g',  kcal: sc(155), protein: sc(3),  carbs: sc(36), fat: 0      },
+          { food_name: 'Brócolis',         quantity: sc(100), unit: 'g',  kcal: sc(34),  protein: sc(3),  carbs: sc(7),  fat: 0      },
+          { food_name: 'Azeite de oliva',  quantity: sc(10),  unit: 'ml', kcal: sc(90),  protein: 0,      carbs: 0,      fat: sc(10) },
+        ].filter(f => f.quantity > 0 && f.kcal > 0),
+      },
+    ],
+  };
+}
+
+// Pre-compute template summaries for the picker UI
+const TEMPLATE_PREVIEWS = KCAL_LEVELS.map(kcal => {
+  const t = buildTemplate(kcal);
+  const totals = t.meals.reduce(
+    (acc, m) => ({
+      kcal:    acc.kcal    + m.foods.reduce((s, f) => s + f.kcal,    0),
+      protein: acc.protein + m.foods.reduce((s, f) => s + f.protein, 0),
+      carbs:   acc.carbs   + m.foods.reduce((s, f) => s + f.carbs,   0),
+      fat:     acc.fat     + m.foods.reduce((s, f) => s + f.fat,     0),
+    }),
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+  return {
+    targetKcal: kcal,
+    label: `${kcal} kcal`,
+    objective: t.objective,
+    objectiveLabel: kcal <= 1750 ? 'Perda de gordura' : kcal <= 2200 ? 'Manutenção' : 'Ganho de massa',
+    totalKcal: Math.round(totals.kcal),
+    protein:   Math.round(totals.protein),
+    carbs:     Math.round(totals.carbs),
+    fat:       Math.round(totals.fat),
+  };
+});
+
+// ── utils ─────────────────────────────────────────────────────────────────────
 const emptyFood = (): Food => ({ food_name: '', quantity: 100, unit: 'g', kcal: 0, protein: 0, carbs: 0, fat: 0 });
 
 const sumMacros = (foods: Food[]) => ({
-  kcal: foods.reduce((s, f) => s + (f.kcal || 0), 0),
+  kcal:    foods.reduce((s, f) => s + (f.kcal    || 0), 0),
   protein: foods.reduce((s, f) => s + (f.protein || 0), 0),
-  carbs: foods.reduce((s, f) => s + (f.carbs || 0), 0),
-  fat: foods.reduce((s, f) => s + (f.fat || 0), 0),
+  carbs:   foods.reduce((s, f) => s + (f.carbs   || 0), 0),
+  fat:     foods.reduce((s, f) => s + (f.fat     || 0), 0),
 });
 
+// ── component ─────────────────────────────────────────────────────────────────
 export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
   const { professionalId } = usePro();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [planId, setPlanId] = useState<string | null>(null);
+  const [loading, setLoading]           = useState(true);
+  const [saving, setSaving]             = useState(false);
+  const [planId, setPlanId]             = useState<string | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [plan, setPlan] = useState<Plan>({
     name: 'Plano Alimentar', objective: 'maintain', notes: '',
-    meals: DEFAULT_MEALS.map((name, i) => ({ name, time_suggestion: '', meal_order: i, foods: [], expanded: i === 0 })),
+    meals: DEFAULT_MEALS.map((name, i) => ({
+      name, time_suggestion: '', meal_order: i, foods: [], expanded: i === 0,
+    })),
   });
 
-  useEffect(() => {
-    loadPlan();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  useEffect(() => { loadPlan(); }, [clientId]);
 
   const loadPlan = async () => {
     setLoading(true);
@@ -84,17 +175,24 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
         .select('id, name, time_suggestion, meal_order, diet_plan_foods(id, food_name, quantity, unit, kcal, protein, carbs, fat)')
         .eq('plan_id', p.id)
         .order('meal_order');
-
       setPlan({
         name: p.name, objective: p.objective || 'maintain', notes: p.notes || '',
         meals: (meals || []).map((m: any, i: number) => ({
           id: m.id, name: m.name, time_suggestion: m.time_suggestion || '',
           meal_order: m.meal_order, expanded: i === 0,
-          foods: (m.diet_plan_foods || []),
+          foods: m.diet_plan_foods || [],
         })),
       });
     }
     setLoading(false);
+  };
+
+  const applyTemplate = (targetKcal: number) => {
+    const t = buildTemplate(targetKcal);
+    setPlan(t);
+    setPlanId(null); // force insert on next save
+    setShowTemplates(false);
+    toast.success(`Template de ${targetKcal} kcal aplicado. Revise e salve o plano.`);
   };
 
   const savePlan = async () => {
@@ -140,13 +238,8 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
           await supabase.from('diet_plan_foods').insert(
             meal.foods.map(f => ({
               meal_id: insertedMeal.id,
-              food_name: f.food_name,
-              quantity: f.quantity,
-              unit: f.unit,
-              kcal: f.kcal,
-              protein: f.protein,
-              carbs: f.carbs,
-              fat: f.fat,
+              food_name: f.food_name, quantity: f.quantity, unit: f.unit,
+              kcal: f.kcal, protein: f.protein, carbs: f.carbs, fat: f.fat,
             }))
           );
         }
@@ -166,33 +259,30 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
     }
   };
 
-  const updateMeal = (i: number, field: string, value: any) => {
+  const updateMeal = (i: number, field: string, value: any) =>
     setPlan(p => ({ ...p, meals: p.meals.map((m, idx) => idx === i ? { ...m, [field]: value } : m) }));
-  };
 
-  const addFood = (mealIdx: number) => {
+  const addFood = (mealIdx: number) =>
     setPlan(p => ({ ...p, meals: p.meals.map((m, i) => i === mealIdx ? { ...m, foods: [...m.foods, emptyFood()] } : m) }));
-  };
 
-  const updateFood = (mealIdx: number, foodIdx: number, field: string, value: any) => {
+  const updateFood = (mealIdx: number, foodIdx: number, field: string, value: any) =>
     setPlan(p => ({
       ...p, meals: p.meals.map((m, i) => i === mealIdx ? {
-        ...m, foods: m.foods.map((f, j) => j === foodIdx ? { ...f, [field]: value } : f)
-      } : m)
+        ...m, foods: m.foods.map((f, j) => j === foodIdx ? { ...f, [field]: value } : f),
+      } : m),
     }));
-  };
 
-  const removeFood = (mealIdx: number, foodIdx: number) => {
+  const removeFood = (mealIdx: number, foodIdx: number) =>
     setPlan(p => ({ ...p, meals: p.meals.map((m, i) => i === mealIdx ? { ...m, foods: m.foods.filter((_, j) => j !== foodIdx) } : m) }));
-  };
 
-  const addMeal = () => {
-    setPlan(p => ({ ...p, meals: [...p.meals, { name: 'Nova refeição', time_suggestion: '', meal_order: p.meals.length, foods: [], expanded: true }] }));
-  };
+  const addMeal = () =>
+    setPlan(p => ({
+      ...p,
+      meals: [...p.meals, { name: 'Nova refeição', time_suggestion: '', meal_order: p.meals.length, foods: [], expanded: true }],
+    }));
 
-  const removeMeal = (i: number) => {
+  const removeMeal = (i: number) =>
     setPlan(p => ({ ...p, meals: p.meals.filter((_, idx) => idx !== i) }));
-  };
 
   const totalDay = plan.meals.reduce((acc, m) => {
     const s = sumMacros(m.foods);
@@ -209,37 +299,128 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Header do plano */}
-      <Card className="p-5 glass-card space-y-4">
-        <div className="flex items-center gap-2">
-          <UtensilsCrossed className="h-4 w-4 text-accent" />
-          <h3 className="text-sm font-semibold">Configuração do plano</h3>
+      {/* ── Template Picker Modal ── */}
+      {showTemplates && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <Card className="w-full max-w-2xl glass-card p-6 space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-accent" /> Templates de Dieta
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Selecione um ponto de partida e ajuste conforme o paciente.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTemplates(false)}
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Template cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {TEMPLATE_PREVIEWS.map(t => (
+                <button
+                  key={t.targetKcal}
+                  onClick={() => applyTemplate(t.targetKcal)}
+                  className="group text-left p-4 rounded-xl border border-border hover:border-foreground/40 bg-secondary/20 hover:bg-secondary/40 transition-all"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-bold tabular-nums text-accent">{t.targetKcal}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium">kcal/dia</span>
+                  </div>
+                  <span className={cn(
+                    'inline-block text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full mb-3',
+                    t.objective === 'lose'     ? 'bg-sky-500/10 text-sky-400'
+                    : t.objective === 'gain'   ? 'bg-emerald-500/10 text-emerald-400'
+                    : 'bg-amber-500/10 text-amber-400'
+                  )}>
+                    {t.objectiveLabel}
+                  </span>
+                  <div className="space-y-1 text-[11px] text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Proteína</span>
+                      <span className="tabular-nums font-medium text-foreground">{t.protein}g</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Carboidrato</span>
+                      <span className="tabular-nums font-medium text-foreground">{t.carbs}g</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Gordura</span>
+                      <span className="tabular-nums font-medium text-foreground">{t.fat}g</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+                    <Check className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    Usar este template
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              ⚠️ Aplicar um template <strong>substituirá</strong> o plano atual não salvo. Salve antes se quiser manter as alterações.
+            </p>
+          </Card>
         </div>
+      )}
+
+      {/* ── Plan header ── */}
+      <Card className="p-5 glass-card space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed className="h-4 w-4 text-accent" />
+            <h3 className="text-sm font-semibold">Configuração do plano</h3>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}>
+            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-accent" />
+            Usar template
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Nome do plano</label>
-            <input value={plan.name} onChange={e => setPlan(p => ({ ...p, name: e.target.value }))}
-              className="w-full mt-1 h-9 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20" />
+            <input
+              value={plan.name}
+              onChange={e => setPlan(p => ({ ...p, name: e.target.value }))}
+              className="w-full mt-1 h-9 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+            />
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Objetivo</label>
-            <select value={plan.objective} onChange={e => setPlan(p => ({ ...p, objective: e.target.value }))}
-              className="w-full mt-1 h-9 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none">
+            <select
+              value={plan.objective}
+              onChange={e => setPlan(p => ({ ...p, objective: e.target.value }))}
+              className="w-full mt-1 h-9 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none"
+            >
               {OBJECTIVES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
         </div>
+
         <div>
           <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Observações para o paciente</label>
-          <textarea value={plan.notes} onChange={e => setPlan(p => ({ ...p, notes: e.target.value }))} rows={2}
-            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary/30 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20" />
+          <textarea
+            value={plan.notes}
+            onChange={e => setPlan(p => ({ ...p, notes: e.target.value }))}
+            rows={2}
+            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary/30 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20"
+          />
         </div>
+
+        {/* Daily totals */}
         <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border">
           {[
-            { label: 'Kcal/dia', value: Math.round(totalDay.kcal), color: 'text-accent' },
+            { label: 'Kcal/dia', value: Math.round(totalDay.kcal),    color: 'text-accent'  },
             { label: 'Proteína', value: `${Math.round(totalDay.protein)}g`, color: 'text-red-400' },
-            { label: 'Carb', value: `${Math.round(totalDay.carbs)}g`, color: 'text-amber-400' },
-            { label: 'Gordura', value: `${Math.round(totalDay.fat)}g`, color: 'text-blue-400' },
+            { label: 'Carb',     value: `${Math.round(totalDay.carbs)}g`,   color: 'text-amber-400' },
+            { label: 'Gordura',  value: `${Math.round(totalDay.fat)}g`,     color: 'text-blue-400' },
           ].map(t => (
             <div key={t.label} className="text-center">
               <p className={`text-base font-semibold tabular-nums ${t.color}`}>{t.value}</p>
@@ -249,7 +430,7 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
         </div>
       </Card>
 
-      {/* Refeições */}
+      {/* ── Meals ── */}
       {plan.meals.map((meal, mealIdx) => {
         const mealTotals = sumMacros(meal.foods);
         return (
@@ -263,15 +444,20 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
                   <p className="text-sm font-medium text-left">{meal.name}</p>
                   <p className="text-[10px] text-muted-foreground text-left">
                     {meal.foods.length} alimento{meal.foods.length !== 1 ? 's' : ''} · {Math.round(mealTotals.kcal)} kcal
+                    {meal.time_suggestion && ` · ${meal.time_suggestion}`}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={e => { e.stopPropagation(); removeMeal(mealIdx); }}
-                  className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                <button
+                  onClick={e => { e.stopPropagation(); removeMeal(mealIdx); }}
+                  className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
-                {meal.expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                {meal.expanded
+                  ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
               </div>
             </button>
 
@@ -280,18 +466,26 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Nome da refeição</label>
-                    <input value={meal.name} onChange={e => updateMeal(mealIdx, 'name', e.target.value)}
-                      className="w-full mt-1 h-8 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none" />
+                    <input
+                      value={meal.name}
+                      onChange={e => updateMeal(mealIdx, 'name', e.target.value)}
+                      className="w-full mt-1 h-8 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Horário sugerido</label>
-                    <input type="time" value={meal.time_suggestion} onChange={e => updateMeal(mealIdx, 'time_suggestion', e.target.value)}
-                      className="w-full mt-1 h-8 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none" />
+                    <input
+                      type="time"
+                      value={meal.time_suggestion}
+                      onChange={e => updateMeal(mealIdx, 'time_suggestion', e.target.value)}
+                      className="w-full mt-1 h-8 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none"
+                    />
                   </div>
                 </div>
 
                 {meal.foods.length > 0 && (
                   <div className="space-y-2">
+                    {/* Column headers */}
                     <div className="grid grid-cols-12 gap-1 text-[10px] uppercase tracking-widest text-muted-foreground px-1">
                       <span className="col-span-4">Alimento</span>
                       <span className="col-span-2">Qtd</span>
@@ -301,27 +495,57 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
                       <span className="col-span-1">Carb</span>
                       <span className="col-span-1">Gord</span>
                     </div>
+
                     {meal.foods.map((food, foodIdx) => (
                       <div key={foodIdx} className="grid grid-cols-12 gap-1 items-center">
-                        <input value={food.food_name} onChange={e => updateFood(mealIdx, foodIdx, 'food_name', e.target.value)}
-                          placeholder="Ex: Arroz" className="col-span-4 h-8 px-2 rounded border border-border bg-secondary/30 text-xs focus:outline-none" />
-                        <input type="number" value={food.quantity} onChange={e => updateFood(mealIdx, foodIdx, 'quantity', Number(e.target.value))}
-                          className="col-span-2 h-8 px-2 rounded border border-border bg-secondary/30 text-xs focus:outline-none" />
-                        <select value={food.unit} onChange={e => updateFood(mealIdx, foodIdx, 'unit', e.target.value)}
-                          className="col-span-2 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none">
+                        <input
+                          value={food.food_name}
+                          onChange={e => updateFood(mealIdx, foodIdx, 'food_name', e.target.value)}
+                          placeholder="Ex: Arroz"
+                          className="col-span-4 h-8 px-2 rounded border border-border bg-secondary/30 text-xs focus:outline-none"
+                        />
+                        <input
+                          type="number"
+                          value={food.quantity}
+                          onChange={e => updateFood(mealIdx, foodIdx, 'quantity', Number(e.target.value))}
+                          className="col-span-2 h-8 px-2 rounded border border-border bg-secondary/30 text-xs focus:outline-none"
+                        />
+                        <select
+                          value={food.unit}
+                          onChange={e => updateFood(mealIdx, foodIdx, 'unit', e.target.value)}
+                          className="col-span-2 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none"
+                        >
                           {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                         </select>
-                        <input type="number" value={food.kcal} onChange={e => updateFood(mealIdx, foodIdx, 'kcal', Number(e.target.value))}
-                          className="col-span-1 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none" />
-                        <input type="number" value={food.protein} onChange={e => updateFood(mealIdx, foodIdx, 'protein', Number(e.target.value))}
-                          className="col-span-1 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none" />
-                        <input type="number" value={food.carbs} onChange={e => updateFood(mealIdx, foodIdx, 'carbs', Number(e.target.value))}
-                          className="col-span-1 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none" />
+                        <input
+                          type="number"
+                          value={food.kcal}
+                          onChange={e => updateFood(mealIdx, foodIdx, 'kcal', Number(e.target.value))}
+                          className="col-span-1 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none"
+                        />
+                        <input
+                          type="number"
+                          value={food.protein}
+                          onChange={e => updateFood(mealIdx, foodIdx, 'protein', Number(e.target.value))}
+                          className="col-span-1 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none"
+                        />
+                        <input
+                          type="number"
+                          value={food.carbs}
+                          onChange={e => updateFood(mealIdx, foodIdx, 'carbs', Number(e.target.value))}
+                          className="col-span-1 h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none"
+                        />
                         <div className="col-span-1 flex items-center gap-0.5">
-                          <input type="number" value={food.fat} onChange={e => updateFood(mealIdx, foodIdx, 'fat', Number(e.target.value))}
-                            className="w-full h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none" />
-                          <button onClick={() => removeFood(mealIdx, foodIdx)}
-                            className="h-8 w-6 flex items-center justify-center text-muted-foreground hover:text-destructive shrink-0">
+                          <input
+                            type="number"
+                            value={food.fat}
+                            onChange={e => updateFood(mealIdx, foodIdx, 'fat', Number(e.target.value))}
+                            className="w-full h-8 px-1 rounded border border-border bg-secondary/30 text-xs focus:outline-none"
+                          />
+                          <button
+                            onClick={() => removeFood(mealIdx, foodIdx)}
+                            className="h-8 w-6 flex items-center justify-center text-muted-foreground hover:text-destructive shrink-0"
+                          >
                             <Trash2 className="h-3 w-3" />
                           </button>
                         </div>
@@ -339,6 +563,7 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
         );
       })}
 
+      {/* Actions */}
       <div className="flex gap-2">
         <Button variant="outline" onClick={addMeal} className="flex-1">
           <Plus className="h-4 w-4 mr-2" /> Nova refeição
