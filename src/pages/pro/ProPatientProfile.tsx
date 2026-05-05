@@ -30,7 +30,7 @@ export default function ProPatientProfile() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'resumo' | 'dieta' | 'observacoes'>('dashboard');
 
   // Observações
-  const [obsSubTab, setObsSubTab] = useState<'notes' | 'docs'>('notes');
+  const [obsSubTab, setObsSubTab] = useState<'notes' | 'docs' | 'ai'>('notes');
   const [noteText, setNoteText] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [notes, setNotes] = useState<{ id: string; content: string; created_at: string }[]>([]);
@@ -69,9 +69,8 @@ export default function ProPatientProfile() {
   }, [patient?.id]);
 
   useEffect(() => {
-    if (!patient?.id || activeTab !== 'observacoes' || obsSubTab !== 'docs') return;
-    loadDocs();
-    loadMarkers();
+    if (!patient?.id || activeTab !== 'observacoes') return;
+    if (obsSubTab === 'docs') { loadDocs(); loadMarkers(); }
   }, [patient?.id, activeTab, obsSubTab]);
 
   const loadMarkers = async () => {
@@ -312,10 +311,7 @@ export default function ProPatientProfile() {
       </div>
 
       {activeTab === 'dashboard' && (
-        <>
-          <PatientDashboardTab clientId={patient.id} />
-          <PatientInsightsPanel clientId={patient.id} />
-        </>
+        <PatientDashboardTab clientId={patient.id} />
       )}
 
       {activeTab === 'resumo' && (
@@ -405,6 +401,7 @@ export default function ProPatientProfile() {
             {[
               { id: 'notes', label: '📝 Anotações' },
               { id: 'docs',  label: '📎 Documentos' },
+              { id: 'ai',    label: '✨ Análise IA' },
             ].map(t => (
               <button
                 key={t.id}
@@ -457,6 +454,11 @@ export default function ProPatientProfile() {
                 </div>
               )}
             </Card>
+          )}
+
+          {/* ── ANÁLISE IA ── */}
+          {obsSubTab === 'ai' && (
+            <PatientInsightsPanel clientId={patient.id} />
           )}
 
           {/* ── DOCUMENTOS ── */}
