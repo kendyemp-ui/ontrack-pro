@@ -41,7 +41,7 @@ export const HowItWorks = () => {
           </p>
         </div>
 
-        <div className="mt-16 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:mt-12 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
             <div key={s.step} className="landing-card-elevated relative p-6">
               <div className="flex items-center justify-between">

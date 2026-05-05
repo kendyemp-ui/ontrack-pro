@@ -14,7 +14,7 @@ export const ProOpportunity = () => {
     <section className="landing-section relative border-y border-border/60 bg-card/20">
       <div className="pointer-events-none absolute inset-0 pro-grid-bg opacity-50" aria-hidden />
       <div className="landing-container relative">
-        <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+        <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:gap-12">
           <div>
             <span className="landing-eyebrow">A virada de chave</span>
             <h2 className="landing-h2 mt-5">

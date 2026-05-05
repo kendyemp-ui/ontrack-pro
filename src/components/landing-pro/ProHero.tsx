@@ -5,7 +5,7 @@ import heroDashboard from "@/assets/landing-pro/hero-dashboard.png";
 
 export const ProHero = () => {
   return (
-    <section className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
+    <section className="relative overflow-hidden pt-24 pb-12 sm:pt-36 sm:pb-24">
       <div className="pointer-events-none absolute inset-0 pro-grid-bg" aria-hidden />
       <div
         className="pointer-events-none absolute left-1/2 top-32 h-[420px] w-[820px] -translate-x-1/2 rounded-full opacity-40 blur-[120px]"
@@ -56,7 +56,7 @@ export const ProHero = () => {
         </div>
 
         {/* Hero mockup */}
-        <div className="relative mx-auto mt-20 max-w-6xl">
+        <div className="relative mx-auto mt-10 hidden max-w-6xl sm:block sm:mt-16">
           <div className="absolute inset-x-12 -top-6 h-40 rounded-full opacity-50 blur-3xl"
             style={{ background: "radial-gradient(ellipse, hsl(174 72% 56% / 0.5), transparent 70%)" }}
             aria-hidden

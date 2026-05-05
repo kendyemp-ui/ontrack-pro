@@ -23,9 +23,9 @@ export const ProBenefits = () => {
           </h2>
         </div>
 
-        <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {benefits.map((b) => (
-            <div key={b.title} className="pro-card p-5">
+        <div className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
+          {benefits.map((b, i) => (
+            <div key={b.title} className={`pro-card p-4 sm:p-5 ${i >= 4 ? "hidden sm:block" : ""}`}>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/60 bg-background pro-accent">
                 <b.icon size={17} strokeWidth={2.2} />
               </div>

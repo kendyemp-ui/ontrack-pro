@@ -53,7 +53,7 @@ export const FAQ = () => {
             </p>
           </div>
 
-          <Accordion type="single" collapsible className="mt-12 w-full">
+          <Accordion type="single" collapsible className="mt-8 w-full sm:mt-12">
             {faqs.map((f, i) => (
               <AccordionItem
                 key={i}

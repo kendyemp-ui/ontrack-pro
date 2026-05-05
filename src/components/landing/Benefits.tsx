@@ -45,9 +45,9 @@ export const Benefits = () => {
           </h2>
         </div>
 
-        <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {benefits.map((b) => (
-            <div key={b.title} className="landing-card group p-7">
+        <div className="mt-8 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3">
+          {benefits.map((b, i) => (
+            <div key={b.title} className={`landing-card group p-5 sm:p-7${i >= 4 ? " hidden sm:block" : ""}`}>
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-secondary/40 transition-colors group-hover:border-accent/40 group-hover:bg-accent/5">
                 <b.icon size={18} className="text-foreground/80 transition-colors group-hover:text-accent" />
               </div>

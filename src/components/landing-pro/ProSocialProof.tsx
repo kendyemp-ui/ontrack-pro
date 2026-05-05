@@ -40,7 +40,7 @@ export const ProSocialProof = () => {
           </h2>
         </div>
 
-        <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {metrics.map((m) => (
             <div key={m.label} className="pro-card p-6 text-center">
               <div className="font-heading text-3xl font-semibold pro-accent">{m.value}</div>
@@ -49,7 +49,7 @@ export const ProSocialProof = () => {
           ))}
         </div>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
           {testimonials.map((t) => (
             <div key={t.name} className="pro-card relative p-6">
               <Quote className="absolute right-5 top-5 h-6 w-6 pro-accent opacity-30" />

@@ -5,7 +5,7 @@ export const FinalCTA = () => {
   return (
     <section className="landing-section">
       <div className="landing-container">
-        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-background to-card p-10 sm:p-16 lg:p-20">
+        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-background to-card p-8 sm:p-14 lg:p-20">
           {/* Glow */}
           <div
             aria-hidden

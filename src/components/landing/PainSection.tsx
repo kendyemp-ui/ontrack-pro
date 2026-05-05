@@ -42,9 +42,9 @@ export const PainSection = () => {
           </p>
         </div>
 
-        <div className="mt-16 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-2">
           {pains.map((p) => (
-            <div key={p.title} className="landing-card p-7">
+            <div key={p.title} className="landing-card p-5 sm:p-7">
               <div className="flex items-start gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-secondary/40">
                   <p.icon size={18} className="text-muted-foreground" />

@@ -6,7 +6,7 @@ export const ProFinalCTA = () => {
   return (
     <section className="landing-section">
       <div className="landing-container">
-        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-10 text-center backdrop-blur sm:p-16">
+        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur sm:p-14">
           <div
             className="pointer-events-none absolute inset-0 opacity-50"
             style={{

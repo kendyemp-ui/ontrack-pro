@@ -29,11 +29,11 @@ export const Features = () => {
           </p>
         </div>
 
-        <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border/60 bg-border/60 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border/60 bg-border/60 sm:grid-cols-3 lg:grid-cols-4">
           {features.map((f) => (
             <div
               key={f.label}
-              className="group flex flex-col gap-4 bg-background p-6 transition-colors hover:bg-card"
+              className="group flex flex-col gap-3 bg-background p-4 transition-colors hover:bg-card sm:gap-4 sm:p-6"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
                 <f.icon size={18} />

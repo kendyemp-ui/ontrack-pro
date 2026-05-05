@@ -66,11 +66,11 @@ export const SocialProof = () => {
           </div>
         </div>
 
-        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((t) => (
+        <div className="mt-8 grid gap-4 sm:mt-12 md:grid-cols-2 lg:grid-cols-3">
+          {testimonials.map((t, i) => (
             <figure
               key={t.name}
-              className="landing-card flex flex-col p-7"
+              className={`landing-card p-5 sm:p-7 ${i >= 3 ? "hidden md:flex md:flex-col" : "flex flex-col"}`}
             >
               <Quote size={20} className="text-accent/60" />
               <blockquote className="mt-5 flex-1 text-sm leading-relaxed text-foreground/90">

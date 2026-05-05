@@ -49,7 +49,7 @@ export const ProFAQ = () => {
           <h2 className="landing-h2 mt-5">Tudo que você precisa saber.</h2>
         </div>
 
-        <div className="mx-auto mt-12 max-w-3xl">
+        <div className="mx-auto mt-8 max-w-3xl sm:mt-12">
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((f, i) => (
               <AccordionItem

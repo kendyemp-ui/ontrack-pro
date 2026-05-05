@@ -40,9 +40,9 @@ export const ProFeatures = () => {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {features.map((f) => (
-            <div key={f.title} className="pro-card p-5">
+        <div className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {features.map((f, i) => (
+            <div key={f.title} className={`pro-card p-4 sm:p-5 ${i >= 6 ? "hidden sm:block" : ""}`}>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg border pro-border-accent bg-accent/5 pro-accent">
                 <f.icon size={17} strokeWidth={2.2} />
               </div>

@@ -61,7 +61,7 @@ export const WhatsAppFeature = () => {
       />
 
       <div className="landing-container">
-        <div className="grid items-center gap-16 lg:grid-cols-[1fr_1fr] lg:gap-20">
+        <div className="grid items-center gap-8 lg:grid-cols-[1fr_1fr] lg:gap-20">
           {/* Left: copy */}
           <div>
             <span className="landing-eyebrow">
@@ -109,7 +109,7 @@ export const WhatsAppFeature = () => {
           </div>
 
           {/* Right: WhatsApp preview */}
-          <div className="relative mx-auto w-full max-w-[400px]">
+          <div className="relative mx-auto hidden w-full max-w-[400px] sm:block">
             <div
               aria-hidden
               className="absolute inset-0 -z-10 translate-y-10 scale-105 rounded-[2.5rem] bg-[#25D366]/15 blur-3xl"

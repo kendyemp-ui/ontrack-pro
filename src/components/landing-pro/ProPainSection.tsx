@@ -50,9 +50,9 @@ export const ProPainSection = () => {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {pains.map((p) => (
-            <div key={p.title} className="pro-card p-6">
+        <div className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3">
+          {pains.map((p, i) => (
+            <div key={p.title} className={`pro-card p-5 sm:p-6 ${i >= 4 ? "hidden sm:block" : ""}`}>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10 text-destructive">
                 <p.icon size={18} strokeWidth={2.2} />
               </div>
@@ -64,7 +64,7 @@ export const ProPainSection = () => {
           ))}
         </div>
 
-        <div className="mx-auto mt-14 max-w-3xl rounded-2xl border border-border/60 bg-card/60 p-6 text-center backdrop-blur sm:p-8">
+        <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-border/60 bg-card/60 p-5 text-center backdrop-blur sm:mt-12 sm:p-8">
           <p className="text-base font-medium text-foreground sm:text-lg">
             "Seu maior gargalo não é prospecção. É a quantidade de pacientes que{" "}
             <span className="pro-accent">abandonam silenciosamente</span> entre uma consulta e outra."

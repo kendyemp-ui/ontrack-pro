@@ -46,11 +46,11 @@ export const Mockups = () => {
           </p>
         </div>
 
-        <div className="mt-20 grid gap-12 md:grid-cols-2 lg:gap-16">
+        <div className="mt-10 grid gap-8 md:mt-16 md:grid-cols-2 md:gap-12 lg:gap-16">
           {screens.map((s, i) => (
             <div
               key={s.title}
-              className={`flex flex-col items-center text-center ${i % 2 === 1 ? "md:mt-16" : ""}`}
+              className={`flex-col items-center text-center ${i >= 2 ? "hidden md:flex" : "flex"}${i % 2 === 1 ? " md:mt-16" : ""}`}
             >
               <div className="relative w-full max-w-[340px]">
                 <div

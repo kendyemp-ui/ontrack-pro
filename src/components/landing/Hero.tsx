@@ -5,7 +5,7 @@ import { HeroMockup } from "./HeroMockup";
 
 export const Hero = () => {
   return (
-    <section className="relative overflow-hidden pt-32 pb-20 md:pt-40 md:pb-28">
+    <section className="relative overflow-hidden pt-24 pb-12 md:pt-36 md:pb-24">
       {/* Background grid */}
       <div aria-hidden className="absolute inset-0 grid-bg" />
       {/* Accent glow */}
@@ -60,13 +60,13 @@ export const Hero = () => {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative hidden md:block">
             <HeroMockup />
           </div>
         </div>
 
         {/* Press / trust strip */}
-        <div className="mt-20 border-t border-border/60 pt-10">
+        <div className="mt-10 border-t border-border/60 pt-8 md:mt-16 md:pt-10">
           <p className="text-center text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
             Construído para quem leva a evolução a sério
           </p>

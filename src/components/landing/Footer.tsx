@@ -6,8 +6,8 @@ export const Footer = () => {
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-border/60 bg-background">
-      <div className="landing-container py-16">
-        <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="landing-container py-10 md:py-16">
+        <div className="grid gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:gap-12">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
               <img src={logo} alt="OnTrack App" className="h-8 w-8 rounded-lg" width={32} height={32} />
@@ -75,7 +75,7 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border/60 pt-8 text-xs text-muted-foreground sm:flex-row">
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row md:mt-12">
           <p>© {year} OnTrack App. Todos os direitos reservados.</p>
           <p className="italic">Evolução que acompanha você.</p>
         </div>

@@ -210,7 +210,7 @@ export const ProMockups = () => {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-4 lg:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:mt-12 lg:grid-cols-3">
           <KpiCard label="Pacientes ativos" value="28" delta="+4 mês" positive />
           <KpiCard label="Adesão média" value="87%" delta="+12%" positive />
           <KpiCard label="Em risco" value="3" delta="−2" positive />
