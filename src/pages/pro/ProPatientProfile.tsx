@@ -8,7 +8,8 @@ import { usePro } from '@/contexts/ProContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Flame, TrendingDown, Beef, Wheat, Utensils, MessageCircle, ArrowLeft,
-  NotebookPen, Calendar, Loader2,
+  NotebookPen, Calendar, Loader2, Upload, FileText, ImageIcon, Trash2,
+  Download, File,
 } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, ReferenceLine, CartesianGrid,
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ProDietPlanEditor from '@/components/pro/ProDietPlanEditor';
 import PatientDashboardTab from '@/components/pro/PatientDashboardTab';
+import PatientInsightsPanel from '@/components/pro/PatientInsightsPanel';
 import { usePatientDashboard } from '@/hooks/usePatientDashboard';
 
 export default function ProPatientProfile() {
@@ -28,10 +30,19 @@ export default function ProPatientProfile() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'resumo' | 'dieta' | 'observacoes'>('dashboard');
 
   // Observações
+  const [obsSubTab, setObsSubTab] = useState<'notes' | 'docs'>('notes');
   const [noteText, setNoteText] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [notes, setNotes] = useState<{ id: string; content: string; created_at: string }[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
+
+  // Documentos
+  interface PatientDoc { id: string; name: string; doc_type: string; file_path: string; file_size: number | null; mime_type: string | null; notes: string | null; created_at: string; }
+  const [docs, setDocs] = useState<PatientDoc[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [docType, setDocType] = useState('blood_test');
+  const [docNote, setDocNote] = useState('');
 
   // Dados de gráfico
   const [weeklyData, setWeeklyData] = useState<{ dia: string; adesao: number; meta: number }[]>([]);
@@ -51,6 +62,68 @@ export default function ProPatientProfile() {
     };
     loadNotes();
   }, [patient?.id]);
+
+  useEffect(() => {
+    if (!patient?.id || activeTab !== 'observacoes' || obsSubTab !== 'docs') return;
+    loadDocs();
+  }, [patient?.id, activeTab, obsSubTab]);
+
+  const loadDocs = async () => {
+    if (!patient?.id) return;
+    setDocsLoading(true);
+    const { data } = await supabase
+      .from('patient_documents')
+      .select('id, name, doc_type, file_path, file_size, mime_type, notes, created_at')
+      .eq('client_id', patient.id)
+      .order('created_at', { ascending: false });
+    setDocs((data as any) || []);
+    setDocsLoading(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !patient?.id || !professionalId) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${professionalId}/${patient.id}/${Date.now()}.${ext}`;
+      const { error: storageErr } = await supabase.storage
+        .from('patient-documents')
+        .upload(fileName, file, { contentType: file.type });
+      if (storageErr) throw storageErr;
+      const { error: dbErr } = await supabase.from('patient_documents').insert({
+        client_id: patient.id,
+        professional_id: professionalId,
+        name: file.name,
+        doc_type: docType,
+        file_path: fileName,
+        file_size: file.size,
+        mime_type: file.type,
+        notes: docNote.trim() || null,
+      });
+      if (dbErr) throw dbErr;
+      toast.success('Documento enviado com sucesso!');
+      setDocNote('');
+      await loadDocs();
+    } catch (err: any) {
+      toast.error('Erro ao enviar: ' + err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteDoc = async (doc: any) => {
+    await supabase.storage.from('patient-documents').remove([doc.file_path]);
+    await supabase.from('patient_documents').delete().eq('id', doc.id);
+    setDocs(prev => prev.filter(d => d.id !== doc.id));
+    toast.success('Documento excluído.');
+  };
+
+  const getDocUrl = async (filePath: string) => {
+    const { data } = await supabase.storage.from('patient-documents').createSignedUrl(filePath, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  };
 
   useEffect(() => {
     if (!patient?.id) return;
@@ -204,7 +277,10 @@ export default function ProPatientProfile() {
       </div>
 
       {activeTab === 'dashboard' && (
-        <PatientDashboardTab clientId={patient.id} />
+        <>
+          <PatientDashboardTab clientId={patient.id} />
+          <PatientInsightsPanel clientId={patient.id} />
+        </>
       )}
 
       {activeTab === 'resumo' && (
@@ -288,42 +364,176 @@ export default function ProPatientProfile() {
       )}
 
       {activeTab === 'observacoes' && (
-        <Card className="p-5 glass-card">
-          <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-            <NotebookPen className="h-4 w-4" /> Observações profissionais
-          </h3>
-          <div className="space-y-3 mb-4">
-            <textarea
-              value={noteText}
-              onChange={e => setNoteText(e.target.value)}
-              placeholder="Registre uma observação sobre este paciente..."
-              className="w-full rounded-lg border border-border bg-secondary/30 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20"
-              rows={3}
-            />
-            <Button onClick={handleSaveNote} disabled={savingNote || !noteText.trim()} size="sm">
-              {savingNote ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
-              Salvar observação
-            </Button>
+        <div className="space-y-4">
+          {/* Sub-tabs */}
+          <div className="flex gap-1 p-1 rounded-xl bg-secondary/40 border border-border">
+            {[
+              { id: 'notes', label: '📝 Anotações' },
+              { id: 'docs',  label: '📎 Documentos' },
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => setObsSubTab(t.id as any)}
+                className={cn(
+                  'flex-1 h-9 rounded-lg text-xs font-semibold transition-all',
+                  obsSubTab === t.id ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-          {notesLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="animate-spin h-4 w-4" /> Carregando...
-            </div>
-          ) : notes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma observação registrada ainda.</p>
-          ) : (
-            <div className="space-y-3">
-              {notes.map(n => (
-                <div key={n.id} className="bg-secondary/30 rounded-lg p-3">
-                  <p className="text-sm">{n.content}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1.5">
-                    {new Date(n.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </p>
+
+          {/* ── ANOTAÇÕES ── */}
+          {obsSubTab === 'notes' && (
+            <Card className="p-5 glass-card">
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <NotebookPen className="h-4 w-4" /> Observações profissionais
+              </h3>
+              <div className="space-y-3 mb-4">
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  placeholder="Registre uma observação sobre este paciente..."
+                  className="w-full rounded-lg border border-border bg-secondary/30 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                  rows={3}
+                />
+                <Button onClick={handleSaveNote} disabled={savingNote || !noteText.trim()} size="sm">
+                  {savingNote ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+                  Salvar observação
+                </Button>
+              </div>
+              {notesLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="animate-spin h-4 w-4" /> Carregando...
                 </div>
-              ))}
-            </div>
+              ) : notes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma observação registrada ainda.</p>
+              ) : (
+                <div className="space-y-3">
+                  {notes.map(n => (
+                    <div key={n.id} className="bg-secondary/30 rounded-lg p-3">
+                      <p className="text-sm">{n.content}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1.5">
+                        {new Date(n.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
           )}
-        </Card>
+
+          {/* ── DOCUMENTOS ── */}
+          {obsSubTab === 'docs' && (
+            <Card className="p-5 glass-card space-y-5">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Documentos clínicos
+              </h3>
+
+              {/* Upload area */}
+              <div className="rounded-xl border border-dashed border-border p-5 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Tipo de documento</label>
+                    <select
+                      value={docType}
+                      onChange={e => setDocType(e.target.value)}
+                      className="w-full mt-1 h-9 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none"
+                    >
+                      <option value="blood_test">🩸 Exame de sangue</option>
+                      <option value="bioimpedance">⚖️ Bioimpedância</option>
+                      <option value="prescription">💊 Prescrição</option>
+                      <option value="report">📋 Laudo / Relatório</option>
+                      <option value="other">📄 Outro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Anotação (opcional)</label>
+                    <input
+                      value={docNote}
+                      onChange={e => setDocNote(e.target.value)}
+                      placeholder="Ex: Resultado julho 2026..."
+                      className="w-full mt-1 h-9 px-3 rounded-lg border border-border bg-secondary/30 text-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <label className={cn(
+                  'flex items-center justify-center gap-2 h-10 rounded-lg border border-border text-sm font-medium transition-colors cursor-pointer',
+                  uploading
+                    ? 'opacity-50 cursor-not-allowed bg-secondary/30'
+                    : 'hover:bg-secondary/40 bg-secondary/20'
+                )}>
+                  {uploading
+                    ? <><Loader2 className="animate-spin h-4 w-4" /> Enviando...</>
+                    : <><Upload className="h-4 w-4" /> Selecionar arquivo (PDF ou imagem)</>
+                  }
+                  <input
+                    type="file"
+                    accept=".pdf,image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={handleFileUpload}
+                  />
+                </label>
+                <p className="text-[11px] text-muted-foreground text-center">PDF, JPG, PNG, HEIC · máx 50 MB</p>
+              </div>
+
+              {/* Documents list */}
+              {docsLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
+                  <Loader2 className="animate-spin h-4 w-4" /> Carregando documentos...
+                </div>
+              ) : docs.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum documento enviado ainda.</p>
+              ) : (
+                <div className="space-y-2">
+                  {docs.map(doc => {
+                    const isPdf = doc.mime_type === 'application/pdf';
+                    const typeLabels: Record<string, string> = {
+                      blood_test: '🩸 Exame de sangue', bioimpedance: '⚖️ Bioimpedância',
+                      prescription: '💊 Prescrição', report: '📋 Laudo', other: '📄 Outro',
+                    };
+                    const sizeKb = doc.file_size ? Math.round(doc.file_size / 1024) : null;
+                    return (
+                      <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-secondary/20 group hover:bg-secondary/30 transition-all">
+                        <div className="h-10 w-10 shrink-0 rounded-lg bg-secondary flex items-center justify-center">
+                          {isPdf ? <FileText className="h-5 w-5 text-red-400" /> : <ImageIcon className="h-5 w-5 text-blue-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{doc.name}</p>
+                          <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground mt-0.5">
+                            <span>{typeLabels[doc.doc_type] || doc.doc_type}</span>
+                            {sizeKb && <span>{sizeKb < 1024 ? `${sizeKb} KB` : `${(sizeKb / 1024).toFixed(1)} MB`}</span>}
+                            <span>{new Date(doc.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          </div>
+                          {doc.notes && <p className="text-[11px] text-muted-foreground italic mt-0.5">{doc.notes}</p>}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => getDocUrl(doc.file_path)}
+                            className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors"
+                            title="Abrir documento"
+                          >
+                            <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDoc(doc)}
+                            className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
       )}
     </ProLayout>
   );
