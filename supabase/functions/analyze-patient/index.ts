@@ -80,6 +80,15 @@ Deno.serve(async (req) => {
       .eq("client_id", client_id)
       .maybeSingle();
 
+    // ── Fetch latest health markers ───────────────────────────────────────────
+    const { data: markers } = await admin
+      .from("patient_health_markers")
+      .select("exam_date,glucose,hba1c,ldl,hdl,total_cholesterol,triglycerides,uric_acid,creatinine,tsh,hemoglobin")
+      .eq("client_id", client_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // ── Build data summary for AI ─────────────────────────────────────────────
     const days = summaries || [];
     const activeDays = days.filter((d: any) => d.meal_count > 0);
@@ -108,8 +117,23 @@ Deno.serve(async (req) => {
     // Most common foods (last 30 days)
     const mealTexts = (meals || []).slice(0, 40).map((m: any) => m.original_text).filter(Boolean);
 
-    const prompt = `Você é um nutricionista especialista em análise de dados.
-Analise os dados abaixo de um paciente e gere insights clínicos valiosos.
+    // Build markers summary for prompt
+    const markersBlock = markers ? `
+MARCADORES LABORATORIAIS (exame de ${markers.exam_date ?? "data desconhecida"}):
+${markers.glucose != null ? `- Glicemia: ${markers.glucose} mg/dL (ref: 70–99${markers.glucose > 125 ? " ⚠️ DIABETES" : markers.glucose > 99 ? " ⚠️ PRÉ-DIABÉTICO" : " ✓"})` : ""}
+${markers.hba1c != null ? `- HbA1c: ${markers.hba1c}% (ref: <5.7%${markers.hba1c >= 6.5 ? " ⚠️ DIABETES" : markers.hba1c >= 5.7 ? " ⚠️ PRÉ-DIABÉTICO" : " ✓"})` : ""}
+${markers.ldl != null ? `- LDL: ${markers.ldl} mg/dL (ref: <130${markers.ldl >= 160 ? " ⚠️ ALTO" : markers.ldl >= 130 ? " ⚠️ LIMÍTROFE" : " ✓"})` : ""}
+${markers.hdl != null ? `- HDL: ${markers.hdl} mg/dL (ref: >40${markers.hdl < 40 ? " ⚠️ BAIXO" : " ✓"})` : ""}
+${markers.total_cholesterol != null ? `- Colesterol total: ${markers.total_cholesterol} mg/dL (ref: <200${markers.total_cholesterol >= 240 ? " ⚠️ ALTO" : markers.total_cholesterol >= 200 ? " ⚠️ LIMÍTROFE" : " ✓"})` : ""}
+${markers.triglycerides != null ? `- Triglicerídeos: ${markers.triglycerides} mg/dL (ref: <150${markers.triglycerides >= 500 ? " ⚠️ MUITO ALTO" : markers.triglycerides >= 200 ? " ⚠️ ALTO" : markers.triglycerides >= 150 ? " ⚠️ LIMÍTROFE" : " ✓"})` : ""}
+${markers.uric_acid != null ? `- Ácido úrico: ${markers.uric_acid} mg/dL (ref: 2.4–7.0${markers.uric_acid > 7.0 ? " ⚠️ ELEVADO" : " ✓"})` : ""}
+${markers.creatinine != null ? `- Creatinina: ${markers.creatinine} mg/dL` : ""}
+${markers.tsh != null ? `- TSH: ${markers.tsh} mUI/L (ref: 0.4–4.0${markers.tsh > 4.0 ? " ⚠️ HIPOTIREOIDISMO?" : markers.tsh < 0.4 ? " ⚠️ HIPERTIREOIDISMO?" : " ✓"})` : ""}
+${markers.hemoglobin != null ? `- Hemoglobina: ${markers.hemoglobin} g/dL` : ""}
+`.split("\n").filter(l => l.trim()).join("\n") : "Nenhum exame laboratorial disponível.";
+
+    const prompt = `Você é um nutricionista especialista em análise de dados e correlação dietética com marcadores de saúde.
+Analise os dados abaixo de um paciente e gere insights clínicos valiosos, cruzando padrões alimentares com marcadores laboratoriais quando disponíveis.
 
 OBJETIVO DO PACIENTE: ${goals?.objective === "lose" ? "Perda de gordura" : goals?.objective === "gain" ? "Ganho de massa" : "Manutenção"}
 META CALÓRICA: ${goals?.calories_target ?? "não definida"} kcal/dia
@@ -134,6 +158,16 @@ ${surplusDays.slice(0, 5).map((d: any) => `- ${d.summary_date}: ${Math.round(d.c
 
 REFEIÇÕES RECENTES (amostra):
 ${mealTexts.slice(0, 20).join("\n")}
+
+${markersBlock}
+
+INSTRUÇÕES ESPECIAIS PARA CORRELAÇÃO:
+${markers?.glucose != null && markers.glucose > 99 ? "- Paciente com glicemia alterada: analise o padrão de consumo de carboidratos simples, picos glicêmicos, frequência de doces/bebidas açucaradas." : ""}
+${markers?.hba1c != null && markers.hba1c >= 5.7 ? "- HbA1c elevada: avalie consistência do controle glicêmico nos últimos 3 meses pela dieta." : ""}
+${markers?.ldl != null && markers.ldl >= 130 ? "- LDL elevado: identifique gorduras saturadas/trans na alimentação, frequência de frituras e laticínios integrais." : ""}
+${markers?.triglycerides != null && markers.triglycerides >= 150 ? "- Triglicerídeos elevados: analise consumo de carboidratos refinados, álcool e horários das refeições." : ""}
+${markers?.uric_acid != null && markers.uric_acid > 7.0 ? "- Ácido úrico elevado: avalie consumo de purinas (carnes vermelhas, frutos do mar, vísceras), frutose e hidratação." : ""}
+Se não houver marcadores, foque nos padrões de adesão e qualidade alimentar.
 
 Retorne SOMENTE um JSON com esta estrutura exata:
 {

@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Flame, TrendingDown, Beef, Wheat, Utensils, MessageCircle, ArrowLeft,
   NotebookPen, Calendar, Loader2, Upload, FileText, ImageIcon, Trash2,
-  Download, File,
+  Download, File, FlaskConical, AlertTriangle, CheckCircle,
 } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, ReferenceLine, CartesianGrid,
@@ -44,6 +44,11 @@ export default function ProPatientProfile() {
   const [docType, setDocType] = useState('blood_test');
   const [docNote, setDocNote] = useState('');
 
+  // Marcadores laboratoriais
+  interface HealthMarkers { id: string; exam_date: string | null; glucose: number | null; hba1c: number | null; ldl: number | null; hdl: number | null; total_cholesterol: number | null; triglycerides: number | null; uric_acid: number | null; creatinine: number | null; tsh: number | null; t4: number | null; hemoglobin: number | null; hematocrit: number | null; raw_markers: Record<string, any>; created_at: string; }
+  const [latestMarkers, setLatestMarkers] = useState<HealthMarkers | null>(null);
+  const [extractingMarkersId, setExtractingMarkersId] = useState<string | null>(null);
+
   // Dados de gráfico
   const [weeklyData, setWeeklyData] = useState<{ dia: string; adesao: number; meta: number }[]>([]);
   const [monthlyData, setMonthlyData] = useState<{ semana: string; adesao: number }[]>([]);
@@ -66,7 +71,37 @@ export default function ProPatientProfile() {
   useEffect(() => {
     if (!patient?.id || activeTab !== 'observacoes' || obsSubTab !== 'docs') return;
     loadDocs();
+    loadMarkers();
   }, [patient?.id, activeTab, obsSubTab]);
+
+  const loadMarkers = async () => {
+    if (!patient?.id) return;
+    const { data } = await supabase
+      .from('patient_health_markers')
+      .select('*')
+      .eq('client_id', patient.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setLatestMarkers(data as any);
+  };
+
+  const extractMarkers = async (docId: string) => {
+    setExtractingMarkersId(docId);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('extract-blood-markers', {
+        body: { document_id: docId },
+      });
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
+      setLatestMarkers(data.markers);
+      toast.success('Marcadores extraídos com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao extrair marcadores: ' + err.message);
+    } finally {
+      setExtractingMarkersId(null);
+    }
+  };
 
   const loadDocs = async () => {
     if (!patient?.id) return;
@@ -480,6 +515,68 @@ export default function ProPatientProfile() {
                 <p className="text-[11px] text-muted-foreground text-center">PDF, JPG, PNG, HEIC · máx 50 MB</p>
               </div>
 
+              {/* Latest markers panel */}
+              {latestMarkers && (() => {
+                const mk = latestMarkers;
+                type MarkerDef = { label: string; value: number | null; unit: string; lo?: number; hi: number; hiDanger?: number };
+                const defs: MarkerDef[] = [
+                  { label: 'Glicemia', value: mk.glucose, unit: 'mg/dL', lo: 70, hi: 99, hiDanger: 125 },
+                  { label: 'HbA1c', value: mk.hba1c, unit: '%', hi: 5.6, hiDanger: 6.4 },
+                  { label: 'LDL', value: mk.ldl, unit: 'mg/dL', hi: 129, hiDanger: 159 },
+                  { label: 'HDL', value: mk.hdl, unit: 'mg/dL', hi: 999 },
+                  { label: 'Colesterol', value: mk.total_cholesterol, unit: 'mg/dL', hi: 199, hiDanger: 239 },
+                  { label: 'Triglicerídeos', value: mk.triglycerides, unit: 'mg/dL', hi: 149, hiDanger: 199 },
+                  { label: 'Ácido úrico', value: mk.uric_acid, unit: 'mg/dL', hi: 7.0 },
+                  { label: 'Creatinina', value: mk.creatinine, unit: 'mg/dL', hi: 1.2 },
+                  { label: 'TSH', value: mk.tsh, unit: 'mUI/L', lo: 0.4, hi: 4.0 },
+                  { label: 'Hemoglobina', value: mk.hemoglobin, unit: 'g/dL', lo: 12, hi: 17.5 },
+                ].filter(d => d.value != null);
+                if (defs.length === 0) return null;
+                return (
+                  <div className="rounded-xl border border-border bg-secondary/10 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                        <FlaskConical className="h-3 w-3" /> Marcadores laboratoriais
+                      </p>
+                      {mk.exam_date && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Exame de {new Date(mk.exam_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                      {defs.map((d, i) => {
+                        const val = d.value!;
+                        const isLow = d.lo != null && val < d.lo;
+                        const isDanger = d.hiDanger != null ? val > d.hiDanger : val > d.hi;
+                        const isWarning = !isDanger && val > d.hi;
+                        const isLowRisk = d.label === 'HDL' && val < 40;
+                        const colorClass = (isLow || isDanger || isLowRisk)
+                          ? 'text-red-400 bg-red-500/5 border-red-500/20'
+                          : isWarning
+                          ? 'text-amber-400 bg-amber-500/5 border-amber-500/20'
+                          : 'text-emerald-400 bg-emerald-500/5 border-emerald-500/20';
+                        return (
+                          <div key={i} className={cn('rounded-lg border p-2.5 text-center', colorClass)}>
+                            <p className="text-[10px] text-muted-foreground mb-0.5">{d.label}</p>
+                            <p className="text-sm font-bold tabular-nums">{val}</p>
+                            <p className="text-[9px] text-muted-foreground">{d.unit}</p>
+                            {(isLow || isDanger || isLowRisk) && <AlertTriangle className="h-2.5 w-2.5 mx-auto mt-0.5 text-red-400" />}
+                            {isWarning && <AlertTriangle className="h-2.5 w-2.5 mx-auto mt-0.5 text-amber-400" />}
+                            {(!isLow && !isDanger && !isWarning && !isLowRisk) && <CheckCircle className="h-2.5 w-2.5 mx-auto mt-0.5 text-emerald-400" />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {Object.keys(mk.raw_markers || {}).length > Object.keys(defs).length && (
+                      <p className="text-[10px] text-muted-foreground">
+                        +{Object.keys(mk.raw_markers).length - defs.length} marcadores adicionais no exame original
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Documents list */}
               {docsLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
@@ -496,6 +593,7 @@ export default function ProPatientProfile() {
                       prescription: '💊 Prescrição', report: '📋 Laudo', other: '📄 Outro',
                     };
                     const sizeKb = doc.file_size ? Math.round(doc.file_size / 1024) : null;
+                    const isExtracting = extractingMarkersId === doc.id;
                     return (
                       <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-secondary/20 group hover:bg-secondary/30 transition-all">
                         <div className="h-10 w-10 shrink-0 rounded-lg bg-secondary flex items-center justify-center">
@@ -511,6 +609,19 @@ export default function ProPatientProfile() {
                           {doc.notes && <p className="text-[11px] text-muted-foreground italic mt-0.5">{doc.notes}</p>}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {doc.doc_type === 'blood_test' && (
+                            <button
+                              onClick={() => extractMarkers(doc.id)}
+                              disabled={isExtracting || extractingMarkersId !== null}
+                              className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-medium bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 transition-colors disabled:opacity-50"
+                              title="Extrair marcadores com IA"
+                            >
+                              {isExtracting
+                                ? <Loader2 className="animate-spin h-3 w-3" />
+                                : <FlaskConical className="h-3 w-3" />}
+                              {isExtracting ? 'Extraindo...' : 'Extrair'}
+                            </button>
+                          )}
                           <button
                             onClick={() => getDocUrl(doc.file_path)}
                             className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors"
