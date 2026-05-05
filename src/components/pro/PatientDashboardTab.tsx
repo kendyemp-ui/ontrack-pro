@@ -137,6 +137,9 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const [mealsDateFilter, setMealsDateFilter] = useState<'7d' | '14d' | '30d' | 'all'>('7d');
   const [mealsLimit, setMealsLimit] = useState(15);
+  const [allMealsHistory, setAllMealsHistory] = useState<typeof mealHistory>([]);
+  const [allMealsLoading, setAllMealsLoading] = useState(false);
+  const [allMealsLoaded, setAllMealsLoaded] = useState(false);
 
   // load extended history (365 days) when needed
   useEffect(() => {
@@ -145,6 +148,24 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
 
   // reset selected bar on period change
   useEffect(() => { setSelectedBar(null); }, [chartPeriod]);
+
+  // fetch all meals when 'all' filter selected (beyond the 30d window of the hook)
+  useEffect(() => {
+    if (mealsDateFilter !== 'all' || allMealsLoaded || allMealsLoading) return;
+    const fetchAll = async () => {
+      setAllMealsLoading(true);
+      const { data } = await supabase
+        .from('meal_logs')
+        .select('id, created_at, original_text, estimated_kcal, estimated_protein, estimated_carbs, estimated_fat, media_url, image_path, status')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      setAllMealsHistory((data as any) || []);
+      setAllMealsLoaded(true);
+      setAllMealsLoading(false);
+    };
+    fetchAll();
+  }, [mealsDateFilter, clientId]);
 
   const loadExtHistory = async () => {
     setExtLoading(true);
@@ -249,7 +270,7 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
 
   // ── filtered meal history ─────────────────────────────────────────────────
   const filteredMeals = (() => {
-    if (mealsDateFilter === 'all') return mealHistory;
+    if (mealsDateFilter === 'all') return allMealsLoaded ? allMealsHistory : mealHistory;
     const days = mealsDateFilter === '7d' ? 7 : mealsDateFilter === '14d' ? 14 : 30;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
@@ -257,6 +278,7 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
   })();
   const visibleMeals = filteredMeals.slice(0, mealsLimit);
   const hasMoreMeals = filteredMeals.length > mealsLimit;
+  const isMealsLoading = mealsDateFilter === 'all' && allMealsLoading;
 
   const PERIOD_LABELS: Record<PeriodType, string> = {
     '14d': '14 dias', '30d': '30 dias', '3m': '3 meses', '12m': '12 meses',
@@ -585,12 +607,17 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
 
         {historyTab === 'refeicoes' && (
           <div className="divide-y divide-border">
-            {filteredMeals.length === 0 && (
+            {isMealsLoading && (
+              <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm py-8">
+                <Loader2 className="animate-spin h-4 w-4" /> Carregando histórico completo...
+              </div>
+            )}
+            {!isMealsLoading && filteredMeals.length === 0 && (
               <p className="text-sm text-muted-foreground p-6 text-center">
                 {mealHistory.length === 0 ? 'Nenhuma refeição registrada.' : `Nenhuma refeição nos últimos ${mealsDateFilter === '7d' ? '7' : mealsDateFilter === '14d' ? '14' : '30'} dias.`}
               </p>
             )}
-            {visibleMeals.map(meal => {
+            {!isMealsLoading && visibleMeals.map(meal => {
               const todayStr = new Date().toISOString().split('T')[0];
               const hasPhoto = !!(meal.media_url || meal.image_path) && !imgErrors[meal.id];
               const photoUrl = meal.media_url || meal.image_path || '';

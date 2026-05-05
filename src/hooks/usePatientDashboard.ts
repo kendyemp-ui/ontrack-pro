@@ -69,7 +69,7 @@ export function usePatientDashboard(clientId: string | undefined) {
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
-    const historyStart = thirtyDaysAgo.toISOString().split('T')[0];
+    const historyStart = thirtyDaysAgo.toISOString().split('T')[0]; // 30 dias de refeições base
 
     const [summaryRes, mealsRes, activitiesRes, goalsRes] = await Promise.all([
       supabase
@@ -85,14 +85,14 @@ export function usePatientDashboard(clientId: string | undefined) {
         .eq('client_id', clientId)
         .gte('created_at', historyStart + 'T00:00:00')
         .order('created_at', { ascending: false })
-        .limit(50),
+        .limit(300),
       supabase
         .from('activity_logs')
         .select('id, created_at, original_text, activity_type, activity_duration, estimated_burn_kcal, status')
         .eq('client_id', clientId)
         .gte('created_at', historyStart + 'T00:00:00')
         .order('created_at', { ascending: false })
-        .limit(30),
+        .limit(100),
       supabase
         .from('client_goals')
         .select('calories_target, protein_target, carbs_target, objective')
