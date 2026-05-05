@@ -204,16 +204,19 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
     return [];
   };
 
-  const handleChartClick = (data: any) => {
-    const payload = data?.activePayload?.[0]?.payload as ChartPoint | undefined;
-    if (!payload) return;
-    setSelectedBar(prev => prev?.rawDate === payload.rawDate ? null : payload);
+  // Bar component onClick receives (data, index) where data IS the ChartPoint directly
+  const handleBarClick = (data: ChartPoint) => {
+    setSelectedBar(prev => prev?.rawDate === data.rawDate ? null : data);
   };
 
-  // meals for selected day (filter from already-loaded mealHistory, 30 days back)
+  // meals for selected day — compare using local date to handle timezone offsets
   const selectedDayMeals =
     selectedBar?.type === 'day'
-      ? mealHistory.filter(m => m.created_at.startsWith(selectedBar.rawDate))
+      ? mealHistory.filter(m => {
+          const d = new Date(m.created_at);
+          const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          return localDate === selectedBar.rawDate;
+        })
       : [];
 
   // ── loading state ───────────────────────────────────────────────────────────
@@ -357,7 +360,7 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
               {(chartPeriod === '14d' || chartPeriod === '30d') && '👆 Clique em uma barra para ver as refeições do dia'}
             </p>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={chartData} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -382,7 +385,12 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
                     <ReferenceLine y={500} stroke="hsl(var(--accent))" strokeDasharray="3 3" />
                   </>
                 )}
-                <Bar dataKey="balance" radius={[6, 6, 6, 6]}>
+                <Bar
+                  dataKey="balance"
+                  radius={[6, 6, 6, 6]}
+                  onClick={handleBarClick}
+                  cursor={chartPeriod === '14d' || chartPeriod === '30d' ? 'pointer' : 'default'}
+                >
                   {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
