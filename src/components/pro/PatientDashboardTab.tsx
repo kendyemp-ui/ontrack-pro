@@ -135,6 +135,8 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
   const [historyTab, setHistoryTab] = useState<'refeicoes' | 'atividades'>('refeicoes');
   const [expandedMeal, setExpandedMeal] = useState<string | null>(null);
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+  const [mealsDateFilter, setMealsDateFilter] = useState<'7d' | '14d' | '30d' | 'all'>('7d');
+  const [mealsLimit, setMealsLimit] = useState(15);
 
   // load extended history (365 days) when needed
   useEffect(() => {
@@ -244,6 +246,17 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
 
   const chartData = getChartData();
   const showLoader = (chartPeriod !== '14d') && extLoading;
+
+  // ── filtered meal history ─────────────────────────────────────────────────
+  const filteredMeals = (() => {
+    if (mealsDateFilter === 'all') return mealHistory;
+    const days = mealsDateFilter === '7d' ? 7 : mealsDateFilter === '14d' ? 14 : 30;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    return mealHistory.filter(m => new Date(m.created_at) >= cutoff);
+  })();
+  const visibleMeals = filteredMeals.slice(0, mealsLimit);
+  const hasMoreMeals = filteredMeals.length > mealsLimit;
 
   const PERIOD_LABELS: Record<PeriodType, string> = {
     '14d': '14 dias', '30d': '30 dias', '3m': '3 meses', '12m': '12 meses',
@@ -527,32 +540,57 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
 
       {/* ── HISTÓRICO ── */}
       <Card className="glass-card overflow-hidden">
-        <div className="flex border-b border-border">
-          {[
-            { id: 'refeicoes', label: `Refeições (${mealHistory.length})` },
-            { id: 'atividades', label: `Atividades (${activityHistory.length})` },
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => setHistoryTab(t.id as any)}
-              className={cn(
-                'flex-1 py-3 text-xs font-medium transition-colors',
-                historyTab === t.id
-                  ? 'text-foreground border-b-2 border-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border-b border-border">
+          {/* Tab switcher */}
+          <div className="flex flex-1">
+            {[
+              { id: 'refeicoes', label: `Refeições (${mealHistory.length})` },
+              { id: 'atividades', label: `Atividades (${activityHistory.length})` },
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => setHistoryTab(t.id as any)}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium transition-colors rounded-lg',
+                  historyTab === t.id
+                    ? 'text-foreground bg-secondary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {/* Date filter */}
+          {historyTab === 'refeicoes' && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Período:</span>
+              <div className="flex gap-1 p-0.5 rounded-lg bg-secondary/40 border border-border">
+                {([['7d','7 dias'],['14d','14 dias'],['30d','30 dias'],['all','Todos']] as const).map(([val, lbl]) => (
+                  <button
+                    key={val}
+                    onClick={() => { setMealsDateFilter(val); setMealsLimit(15); }}
+                    className={cn(
+                      'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all',
+                      mealsDateFilter === val ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {historyTab === 'refeicoes' && (
           <div className="divide-y divide-border">
-            {mealHistory.length === 0 && (
-              <p className="text-sm text-muted-foreground p-6 text-center">Nenhuma refeição registrada.</p>
+            {filteredMeals.length === 0 && (
+              <p className="text-sm text-muted-foreground p-6 text-center">
+                {mealHistory.length === 0 ? 'Nenhuma refeição registrada.' : `Nenhuma refeição nos últimos ${mealsDateFilter === '7d' ? '7' : mealsDateFilter === '14d' ? '14' : '30'} dias.`}
+              </p>
             )}
-            {mealHistory.map(meal => {
+            {visibleMeals.map(meal => {
               const todayStr = new Date().toISOString().split('T')[0];
               const hasPhoto = !!(meal.media_url || meal.image_path) && !imgErrors[meal.id];
               const photoUrl = meal.media_url || meal.image_path || '';
@@ -614,6 +652,30 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
                 </div>
               );
             })}
+            {/* Ver mais / ver menos */}
+            {(hasMoreMeals || mealsLimit > 15) && (
+              <div className="flex items-center justify-center gap-3 p-4 border-t border-border">
+                {hasMoreMeals && (
+                  <button
+                    onClick={() => setMealsLimit(l => l + 15)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    Ver mais {Math.min(filteredMeals.length - mealsLimit, 15)} refeições ↓
+                  </button>
+                )}
+                {mealsLimit > 15 && (
+                  <button
+                    onClick={() => setMealsLimit(15)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ↑ Recolher
+                  </button>
+                )}
+                <span className="text-[10px] text-muted-foreground">
+                  {visibleMeals.length} de {filteredMeals.length}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
