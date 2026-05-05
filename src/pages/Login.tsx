@@ -82,19 +82,6 @@ const Login = () => {
       return;
     }
 
-    // Validar assinatura ativa após autenticação
-    const { data: hasAccess } = await supabase.rpc('is_subscription_active', {
-      _email: parsed.data.email,
-    });
-    if (!hasAccess) {
-      await supabase.auth.signOut();
-      setLoading(false);
-      setLoginErrors({
-        form: 'Sua assinatura não está ativa. Renove para continuar acessando a plataforma.',
-      });
-      return;
-    }
-
     setLoading(false);
     toast.success('Bem-vindo de volta!');
     navigate('/dashboard');
