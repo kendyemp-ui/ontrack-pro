@@ -83,6 +83,48 @@ function aggregateByMonth(days: DailySummaryPoint[]): ChartPoint[] {
   }));
 }
 
+// ── ClickableBar: full-column hit area + colored bar ─────────────────────────
+function ClickableBar(props: any) {
+  const { x, y, width, height, fill, opacity, background, payload, onBarClick } = props;
+
+  // 'background' gives the full column slot dimensions (regardless of bar value)
+  const bgX      = background?.x      ?? x;
+  const bgY      = background?.y      ?? 0;
+  const bgWidth  = background?.width  ?? width;
+  const bgHeight = background?.height ?? 260;
+
+  const isClickable = payload?.hasData;
+
+  return (
+    <g
+      onClick={() => isClickable && onBarClick?.(payload)}
+      style={{ cursor: isClickable ? 'pointer' : 'default' }}
+    >
+      {/* Transparent full-height hit area — makes small/flat bars easy to click */}
+      <rect
+        x={bgX}
+        y={bgY}
+        width={bgWidth}
+        height={bgHeight}
+        fill="transparent"
+      />
+      {/* Visible bar */}
+      {Math.abs(height ?? 0) > 0 && (
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={Math.abs(height)}
+          fill={fill}
+          opacity={opacity ?? 1}
+          rx={6}
+          ry={6}
+        />
+      )}
+    </g>
+  );
+}
+
 // ── sub-components ────────────────────────────────────────────────────────────
 function MacroBar({ label, current, target, color }: { label: string; current: number; target: number; color: string }) {
   const pct = target > 0 ? Math.min((current / target) * 100, 100) : 0;
@@ -422,9 +464,12 @@ export default function PatientDashboardTab({ clientId }: { clientId: string }) 
                 )}
                 <Bar
                   dataKey="balance"
-                  radius={[6, 6, 6, 6]}
-                  onClick={handleBarClick}
-                  cursor={chartPeriod === '14d' || chartPeriod === '30d' ? 'pointer' : 'default'}
+                  shape={(props: any) => (
+                    <ClickableBar
+                      {...props}
+                      onBarClick={chartPeriod === '14d' || chartPeriod === '30d' ? handleBarClick : undefined}
+                    />
+                  )}
                 >
                   {chartData.map((entry, index) => (
                     <Cell
