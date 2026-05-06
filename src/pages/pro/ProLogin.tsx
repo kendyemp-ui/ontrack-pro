@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { usePro } from '@/contexts/ProContext';
 import { toast } from 'sonner';
-import logo from '@/assets/logo.png';
+import { GroveIcon } from '@/components/GroveIcon';
 
 export default function ProLogin() {
   const [email, setEmail] = useState('');
@@ -39,7 +39,7 @@ export default function ProLogin() {
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-3 mb-3">
-            <img src={logo} alt="OnTrack" className="h-16 object-contain invert dark:invert-0" />
+            <GroveIcon size={52} wordmark wordmarkSize={28} />
             <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold border-l border-border pl-3">Pro</span>
           </div>
           <p className="text-xs text-muted-foreground italic tracking-wide">evolução que acompanha você</p>

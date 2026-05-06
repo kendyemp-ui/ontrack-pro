@@ -34,7 +34,7 @@ export const FinalCTA = () => {
             <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg" className="h-12 px-8 text-sm font-semibold">
                 <a href="#planos">
-                  Assinar o OnTrack App <ArrowRight size={16} />
+                  Assinar o Grove App <ArrowRight size={16} />
                 </a>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 px-8 text-sm">

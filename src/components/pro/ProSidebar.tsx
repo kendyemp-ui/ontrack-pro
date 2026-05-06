@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, UserPlus, Bell, MessageCircle, LogOut, Activity,
+  LayoutDashboard, Users, UserPlus, Bell, MessageCircle, LogOut,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/sidebar';
 import { usePro } from '@/contexts/ProContext';
 import { useNavigate } from 'react-router-dom';
-import logo from '@/assets/logo.png';
+import { GroveIcon } from '@/components/GroveIcon';
 
 const items = [
   { title: 'Dashboard', url: '/pro/dashboard', icon: LayoutDashboard },
@@ -31,15 +31,19 @@ export function ProSidebar() {
     navigate('/pro/login');
   };
 
+  const initials = professionalName
+    ? professionalName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')
+    : 'PR';
+
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3">
           {collapsed ? (
-            <img src={logo} alt="OnTrack" className="h-7 object-contain invert dark:invert-0 mx-auto" />
+            <GroveIcon size={28} className="mx-auto" />
           ) : (
             <div className="flex items-center gap-2 w-full">
-              <img src={logo} alt="OnTrack" className="h-8 object-contain invert dark:invert-0" />
+              <GroveIcon size={28} wordmark wordmarkSize={16} />
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Pro</span>
             </div>
           )}
@@ -73,7 +77,7 @@ export function ProSidebar() {
       <SidebarFooter className="border-t border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-2">
           <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold shrink-0">
-            HV
+            {initials}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">

@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { ArrowLeft, Upload, Check, Loader2, FileText, Activity } from "lucide-react";
+import { ArrowLeft, Upload, Check, Loader2, FileText } from "lucide-react";
+import { GroveIcon } from "@/components/GroveIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,7 +145,7 @@ export default function ProSignup() {
       <div className="min-h-screen bg-background text-foreground">
         <div className="landing-container flex min-h-screen items-center justify-center py-20">
           <Card className="w-full max-w-lg p-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full pro-bg-accent text-black">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full pro-bg-accent text-white">
               <Check size={26} strokeWidth={2.6} />
             </div>
             <h1 className="mt-6 font-heading text-2xl font-semibold tracking-tight">
@@ -158,7 +159,7 @@ export default function ProSignup() {
               <Button asChild variant="outline">
                 <Link to="/pro">Voltar para a página inicial</Link>
               </Button>
-              <Button onClick={() => navigate("/pro/login")} className="pro-bg-accent text-black hover:opacity-90">
+              <Button onClick={() => navigate("/pro/login")} className="pro-bg-accent text-white hover:opacity-90">
                 Já tenho acesso
               </Button>
             </div>
@@ -180,20 +181,13 @@ export default function ProSignup() {
 
         <div className="mx-auto mt-8 max-w-2xl">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-card pro-accent">
-              <Activity size={16} strokeWidth={2.4} />
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-heading text-lg font-semibold tracking-tight">OnTrack</span>
-              <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.22em] pro-accent">
-                Pro
-              </span>
-            </div>
+            <GroveIcon size={30} wordmark wordmarkSize={18} />
+            <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.22em] pro-accent -ml-1">Pro</span>
           </div>
 
           <h1 className="landing-h2 mt-6">Crie sua conta de profissional.</h1>
           <p className="landing-lead mt-3">
-            Validamos cada cadastro manualmente para garantir que o OnTrack Pro seja usado apenas
+            Validamos cada cadastro manualmente para garantir que o Grove Pro seja usado apenas
             por nutricionistas registrados. Liberação em até 24h úteis.
           </p>
 
@@ -329,7 +323,7 @@ export default function ProSignup() {
                 type="submit"
                 size="lg"
                 disabled={submitting}
-                className="w-full pro-bg-accent text-black hover:opacity-90"
+                className="w-full pro-bg-accent text-white hover:opacity-90"
               >
                 {submitting ? (
                   <>

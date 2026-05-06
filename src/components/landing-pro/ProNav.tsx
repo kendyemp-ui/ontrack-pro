@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Menu, X, Activity } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { GroveIcon } from "@/components/GroveIcon";
 
 const links = [
   { href: "#dor", label: "O problema" },
@@ -33,15 +34,10 @@ export const ProNav = () => {
     >
       <nav className="landing-container flex h-16 items-center justify-between md:h-20">
         <Link to="/pro" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-card pro-accent">
-            <Activity size={16} strokeWidth={2.4} />
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-heading text-lg font-semibold tracking-tight">OnTrack</span>
-            <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.22em] pro-accent">
-              Pro
-            </span>
-          </div>
+          <GroveIcon size={30} wordmark wordmarkSize={18} />
+          <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.22em] pro-accent -ml-1">
+            Pro
+          </span>
         </Link>
 
         <ul className="hidden items-center gap-8 lg:flex">
@@ -64,7 +60,7 @@ export const ProNav = () => {
           <Button
             asChild
             size="sm"
-            className="text-sm pro-bg-accent text-black hover:opacity-90"
+            className="text-sm pro-bg-accent text-white hover:opacity-90"
           >
             <Link to="/pro/cadastro">Testar grátis</Link>
           </Button>
@@ -97,7 +93,7 @@ export const ProNav = () => {
               <Button asChild variant="ghost" size="sm">
                 <Link to="/pro/login">Entrar</Link>
               </Button>
-              <Button asChild size="sm" className="pro-bg-accent text-black hover:opacity-90">
+              <Button asChild size="sm" className="pro-bg-accent text-white hover:opacity-90">
                 <Link to="/pro/cadastro" onClick={() => setOpen(false)}>Testar grátis</Link>
               </Button>
             </div>

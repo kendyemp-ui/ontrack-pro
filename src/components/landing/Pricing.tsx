@@ -21,7 +21,7 @@ const plans = [
     href: KIWIFY_URLS.monthly,
     highlight: false,
     features: [
-      "Acesso completo ao OnTrack App",
+      "Acesso completo ao Grove App",
       "Dashboard nutricional diário",
       "Histórico ilimitado de refeições",
       "Metas personalizadas",

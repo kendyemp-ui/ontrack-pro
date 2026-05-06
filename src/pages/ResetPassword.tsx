@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import logo from '@/assets/logo.png';
+import { GroveIcon } from '@/components/GroveIcon';
 
 const schema = z
   .object({
@@ -62,7 +62,7 @@ const ResetPassword = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-background">
       <div className="w-full max-w-sm space-y-8 animate-fade-in">
         <div className="flex flex-col items-center space-y-3">
-          <img src={logo} alt="OnTrack" className="h-14 object-contain invert dark:invert-0" />
+          <GroveIcon size={52} wordmark wordmarkSize={28} />
         </div>
 
         <div className="text-center space-y-2">

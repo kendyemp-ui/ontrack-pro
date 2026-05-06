@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import logo from '@/assets/logo.png';
+import { GroveIcon } from '@/components/GroveIcon';
 
 const schema = z.object({
   email: z.string().trim().email({ message: 'E-mail inválido' }).max(255),
@@ -36,7 +36,7 @@ const ForgotPassword = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-background">
       <div className="w-full max-w-sm space-y-8 animate-fade-in">
         <div className="flex flex-col items-center space-y-3">
-          <img src={logo} alt="OnTrack" className="h-14 object-contain invert dark:invert-0" />
+          <GroveIcon size={52} wordmark wordmarkSize={28} />
         </div>
 
         {!sent ? (

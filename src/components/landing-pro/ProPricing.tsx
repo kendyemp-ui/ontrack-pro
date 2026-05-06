@@ -91,7 +91,7 @@ export const ProPricing = () => {
             <span className="pro-gradient-text">menor o custo por paciente.</span>
           </h2>
           <p className="landing-lead mt-5">
-            O OnTrack Pro é uma alavanca de receita, não um custo. Mais retenção paga a assinatura
+            O Grove Pro é uma alavanca de receita, não um custo. Mais retenção paga a assinatura
             várias vezes em qualquer plano.
           </p>
         </div>
@@ -109,7 +109,7 @@ export const ProPricing = () => {
             >
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 rounded-full border pro-border-accent pro-bg-accent px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black">
+                  <span className="inline-flex items-center gap-1 rounded-full border pro-border-accent pro-bg-accent px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
                     <Sparkles size={11} /> {plan.badge}
                   </span>
                 </div>
@@ -150,7 +150,7 @@ export const ProPricing = () => {
                 className={cn(
                   "mt-7 h-11",
                   plan.highlighted
-                    ? "pro-bg-accent text-black hover:opacity-90"
+                    ? "pro-bg-accent text-white hover:opacity-90"
                     : "bg-foreground text-background hover:bg-foreground/90"
                 )}
               >

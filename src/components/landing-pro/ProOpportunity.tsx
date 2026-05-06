@@ -26,7 +26,7 @@ export const ProOpportunity = () => {
               acompanhamento, não só do plano alimentar.
             </p>
             <p className="landing-lead mt-4">
-              O OnTrack Pro automatiza essa presença para você, transformando dados do dia a dia
+              O Grove Pro automatiza essa presença para você, transformando dados do dia a dia
               em ação concreta dentro do consultório.
             </p>
 

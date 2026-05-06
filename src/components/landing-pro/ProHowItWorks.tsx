@@ -35,7 +35,7 @@ export const ProHowItWorks = () => {
           <span className="landing-eyebrow">Como funciona</span>
           <h2 className="landing-h2 mt-5">Da consulta ao dashboard, em 4 passos.</h2>
           <p className="landing-lead mt-5">
-            Você cuida do paciente. O OnTrack Pro cuida do acompanhamento entre as consultas.
+            Você cuida do paciente. O Grove Pro cuida do acompanhamento entre as consultas.
           </p>
         </div>
 

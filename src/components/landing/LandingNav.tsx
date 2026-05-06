@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/ontrack-logo.png";
+import { GroveIcon } from "@/components/GroveIcon";
 
 const links = [
   { href: "#beneficios", label: "Benefícios" },
@@ -36,8 +36,7 @@ export const LandingNav = () => {
     >
       <nav className="landing-container flex h-16 items-center justify-between md:h-20">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logo} alt="OnTrack App" className="h-8 w-8 rounded-lg" width={32} height={32} />
-          <span className="font-heading text-lg font-semibold tracking-tight">OnTrack</span>
+          <GroveIcon size={32} wordmark wordmarkSize={18} />
         </Link>
 
         <ul className="hidden items-center gap-8 md:flex">

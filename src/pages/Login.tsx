@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import { GroveIcon } from '@/components/GroveIcon';
 import { toast } from 'sonner';
 
 type Tab = 'login' | 'signup';
@@ -148,7 +148,7 @@ const Login = () => {
       <div className="w-full max-w-sm space-y-8 animate-fade-in">
         {/* Logo */}
         <div className="flex flex-col items-center space-y-3">
-          <img src={logo} alt="OnTrack" className="h-16 sm:h-20 object-contain invert dark:invert-0" />
+          <GroveIcon size={64} wordmark wordmarkSize={32} />
           <p className="text-xs text-muted-foreground tracking-[0.2em] italic">
             evolução que acompanha você
           </p>
@@ -308,7 +308,7 @@ const Login = () => {
             onClick={() => navigate('/pro')}
             className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wide"
           >
-            É profissional da saúde? <span className="font-semibold underline underline-offset-4">Acesse o OnTrack Pro →</span>
+            É profissional da saúde? <span className="font-semibold underline underline-offset-4">Acesse o Grove Pro →</span>
           </button>
         </div>
       </div>

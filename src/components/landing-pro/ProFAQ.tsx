@@ -7,7 +7,7 @@ import {
 
 const faqs = [
   {
-    q: "Como funciona o OnTrack Pro?",
+    q: "Como funciona o Grove Pro?",
     a: "Você cadastra seus pacientes na plataforma. Eles passam a interagir com um canal automatizado de WhatsApp registrando refeições, fotos, peso e sintomas. A plataforma estrutura tudo isso em dados e te entrega no dashboard com alertas, histórico e visão de adesão por paciente.",
   },
   {
@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     q: "Preciso ter número oficial de WhatsApp Business?",
-    a: "Não. O OnTrack Pro fornece o canal automatizado. Você não precisa expor seu número pessoal nem contratar API oficial separadamente, já está incluso na assinatura.",
+    a: "Não. O Grove Pro fornece o canal automatizado. Você não precisa expor seu número pessoal nem contratar API oficial separadamente, já está incluso na assinatura.",
   },
   {
     q: "Posso testar antes de pagar?",
@@ -35,7 +35,7 @@ const faqs = [
     a: "Você recebe um aviso ao se aproximar do teto. Se ultrapassar, sugerimos um upgrade. Nenhum paciente é desativado sem o seu consentimento.",
   },
   {
-    q: "Como o OnTrack Pro ajuda na retenção dos meus clientes?",
+    q: "Como o Grove Pro ajuda na retenção dos meus clientes?",
     a: "Aumentando a presença entre consultas. Acompanhamento contínuo eleva percepção de valor, gera engajamento diário e te dá visibilidade para corrigir desvios antes do abandono. Resultado: mais renovação, mais indicação e mais previsibilidade de receita.",
   },
 ];

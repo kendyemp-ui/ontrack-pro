@@ -2,12 +2,18 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HeroMockup } from "./HeroMockup";
+import { GroveRingsDecor } from "@/components/GroveRingsDecor";
 
 export const Hero = () => {
   return (
     <section className="relative overflow-hidden pt-24 pb-12 md:pt-36 md:pb-24">
       {/* Background grid */}
       <div aria-hidden className="absolute inset-0 grid-bg" />
+      {/* Anéis de crescimento — decoração de fundo */}
+      <GroveRingsDecor
+        rings={5}
+        className="pointer-events-none absolute -left-24 top-0 w-[480px] opacity-50"
+      />
       {/* Accent glow */}
       <div
         aria-hidden
@@ -29,7 +35,7 @@ export const Hero = () => {
             </h1>
 
             <p className="landing-lead mt-6 max-w-xl">
-              O OnTrack App ajuda você a registrar refeições, acompanhar calorias e macros,
+              O Grove App ajuda você a registrar refeições, acompanhar calorias e macros,
               visualizar sua evolução e seguir no caminho certo todos os dias.
             </p>
 

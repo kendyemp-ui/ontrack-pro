@@ -12,7 +12,7 @@ const testimonials = [
     name: "Rafael C.",
     role: "Usuário há 4 meses",
     quote:
-      "Eu testei vários apps e desisti de todos. O OnTrack é o único que não me cansa, em 30 segundos eu registro tudo.",
+      "Eu testei vários apps e desisti de todos. O Grove é o único que não me cansa, em 30 segundos eu registro tudo.",
     rating: 5,
   },
   {

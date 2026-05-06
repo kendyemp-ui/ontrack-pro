@@ -66,7 +66,7 @@ export const WhatsAppFeature = () => {
           <div>
             <span className="landing-eyebrow">
               <MessageCircle size={12} className="text-[#25D366]" />
-              O diferencial OnTrack
+              O diferencial Grove
             </span>
 
             <h2 className="landing-h2 mt-5">
@@ -76,7 +76,7 @@ export const WhatsAppFeature = () => {
 
             <p className="landing-lead mt-5 max-w-xl">
               Esqueça digitar, escanear código de barras ou abrir app. Mande uma
-              foto da sua refeição no WhatsApp do OnTrack e ela é registrada
+              foto da sua refeição no WhatsApp do Grove e ela é registrada
               automaticamente, calorias, proteína e carbs calculados na hora.
             </p>
 
@@ -122,7 +122,7 @@ export const WhatsAppFeature = () => {
                   <MessageCircle size={16} className="text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">OnTrack</p>
+                  <p className="text-sm font-semibold text-white">Grove</p>
                   <p className="text-[10px] text-white/70">online</p>
                 </div>
                 <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90">

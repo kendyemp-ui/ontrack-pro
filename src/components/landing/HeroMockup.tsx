@@ -1,4 +1,5 @@
 import { Flame, Drumstick, Wheat, Droplet } from "lucide-react";
+import { GroveIcon } from "@/components/GroveIcon";
 
 /**
  * Pure CSS phone mockup that matches the real app dashboard.
@@ -24,8 +25,13 @@ export const HeroMockup = () => {
             </span>
           </div>
 
+          {/* grove header */}
+          <div className="px-5 pt-3">
+            <GroveIcon size={20} wordmark wordmarkSize={13} />
+          </div>
+
           {/* greeting */}
-          <div className="px-6 pt-4">
+          <div className="px-6 pt-2">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Hoje, Quinta</p>
             <h3 className="mt-1 font-heading text-lg font-semibold">Olá, Marina</h3>
           </div>

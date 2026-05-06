@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getCalorieStatus, objectiveLabels } from '@/lib/goalStatus';
-import logo from '@/assets/logo.png';
+import { GroveIcon } from '@/components/GroveIcon';
 
 const Dashboard = () => {
   const {
@@ -61,7 +61,7 @@ const Dashboard = () => {
       <div className="max-w-md mx-auto px-4 pt-6 space-y-4">
         {/* Header */}
         <div className="animate-fade-in pt-2">
-          <img src={logo} alt="OnTrack" className="h-10 object-contain invert dark:invert-0 -ml-1" />
+          <GroveIcon size={36} wordmark wordmarkSize={22} />
           <h1 className="text-3xl font-heading font-bold text-foreground mt-3">Olá, {userName}</h1>
           <p className="text-sm text-muted-foreground mt-1 capitalize">{today}</p>
           <Link
