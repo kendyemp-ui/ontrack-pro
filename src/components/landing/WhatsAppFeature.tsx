@@ -1,30 +1,38 @@
 import { Camera, MessageCircle, CheckCheck, Sparkles, Zap, Clock } from "lucide-react";
 
-const messages = [
+type Message = {
+  type: "received" | "sent";
+  time: string;
+  imageUrl?: string;
+  caption?: string;
+  text?: string;
+};
+
+const messages: Message[] = [
   {
-    type: "received" as const,
+    type: "received",
     time: "12:42",
-    image: "🥗",
+    imageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=320&h=200&fit=crop&q=80",
     caption: "Almoço de hoje 🍽️",
   },
   {
-    type: "sent" as const,
+    type: "sent",
     time: "12:42",
     text: "Recebi! Analisando sua refeição… 📸",
   },
   {
-    type: "sent" as const,
+    type: "sent",
     time: "12:42",
     text:
       "✅ *Almoço registrado*\n\n🍗 Frango grelhado · 180g\n🍚 Arroz integral · 100g\n🥦 Brócolis · 80g\n\n📊 *520 kcal* · 42g proteína · 48g carbs",
   },
   {
-    type: "received" as const,
+    type: "received",
     time: "12:43",
     text: "Perfeito! Como tô indo no dia?",
   },
   {
-    type: "sent" as const,
+    type: "sent",
     time: "12:43",
     text:
       "Você já consumiu *1.840 / 2.480 kcal* hoje 🔥\nProteína: 98/140g\nFaltam *640 kcal* pra sua meta, segue firme! 💪",
@@ -149,9 +157,14 @@ export const WhatsAppFeature = () => {
                           : "rounded-br-md bg-[#005c4b] text-white"
                       }`}
                     >
-                      {m.image && (
-                        <div className="mb-1.5 flex h-32 items-center justify-center rounded-lg bg-black/30 text-5xl">
-                          {m.image}
+                      {m.imageUrl && (
+                        <div className="mb-1.5 overflow-hidden rounded-lg">
+                          <img
+                            src={m.imageUrl}
+                            alt="Foto da refeição"
+                            className="h-36 w-full object-cover rounded-lg"
+                            loading="lazy"
+                          />
                         </div>
                       )}
                       {m.caption && (
