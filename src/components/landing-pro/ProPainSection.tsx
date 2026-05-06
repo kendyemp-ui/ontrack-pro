@@ -1,35 +1,20 @@
-import { Flame, TrendingDown, AlarmClock, Repeat, EyeOff, Calendar } from "lucide-react";
+import { TrendingDown, EyeOff, Repeat } from "lucide-react";
 
 const pains = [
   {
-    icon: Flame,
-    title: "O paciente sai motivado, mas esfria em 7 dias",
-    text: "Sem presença ativa entre consultas, a empolgação some, e o resultado também.",
+    icon: EyeOff,
+    title: "Você não sabe se o paciente está seguindo",
+    text: "Sem visibilidade entre as consultas, você só descobre que ele abandonou o plano quando ele some da agenda.",
   },
   {
     icon: TrendingDown,
-    title: "Sem acompanhamento, a adesão despenca",
-    text: "O plano fica no papel. Você só descobre que ele abandonou na próxima consulta, se ela acontecer.",
-  },
-  {
-    icon: AlarmClock,
-    title: "Quando você nota, já é tarde demais",
-    text: "Sem visibilidade do dia a dia, não dá para corrigir a rota antes do paciente sumir.",
-  },
-  {
-    icon: EyeOff,
-    title: "Você não vê o que acontece entre consultas",
-    text: "Refeições, pesos, sintomas, dúvidas, tudo se perde em conversas soltas no WhatsApp pessoal.",
+    title: "Adesão cai, retorno também",
+    text: "Paciente que não segue a dieta não vê resultado, não volta. E sem retorno, você repõe agenda o tempo todo.",
   },
   {
     icon: Repeat,
-    title: "Você vira refém de repor agenda",
-    text: "Sem retenção, todo mês começa do zero. Mais esforço comercial, menos previsibilidade.",
-  },
-  {
-    icon: Calendar,
-    title: "Sua agenda não escala",
-    text: "Atender mais pacientes vira sinônimo de trabalhar mais horas, não de operar melhor.",
+    title: "Todo mês começa do zero",
+    text: "Sem retenção, a maior parte do esforço vai para prospecção. Menos tempo para quem já é paciente.",
   },
 ];
 
@@ -50,9 +35,9 @@ export const ProPainSection = () => {
           </p>
         </div>
 
-        <div className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3">
-          {pains.map((p, i) => (
-            <div key={p.title} className={`pro-card p-5 sm:p-6 ${i >= 4 ? "hidden sm:block" : ""}`}>
+        <div className="mt-8 grid gap-3 sm:mt-12 md:grid-cols-3">
+          {pains.map((p) => (
+            <div key={p.title} className="pro-card p-5 sm:p-6">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10 text-destructive">
                 <p.icon size={18} strokeWidth={2.2} />
               </div>

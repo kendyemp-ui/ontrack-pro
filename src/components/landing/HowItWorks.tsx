@@ -1,29 +1,24 @@
-import { Camera, Activity, LineChart, Bell } from "lucide-react";
+import { Camera, Activity, LineChart, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const steps = [
   {
     icon: Camera,
     step: "01",
-    title: "Registre sua alimentação",
-    desc: "Adicione refeições em segundos. Texto, foto ou direto pelo WhatsApp, o que for mais rápido pra você.",
+    title: "Registre em segundos",
+    desc: "Foto pelo WhatsApp, texto ou busca rápida no app. Sem tabela nutricional, sem digitação manual.",
   },
   {
     icon: Activity,
     step: "02",
-    title: "Acompanhe calorias e macros",
-    desc: "Veja em tempo real quantas calorias, proteínas e carboidratos você consumiu, sem planilha, sem complicação.",
+    title: "Veja calorias e macros na hora",
+    desc: "O app calcula tudo automaticamente: calorias, proteínas e carboidratos do dia em tempo real.",
   },
   {
     icon: LineChart,
     step: "03",
-    title: "Visualize sua evolução",
-    desc: "Gráficos claros de semana, mês e ano mostram o que está funcionando e onde você precisa ajustar.",
-  },
-  {
-    icon: Bell,
-    step: "04",
-    title: "Receba feedbacks inteligentes",
-    desc: "Alertas e dicas personalizadas pra você corrigir a rota antes de sair dela.",
+    title: "Acompanhe sua meta e evolução",
+    desc: "Anel de progresso diário e gráficos de semana, mês e ano — você sempre sabe onde está.",
   },
 ];
 
@@ -34,14 +29,14 @@ export const HowItWorks = () => {
         <div className="mx-auto max-w-3xl text-center">
           <span className="landing-eyebrow">Como funciona</span>
           <h2 className="landing-h2 mt-5">
-            Simples assim. <span className="text-muted-foreground">Em 4 passos.</span>
+            Três passos. <span className="text-muted-foreground">Zero planilha.</span>
           </h2>
           <p className="landing-lead mt-5">
-            Sem planilhas, sem cálculos, sem fricção. Você registra, o app cuida do resto.
+            Você registra, o Grove calcula. Simples assim.
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:mt-12 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:mt-12 md:grid-cols-3">
           {steps.map((s, i) => (
             <div key={s.step} className="landing-card-elevated relative p-6">
               <div className="flex items-center justify-between">
@@ -55,11 +50,21 @@ export const HowItWorks = () => {
               {i < steps.length - 1 && (
                 <div
                   aria-hidden
-                  className="absolute -right-3 top-1/2 hidden h-px w-6 -translate-y-1/2 bg-border lg:block"
+                  className="absolute -right-3 top-1/2 hidden h-px w-6 -translate-y-1/2 bg-border md:block"
                 />
               )}
             </div>
           ))}
+        </div>
+
+        {/* Mid-page CTA */}
+        <div className="mt-12 flex flex-col items-center gap-3 text-center">
+          <Button asChild size="lg" className="h-12 px-8 text-sm font-semibold">
+            <a href="#planos">
+              Começar a contar calorias agora <ArrowRight size={16} />
+            </a>
+          </Button>
+          <p className="text-xs text-muted-foreground">Sem fidelidade · Cancele quando quiser</p>
         </div>
       </div>
     </section>

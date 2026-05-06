@@ -2,11 +2,7 @@ import { useEffect } from "react";
 import ProNav from "@/components/landing-pro/ProNav";
 import ProHero from "@/components/landing-pro/ProHero";
 import ProPainSection from "@/components/landing-pro/ProPainSection";
-import ProOpportunity from "@/components/landing-pro/ProOpportunity";
 import ProHowItWorks from "@/components/landing-pro/ProHowItWorks";
-import ProBenefits from "@/components/landing-pro/ProBenefits";
-import ProFeatures from "@/components/landing-pro/ProFeatures";
-import ProMockups from "@/components/landing-pro/ProMockups";
 import ProPricing from "@/components/landing-pro/ProPricing";
 import ProSocialProof from "@/components/landing-pro/ProSocialProof";
 import ProFAQ from "@/components/landing-pro/ProFAQ";
@@ -78,11 +74,7 @@ const ProLanding = () => {
         </h1>
         <ProHero />
         <ProPainSection />
-        <ProOpportunity />
         <ProHowItWorks />
-        <ProBenefits />
-        <ProFeatures />
-        <ProMockups />
         <ProPricing />
         <ProSocialProof />
         <ProFAQ />

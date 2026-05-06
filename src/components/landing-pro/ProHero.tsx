@@ -98,13 +98,12 @@ export const ProHero = () => {
           </span>
 
           <h1 className="landing-h1 mt-6">
-            Transforme acompanhamento em{" "}
-            <span className="pro-gradient-text">retenção.</span>
+            Seu paciente sai da consulta motivado.{" "}
+            <span className="pro-gradient-text">Em 7 dias, some.</span>
           </h1>
 
           <p className="landing-lead mx-auto mt-6 max-w-2xl">
-            O Grove Pro ajuda nutricionistas a manterem presença ativa na rotina dos pacientes,
-            aumentando adesão, relacionamento e retorno entre consultas, sem esforço manual.
+            Grove Pro acompanha cada paciente entre as consultas, alerta quando a adesão cai e mantém você presente sem esforço — aumentando retenção e o retorno dos atendimentos.
           </p>
 
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">

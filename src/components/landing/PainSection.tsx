@@ -1,25 +1,15 @@
-import { Frown, TrendingDown, EyeOff, Repeat, BarChart3 } from "lucide-react";
+import { BarChart3, Repeat } from "lucide-react";
 
 const pains = [
   {
-    icon: EyeOff,
-    title: "Você não sabe exatamente como está se alimentando",
-    desc: "Comer no automático, sem registro, sem clareza. No fim do dia, fica a dúvida: comi bem ou não?",
+    icon: BarChart3,
+    title: "Calcular caloria por caloria parece impossível",
+    desc: "Você sabe que precisa controlar, mas abrir tabela nutricional pra cada refeição não é vida. Então desiste.",
   },
   {
     icon: Repeat,
-    title: "Começa firme na segunda e perde o ritmo na quinta",
-    desc: "A motivação some, o foco se dispersa e a rotina volta ao caos. Sem ferramenta, é fácil largar.",
-  },
-  {
-    icon: BarChart3,
-    title: "Sem ideia de calorias, proteína ou carboidratos",
-    desc: "Você sabe que precisa controlar, mas calcular cada refeição parece um trabalho que ninguém aguenta.",
-  },
-  {
-    icon: TrendingDown,
-    title: "Não consegue enxergar a sua evolução",
-    desc: "Sem acompanhamento real, parece que nada muda. E quando não vemos progresso, desistimos.",
+    title: "Começa na segunda, abandona na quinta",
+    desc: "Sem visibilidade do que já consumiu, fica difícil manter o foco. E sem foco, a rotina volta ao caos.",
   },
 ];
 
@@ -27,33 +17,24 @@ export const PainSection = () => {
   return (
     <section className="landing-section relative">
       <div className="landing-container">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="landing-eyebrow">
-            <Frown size={12} />
-            Soa familiar?
-          </span>
-          <h2 className="landing-h2 mt-5">
-            Você não está sozinho. <br className="hidden sm:block" />
-            <span className="text-muted-foreground">Manter constância é o mais difícil.</span>
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="landing-h2">
+            Sem o número, é chute.{" "}
+            <span className="text-muted-foreground">Com o número, é controle.</span>
           </h2>
           <p className="landing-lead mt-5">
-            A maioria das pessoas falha não por falta de vontade, mas por falta de uma
-            ferramenta que torne o acompanhamento simples o suficiente para ser sustentável.
+            A maioria das pessoas não falha por falta de vontade — falha porque contar caloria de cabeça é inviável.
           </p>
         </div>
 
-        <div className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-2">
+        <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 max-w-3xl mx-auto">
           {pains.map((p) => (
-            <div key={p.title} className="landing-card p-5 sm:p-7">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-secondary/40">
-                  <p.icon size={18} className="text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-heading text-base font-semibold leading-snug">{p.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
-                </div>
+            <div key={p.title} className="landing-card p-6 sm:p-8">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-secondary/40">
+                <p.icon size={18} className="text-muted-foreground" />
               </div>
+              <h3 className="font-heading text-base font-semibold leading-snug mt-4">{p.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
             </div>
           ))}
         </div>

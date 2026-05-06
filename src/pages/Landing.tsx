@@ -4,9 +4,6 @@ import Hero from "@/components/landing/Hero";
 import PainSection from "@/components/landing/PainSection";
 import HowItWorks from "@/components/landing/HowItWorks";
 import WhatsAppFeature from "@/components/landing/WhatsAppFeature";
-import Benefits from "@/components/landing/Benefits";
-import Features from "@/components/landing/Features";
-import Mockups from "@/components/landing/Mockups";
 import Pricing from "@/components/landing/Pricing";
 import SocialProof from "@/components/landing/SocialProof";
 import FAQ from "@/components/landing/FAQ";
@@ -78,11 +75,8 @@ const Landing = () => {
         <h1 className="sr-only">Grove App, Acompanhamento nutricional inteligente</h1>
         <Hero />
         <PainSection />
-        <HowItWorks />
         <WhatsAppFeature />
-        <Benefits />
-        <Features />
-        <Mockups />
+        <HowItWorks />
         <Pricing />
         <SocialProof />
         <FAQ />

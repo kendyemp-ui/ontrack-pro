@@ -1,4 +1,6 @@
-import { UserPlus, MessageCircle, Database, LineChart } from "lucide-react";
+import { UserPlus, MessageCircle, Database, LineChart, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const steps = [
   {
@@ -63,6 +65,16 @@ export const ProHowItWorks = () => {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Mid-page CTA */}
+        <div className="mt-12 flex flex-col items-center gap-3 text-center">
+          <Button asChild size="lg" className="pro-bg-accent h-12 px-8 text-white hover:opacity-90">
+            <Link to="/pro/cadastro">
+              Testar grátis — até 5 pacientes <ArrowRight size={16} />
+            </Link>
+          </Button>
+          <p className="text-xs text-muted-foreground">Sem cartão de crédito · Setup em minutos</p>
         </div>
       </div>
     </section>

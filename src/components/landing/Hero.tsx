@@ -25,18 +25,17 @@ export const Hero = () => {
           <div className="flex flex-col items-start text-left">
             <span className="landing-eyebrow">
               <Sparkles size={12} className="text-accent" />
-              Evolução que acompanha você
+              Contagem de calorias sem complicação
             </span>
 
             <h1 className="landing-h1 mt-6">
-              Acompanhe sua rotina alimentar com{" "}
-              <span className="text-gradient-mono">mais clareza, consistência</span>{" "}
-              e <span className="accent-text">resultado</span>.
+              Você sabe o que come.{" "}
+              <span className="text-gradient-mono">Mas sabe quantas calorias</span>{" "}
+              foram?
             </h1>
 
             <p className="landing-lead mt-6 max-w-xl">
-              O Grove App ajuda você a registrar refeições, acompanhar calorias e macros,
-              visualizar sua evolução e seguir no caminho certo todos os dias.
+              Grove conta calorias, proteínas e carboidratos automaticamente. Mande uma foto da refeição pelo WhatsApp ou registre em segundos no app — e acompanhe sua meta em tempo real.
             </p>
 
             <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
