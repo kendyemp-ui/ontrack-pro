@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { LandingNav } from "@/components/landing/LandingNav";
 import Hero from "@/components/landing/Hero";
 import PainSection from "@/components/landing/PainSection";
@@ -15,7 +15,7 @@ import Footer from "@/components/landing/Footer";
 
 const Landing = () => {
   useEffect(() => {
-    document.title = "OnTrack App, Evolução que acompanha você";
+    document.title = "Grove App, EvoluÃ§Ã£o que acompanha vocÃª";
 
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -29,7 +29,7 @@ const Landing = () => {
 
     setMeta(
       "description",
-      "Acompanhe sua rotina alimentar com clareza, consistência e resultado. Registre refeições, monitore calorias e macros, e visualize sua evolução com o OnTrack App."
+      "Acompanhe sua rotina alimentar com clareza, consistÃªncia e resultado. Registre refeiÃ§Ãµes, monitore calorias e macros, e visualize sua evoluÃ§Ã£o com o Grove App."
     );
 
     // Canonical
@@ -53,9 +53,9 @@ const Landing = () => {
     ld.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      name: "OnTrack App",
+      name: "Grove App",
       description:
-        "App de acompanhamento nutricional com registro de refeições, monitoramento de calorias e macros e gráficos de evolução.",
+        "App de acompanhamento nutricional com registro de refeiÃ§Ãµes, monitoramento de calorias e macros e grÃ¡ficos de evoluÃ§Ã£o.",
       applicationCategory: "HealthApplication",
       operatingSystem: "Web, iOS, Android",
       offers: [
@@ -75,7 +75,7 @@ const Landing = () => {
     <div className="min-h-screen bg-background text-foreground">
       <LandingNav />
       <main>
-        <h1 className="sr-only">OnTrack App, Acompanhamento nutricional inteligente</h1>
+        <h1 className="sr-only">Grove App, Acompanhamento nutricional inteligente</h1>
         <Hero />
         <PainSection />
         <HowItWorks />

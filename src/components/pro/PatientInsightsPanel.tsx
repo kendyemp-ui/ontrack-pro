@@ -28,7 +28,19 @@ export default function PatientInsightsPanel({ clientId }: { clientId: string })
       const { data, error: fnError } = await supabase.functions.invoke('analyze-patient', {
         body: { client_id: clientId },
       });
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) {
+        // Try to extract the actual error from the response body
+        const ctx = (fnError as any).context;
+        if (ctx && typeof ctx.json === 'function') {
+          try {
+            const body = await ctx.json();
+            throw new Error(body?.error || fnError.message);
+          } catch (parseErr: any) {
+            if (parseErr.message !== fnError.message) throw parseErr;
+          }
+        }
+        throw new Error(fnError.message);
+      }
       if (data?.error) throw new Error(data.error);
       setInsights(data.insights);
       setGeneratedAt(new Date());

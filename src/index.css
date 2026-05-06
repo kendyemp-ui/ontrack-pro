@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Figtree:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,54 +6,65 @@
 
 @layer base {
   :root {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 95%;
+    /* ── Grove Design System · Sage Light Theme ─────────────────── */
 
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 95%;
+    /* Backgrounds */
+    --background: 120 33% 97%;          /* #F6FAF6 — sage cream */
+    --foreground: 138 37% 17%;          /* #1B3A24 — deep forest text */
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 95%;
+    --card: 0 0% 100%;                  /* #FFFFFF — pure white cards */
+    --card-foreground: 138 37% 17%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 138 37% 17%;
 
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 0 0% 90%;
+    /* Primary — Forest green (CTAs, buttons) */
+    --primary: 141 25% 39%;             /* #4A7C59 */
+    --primary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 55%;
+    /* Secondary — Soft mint (chips, tags) */
+    --secondary: 116 25% 90%;           /* #DCF0DA */
+    --secondary-foreground: 138 37% 17%;
 
-    --accent: 160 70% 45%;
-    --accent-foreground: 0 0% 0%;
+    /* Muted */
+    --muted: 120 15% 94%;               /* #EEF3EE */
+    --muted-foreground: 120 8% 48%;     /* #737D73 */
 
+    /* Accent — Sage green (highlights, icons) */
+    --accent: 123 16% 58%;              /* #7FA882 */
+    --accent-foreground: 0 0% 100%;
+
+    /* Semantic */
     --destructive: 0 62% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 160 70% 45%;
-    --success-foreground: 0 0% 0%;
+    --success: 141 40% 42%;
+    --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 0 0% 100%;
+    /* Borders & inputs */
+    --border: 120 15% 85%;              /* #D3E3D3 */
+    --input: 120 15% 85%;
+    --ring: 141 25% 39%;                /* forest focus ring */
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 14%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 0 0% 100%;
+    /* Sidebar */
+    --sidebar-background: 120 20% 95%;  /* #EDF4ED */
+    --sidebar-foreground: 138 37% 17%;
+    --sidebar-primary: 141 25% 39%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 116 25% 88%;
+    --sidebar-accent-foreground: 138 37% 17%;
+    --sidebar-border: 120 15% 85%;
+    --sidebar-ring: 141 25% 39%;
 
-    --font-heading: 'Outfit', sans-serif;
-    --font-body: 'Figtree', sans-serif;
-    --font-display: 'Outfit', sans-serif;
+    /* Fonts */
+    --font-heading: 'DM Sans', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-display: 'DM Sans', sans-serif;
   }
 }
 
@@ -71,68 +82,81 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
+  /* ── Cards ─────────────────────────────────────────────────────── */
   .glass-card {
-    @apply bg-card border border-border/60 shadow-lg shadow-black/20;
+    @apply bg-card border border-border/70 shadow-sm shadow-black/5;
   }
 
+  /* ── Gradients ─────────────────────────────────────────────────── */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 80%));
-    color: hsl(0 0% 0%);
+    background: linear-gradient(135deg, hsl(141 25% 39%), hsl(123 16% 52%));
+    color: white;
   }
 
   .gradient-accent {
-    background: linear-gradient(135deg, hsl(160 70% 45%), hsl(180 60% 40%));
+    background: linear-gradient(135deg, hsl(141 25% 39%), hsl(116 25% 62%));
+  }
+
+  .gradient-sage {
+    background: linear-gradient(135deg, hsl(120 33% 97%) 0%, hsl(116 25% 92%) 100%);
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 70%));
+    background: linear-gradient(135deg, hsl(141 25% 39%), hsl(123 16% 58%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
+  /* ── Progress bars ─────────────────────────────────────────────── */
   .progress-bar {
     @apply rounded-full overflow-hidden;
-    background: hsl(0 0% 18%);
+    background: hsl(120 15% 90%);
   }
 
   .progress-fill {
     @apply h-full rounded-full transition-all duration-700 ease-out;
+    background: linear-gradient(90deg, hsl(141 25% 39%), hsl(123 16% 58%));
   }
 
+  /* ── WhatsApp ──────────────────────────────────────────────────── */
   .whatsapp-green {
     background-color: #25D366;
     color: white;
   }
 
   .whatsapp-bg {
-    background-color: #0b1014;
+    background-color: #e8f5e9;
   }
 
   .whatsapp-bubble-sent {
-    background-color: hsl(160 30% 18%);
-    color: hsl(0 0% 90%);
+    background-color: hsl(141 35% 88%);
+    color: hsl(138 37% 17%);
   }
 
   .whatsapp-bubble-received {
-    background-color: hsl(0 0% 14%);
-    color: hsl(0 0% 90%);
+    background-color: hsl(0 0% 98%);
+    color: hsl(138 37% 17%);
   }
 
+  /* ── Glow & shadow ─────────────────────────────────────────────── */
   .stat-glow {
-    box-shadow: 0 0 40px -10px hsl(160 70% 45% / 0.15);
+    box-shadow: 0 0 40px -10px hsl(123 16% 58% / 0.20);
   }
 
-  /* ===== Landing page utilities ===== */
+  /* ── Landing page ──────────────────────────────────────────────── */
   .landing-container {
     @apply mx-auto w-full max-w-7xl px-6 lg:px-8;
   }
 
   .landing-eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur;
+    @apply inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur;
   }
 
   .landing-h1 {
@@ -157,11 +181,11 @@
   }
 
   .landing-card {
-    @apply rounded-2xl border border-border/60 bg-card/70 backdrop-blur transition-all duration-300 hover:border-border hover:bg-card;
+    @apply rounded-2xl border border-border/70 bg-white/80 backdrop-blur transition-all duration-300 hover:border-accent/40 hover:shadow-md hover:shadow-black/5;
   }
 
   .landing-card-elevated {
-    @apply rounded-2xl border border-border/60 bg-gradient-to-b from-card to-card/40 shadow-[0_1px_0_0_hsl(0_0%_100%/0.04)_inset,0_30px_60px_-30px_hsl(0_0%_0%/0.6)];
+    @apply rounded-2xl border border-border/70 bg-white shadow-sm shadow-black/5;
   }
 
   .landing-section {
@@ -173,7 +197,7 @@
   }
 
   .text-gradient-mono {
-    background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 65%) 100%);
+    background: linear-gradient(135deg, hsl(138 37% 17%) 0%, hsl(123 16% 58%) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -181,19 +205,19 @@
 
   .grid-bg {
     background-image:
-      linear-gradient(to right, hsl(0 0% 100% / 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+      linear-gradient(to right, hsl(123 16% 58% / 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(123 16% 58% / 0.08) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
     -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
   }
 
   .glow-accent {
-    box-shadow: 0 0 80px -10px hsl(var(--accent) / 0.4), 0 0 200px -40px hsl(var(--accent) / 0.25);
+    box-shadow: 0 0 60px -10px hsl(var(--accent) / 0.25), 0 0 160px -40px hsl(var(--accent) / 0.15);
   }
 
   .phone-frame {
-    @apply relative rounded-[2.2rem] border border-border bg-black p-2 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)];
+    @apply relative rounded-[2.2rem] border border-border bg-white/90 p-2 shadow-[0_20px_60px_-20px_rgba(74,124,89,0.25)];
   }
 
   .phone-frame-inner {
@@ -205,45 +229,45 @@
     -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   }
 
-  /* ===== OnTrack Pro (B2B) accent — teal healthtech ===== */
+  /* ── Grove Pro (B2B) accent — sage wellness ─────────────────────── */
   .pro-accent {
-    color: hsl(174 72% 56%);
+    color: hsl(141 25% 39%);
   }
 
   .pro-bg-accent {
-    background-color: hsl(174 72% 56%);
+    background-color: hsl(141 25% 39%);
   }
 
   .pro-border-accent {
-    border-color: hsl(174 72% 56% / 0.4);
+    border-color: hsl(141 25% 39% / 0.35);
   }
 
   .pro-glow {
     box-shadow:
-      0 0 90px -10px hsl(174 72% 56% / 0.35),
-      0 0 220px -40px hsl(174 72% 56% / 0.2);
+      0 0 60px -10px hsl(123 16% 58% / 0.25),
+      0 0 160px -40px hsl(123 16% 58% / 0.15);
   }
 
   .pro-gradient-text {
-    background: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(174 72% 70%) 100%);
+    background: linear-gradient(135deg, hsl(138 37% 17%) 0%, hsl(123 16% 58%) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .pro-card {
-    @apply rounded-2xl border border-border/60 bg-card/70 backdrop-blur transition-all duration-300;
+    @apply rounded-2xl border border-border/70 bg-white/80 backdrop-blur transition-all duration-300;
   }
 
   .pro-card:hover {
-    border-color: hsl(174 72% 56% / 0.35);
-    background-color: hsl(var(--card));
+    border-color: hsl(141 25% 39% / 0.30);
+    box-shadow: 0 4px 20px -4px hsl(141 25% 39% / 0.12);
   }
 
   .pro-grid-bg {
     background-image:
-      linear-gradient(to right, hsl(174 72% 56% / 0.06) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(174 72% 56% / 0.06) 1px, transparent 1px);
+      linear-gradient(to right, hsl(123 16% 58% / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(123 16% 58% / 0.07) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
     -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
@@ -251,8 +275,8 @@
 
   .pro-pill {
     @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium;
-    border-color: hsl(174 72% 56% / 0.3);
-    background-color: hsl(174 72% 56% / 0.08);
-    color: hsl(174 72% 70%);
+    border-color: hsl(141 25% 39% / 0.25);
+    background-color: hsl(141 25% 39% / 0.08);
+    color: hsl(141 25% 35%);
   }
 }

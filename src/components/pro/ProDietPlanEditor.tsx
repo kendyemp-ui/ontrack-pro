@@ -401,10 +401,10 @@ export default function ProDietPlanEditor({ clientId }: { clientId: string }) {
               </button>
             </div>
 
-            {/* ─ Sugestões OnTrack ─ */}
+            {/* ─ Sugestões Grove ─ */}
             <div>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
-                ✦ Sugestões OnTrack
+                ✦ Sugestões Grove
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {SYSTEM_TEMPLATES.map(t => (

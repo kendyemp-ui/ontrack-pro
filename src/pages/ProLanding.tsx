@@ -15,7 +15,7 @@ import ProFooter from "@/components/landing-pro/ProFooter";
 
 const ProLanding = () => {
   useEffect(() => {
-    document.title = "OnTrack Pro, Acompanhamento inteligente, adesão real";
+    document.title = "Grove Pro, Acompanhamento inteligente, adesão real";
 
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -51,7 +51,7 @@ const ProLanding = () => {
     ld.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      name: "OnTrack Pro",
+      name: "Grove Pro",
       description:
         "Plataforma B2B de acompanhamento nutricional para nutricionistas e profissionais da saúde. Dashboard de pacientes, alertas de adesão e integração com WhatsApp.",
       applicationCategory: "BusinessApplication",
@@ -74,7 +74,7 @@ const ProLanding = () => {
       <ProNav />
       <main>
         <h1 className="sr-only">
-          OnTrack Pro, Plataforma de acompanhamento para nutricionistas
+          Grove Pro, Plataforma de acompanhamento para nutricionistas
         </h1>
         <ProHero />
         <ProPainSection />
