@@ -1,265 +1,426 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
-import HistoryChart from '@/components/HistoryChart';
+import { supabase } from '@/integrations/supabase/client';
 import {
-  TrendingUp, Sparkles, Scale, CheckCircle2, AlertCircle, Info,
-  Flame, Drumstick, Wheat, Zap, Droplets, Activity,
+  TrendingUp, Scale, Flame, Droplets, Activity, Zap, FlaskConical,
+  CheckCircle2, AlertCircle, AlertTriangle, Upload, Link as LinkIcon,
 } from 'lucide-react';
-import { getCalorieStatus } from '@/lib/goalStatus';
+import { useNavigate } from 'react-router-dom';
 
-const toLocalISODate = (d: Date) =>
-  new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-
-// ── Insight helpers ──────────────────────────────────────────────────────────
-type InsightType = 'success' | 'warning' | 'info';
-interface Insight { type: InsightType; text: string }
-
-function buildInsights(
-  totalCalories: number,
-  caloriesTarget: number,
-  totalProtein: number,
-  proteinTarget: number,
-  totalCarbs: number,
-  carbsTarget: number,
-  netBalance: number,
-  objective: string,
-  mealCount: number,
-): Insight[] {
-  const insights: Insight[] = [];
-  const calPct = caloriesTarget > 0 ? Math.round((totalCalories / caloriesTarget) * 100) : 0;
-  const protPct = proteinTarget > 0 ? Math.round((totalProtein / proteinTarget) * 100) : 0;
-
-  // Calorias
-  if (mealCount === 0) {
-    insights.push({ type: 'info', text: 'Nenhuma refeição registrada hoje ainda. Registre via WhatsApp ou pelo botão + no dashboard.' });
-  } else if (calPct >= 90 && calPct <= 110) {
-    insights.push({ type: 'success', text: `Ingestão calórica dentro da meta (${calPct}%). Consistência é o que gera resultado! 🎯` });
-  } else if (calPct < 70) {
-    const rem = caloriesTarget - totalCalories;
-    insights.push({ type: 'warning', text: `Você consumiu apenas ${calPct}% da meta calórica. Faltam ${rem} kcal — não pule refeições.` });
-  } else if (calPct > 115) {
-    const extra = totalCalories - caloriesTarget;
-    insights.push({ type: 'warning', text: `Ultrapassou a meta em ${extra} kcal hoje. Ajuste o jantar para equilibrar.` });
-  }
-
-  // Proteína
-  if (mealCount > 0) {
-    if (protPct >= 100) {
-      insights.push({ type: 'success', text: `Meta de proteína atingida (${totalProtein}g). Ótimo para preservação de massa muscular! 💪` });
-    } else if (protPct < 60) {
-      insights.push({ type: 'warning', text: `Proteína baixa: ${totalProtein}g de ${proteinTarget}g. Adicione frango, ovo ou whey nas próximas refeições.` });
-    } else {
-      const rem = proteinTarget - totalProtein;
-      insights.push({ type: 'info', text: `Faltam ${rem}g de proteína para atingir sua meta do dia.` });
-    }
-  }
-
-  // Objetivo
-  if (mealCount > 0) {
-    if (objective === 'lose' && netBalance > 0) {
-      insights.push({ type: 'info', text: `Seu objetivo é emagrecimento mas hoje está em superávit de ${netBalance} kcal. Tente manter déficit entre 200-700 kcal.` });
-    } else if (objective === 'gain' && netBalance < 0) {
-      insights.push({ type: 'info', text: `Seu objetivo é hipertrofia mas hoje está em déficit de ${Math.abs(netBalance)} kcal. Adicione calorias extras para ganho muscular.` });
-    }
-  }
-
-  return insights.slice(0, 3); // máximo 3 insights
+// ── Tipos ────────────────────────────────────────────────────────────────────
+interface HealthMarkers {
+  exam_date: string | null;
+  glucose: number | null;
+  hba1c: number | null;
+  ldl: number | null;
+  hdl: number | null;
+  total_cholesterol: number | null;
+  triglycerides: number | null;
+  uric_acid: number | null;
+  creatinine: number | null;
+  tsh: number | null;
+  hemoglobin: number | null;
 }
 
-// ── BioMetric card ───────────────────────────────────────────────────────────
-const BioMetric = ({ label, value, sub, icon: Icon, highlight = false }: {
-  label: string; value: string; sub?: string; icon: React.ElementType; highlight?: boolean;
-}) => (
-  <div className={`rounded-xl p-3 space-y-1 ${highlight ? 'bg-primary/10 border border-primary/20' : 'bg-secondary/50'}`}>
-    <Icon size={14} className={highlight ? 'text-primary' : 'text-accent'} />
-    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
-    <p className={`text-base font-heading font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>{value}</p>
-    {sub && <p className="text-[9px] text-muted-foreground">{sub}</p>}
+type MarkerStatus = 'ok' | 'borderline' | 'high' | 'low';
+
+interface MarkerDef {
+  key: keyof HealthMarkers;
+  label: string;
+  unit: string;
+  evaluate: (v: number) => MarkerStatus;
+}
+
+// ── Definições de referência clínica ─────────────────────────────────────────
+const MARKERS: MarkerDef[] = [
+  { key: 'glucose',           label: 'Glicemia',       unit: 'mg/dL', evaluate: v => v < 100 ? 'ok' : v < 126 ? 'borderline' : 'high' },
+  { key: 'hba1c',             label: 'HbA1c',          unit: '%',     evaluate: v => v < 5.7 ? 'ok' : v < 6.5 ? 'borderline' : 'high' },
+  { key: 'ldl',               label: 'LDL',            unit: 'mg/dL', evaluate: v => v < 130 ? 'ok' : v < 160 ? 'borderline' : 'high' },
+  { key: 'hdl',               label: 'HDL',            unit: 'mg/dL', evaluate: v => v >= 60 ? 'ok' : v >= 40 ? 'borderline' : 'low' },
+  { key: 'total_cholesterol', label: 'Colesterol total',unit: 'mg/dL', evaluate: v => v < 200 ? 'ok' : v < 240 ? 'borderline' : 'high' },
+  { key: 'triglycerides',     label: 'Triglicerídeos', unit: 'mg/dL', evaluate: v => v < 150 ? 'ok' : v < 200 ? 'borderline' : 'high' },
+  { key: 'tsh',               label: 'TSH',            unit: 'mUI/L', evaluate: v => v >= 0.5 && v <= 4.0 ? 'ok' : 'borderline' },
+  { key: 'creatinine',        label: 'Creatinina',     unit: 'mg/dL', evaluate: v => v < 1.3 ? 'ok' : v < 1.7 ? 'borderline' : 'high' },
+  { key: 'hemoglobin',        label: 'Hemoglobina',    unit: 'g/dL',  evaluate: v => v >= 12 ? 'ok' : v >= 10 ? 'borderline' : 'low' },
+  { key: 'uric_acid',         label: 'Ácido úrico',    unit: 'mg/dL', evaluate: v => v < 7.0 ? 'ok' : 'high' },
+];
+
+const STATUS_CONFIG: Record<MarkerStatus, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+  ok:         { label: 'Normal',     icon: CheckCircle2,  color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  borderline: { label: 'Atenção',    icon: AlertTriangle, color: 'text-amber-500',   bg: 'bg-amber-500/10'   },
+  high:       { label: 'Alto',       icon: AlertCircle,   color: 'text-red-500',     bg: 'bg-red-500/10'     },
+  low:        { label: 'Baixo',      icon: AlertCircle,   color: 'text-red-500',     bg: 'bg-red-500/10'     },
+};
+
+const toLocalISO = (d: Date) =>
+  new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+
+// ── Body fat reference ranges ─────────────────────────────────────────────────
+function bodyFatStatus(pct: number): { label: string; color: string } {
+  if (pct < 6)   return { label: 'Muito baixo', color: 'text-amber-500' };
+  if (pct < 18)  return { label: 'Atlético',    color: 'text-emerald-500' };
+  if (pct < 25)  return { label: 'Normal',       color: 'text-emerald-400' };
+  if (pct < 30)  return { label: 'Acima do ideal', color: 'text-amber-500' };
+  return            { label: 'Alto',            color: 'text-red-500' };
+}
+
+function visceralFatStatus(v: number): { label: string; color: string } {
+  if (v <= 9)  return { label: 'Saudável', color: 'text-emerald-500' };
+  if (v <= 14) return { label: 'Atenção',  color: 'text-amber-500' };
+  return          { label: 'Risco',      color: 'text-red-500' };
+}
+
+// ── Heatmap de consistência ───────────────────────────────────────────────────
+function buildCalendar(trackedDates: Set<string>) {
+  const today = new Date();
+  const days: { iso: string; tracked: boolean; future: boolean }[] = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const iso = toLocalISO(d);
+    days.push({ iso, tracked: trackedDates.has(iso), future: false });
+  }
+  return days;
+}
+
+// ── Sub-componentes ───────────────────────────────────────────────────────────
+const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
+  <div className="flex items-center gap-2 mb-4">
+    <Icon size={15} className="text-primary" />
+    <h2 className="text-sm font-heading font-semibold text-foreground">{title}</h2>
   </div>
 );
 
-// ── MacroBar ─────────────────────────────────────────────────────────────────
-const MacroBar = ({ label, current, target, color, icon: Icon }: {
-  label: string; current: number; target: number; color: string; icon: React.ElementType;
-}) => {
-  const pct = Math.min(100, target > 0 ? Math.round((current / target) * 100) : 0);
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1.5">
-          <Icon size={12} className="text-muted-foreground" />
-          <span className="text-muted-foreground">{label}</span>
-        </div>
-        <span className="font-medium text-foreground">{current}g <span className="text-muted-foreground font-normal">/ {target}g</span></span>
+const BioCard = ({
+  label, value, unit, sub, icon: Icon, barPct, barColor, status,
+}: {
+  label: string; value: number | string; unit: string; sub?: string;
+  icon: React.ElementType; barPct?: number; barColor?: string; status?: string;
+}) => (
+  <div className="bg-secondary/50 rounded-xl p-3 space-y-2">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-1.5">
+        <Icon size={13} className="text-muted-foreground" />
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       </div>
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-700 ${color}`} style={{ width: `${pct}%` }} />
-      </div>
+      {status && <span className="text-[9px] font-medium text-muted-foreground">{status}</span>}
     </div>
-  );
-};
+    <div className="flex items-baseline gap-1">
+      <span className="text-xl font-heading font-bold text-foreground">{value}</span>
+      <span className="text-xs text-muted-foreground">{unit}</span>
+    </div>
+    {barPct !== undefined && (
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-700 ${barColor ?? 'bg-primary'}`}
+          style={{ width: `${Math.min(100, barPct)}%` }}
+        />
+      </div>
+    )}
+    {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+  </div>
+);
 
-// ── Main page ────────────────────────────────────────────────────────────────
+// ── Página principal ──────────────────────────────────────────────────────────
 const Evolution = () => {
-  const {
-    totalCalories, totalProtein, totalCarbs,
-    goal, totalBurn, netBalance, bioimpedance,
-    meals, activities, clientId,
-  } = useApp();
+  const { bioimpedance, clientId, user } = useApp();
+  const navigate = useNavigate();
 
-  const todayIso = toLocalISODate(new Date());
-  const mealCount = meals.length;
-  const activityCount = activities.length;
+  const [markers, setMarkers]           = useState<HealthMarkers | null>(null);
+  const [markersLoading, setMarkersLoading] = useState(false);
+  const [trackedDates, setTrackedDates] = useState<Set<string>>(new Set());
+  const [consistencyLoading, setConsistencyLoading] = useState(false);
 
-  // Fats estimate
-  const fatsTarget = Math.round((goal.caloriesTarget * 0.25) / 9);
-  const totalFats = meals.reduce((s, m) => s + Math.round((m.calories * 0.3) / 9), 0);
+  // Carrega exames de sangue mais recentes
+  useEffect(() => {
+    if (!clientId) return;
+    setMarkersLoading(true);
+    supabase
+      .from('patient_health_markers')
+      .select('exam_date,glucose,hba1c,ldl,hdl,total_cholesterol,triglycerides,uric_acid,creatinine,tsh,hemoglobin')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => { setMarkers(data as any); setMarkersLoading(false); });
+  }, [clientId]);
 
-  const insights = useMemo(() => buildInsights(
-    totalCalories, goal.caloriesTarget,
-    totalProtein, goal.proteinTarget,
-    totalCarbs, goal.carbsTarget,
-    netBalance, goal.objective,
-    mealCount,
-  ), [totalCalories, totalProtein, totalCarbs, netBalance, goal, mealCount]);
+  // Carrega consistência dos últimos 28 dias
+  useEffect(() => {
+    if (!clientId) return;
+    setConsistencyLoading(true);
+    const since = new Date(); since.setDate(since.getDate() - 27);
+    supabase
+      .from('daily_summary')
+      .select('summary_date, meal_count')
+      .eq('client_id', clientId)
+      .gte('summary_date', toLocalISO(since))
+      .then(({ data }) => {
+        const set = new Set<string>(
+          (data ?? []).filter((r: any) => Number(r.meal_count) > 0).map((r: any) => r.summary_date)
+        );
+        setTrackedDates(set);
+        setConsistencyLoading(false);
+      });
+  }, [clientId]);
 
-  const balanceStatus = getCalorieStatus(netBalance, goal.objective);
+  const calendar = useMemo(() => buildCalendar(trackedDates), [trackedDates]);
+  const trackedCount = calendar.filter(d => d.tracked).length;
 
-  const hasBio = bioimpedance.weight > 0 || bioimpedance.bodyFat > 0 || bioimpedance.muscleMass > 0;
+  const hasBio = bioimpedance.weight > 0 || bioimpedance.bodyFat > 0;
+
+  const visibleMarkers = MARKERS.filter(m => markers && markers[m.key] != null);
+  const examDate = markers?.exam_date
+    ? new Date(markers.exam_date).toLocaleDateString('pt-BR')
+    : null;
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-md mx-auto px-4 pt-6 space-y-5">
 
         {/* Header */}
-        <div className="animate-fade-in flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <TrendingUp size={20} className="text-primary" strokeWidth={2} />
-              <h1 className="text-2xl font-heading font-bold text-foreground">Evolução</h1>
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">Sua jornada em números</p>
+        <div className="animate-fade-in">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={20} className="text-primary" strokeWidth={2} />
+            <h1 className="text-2xl font-heading font-bold text-foreground">Evolução</h1>
           </div>
+          <p className="text-sm text-muted-foreground mt-0.5">Composição corporal e saúde</p>
         </div>
 
-        {/* ── AI Insights ─────────────────────────────────────────────── */}
-        <div className="glass-card rounded-2xl p-5 space-y-3 animate-slide-up">
-          <div className="flex items-center gap-2">
-            <Sparkles size={15} className="text-primary" />
-            <h2 className="text-sm font-heading font-semibold text-foreground">Insights de hoje</h2>
+        {/* ── Composição corporal ──────────────────────────────────────── */}
+        <div className="glass-card rounded-2xl p-5 animate-slide-up">
+          <div className="flex items-center justify-between mb-4">
+            <SectionHeader icon={Scale} title="Composição corporal" />
+            <button
+              onClick={() => navigate('/profile')}
+              className="text-[10px] text-primary font-medium hover:opacity-80 transition-opacity"
+            >
+              Atualizar →
+            </button>
           </div>
 
-          {insights.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Registre suas refeições para receber insights personalizados.</p>
-          ) : (
-            insights.map((ins, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-3 rounded-xl p-3 ${
-                  ins.type === 'success' ? 'bg-success/10' :
-                  ins.type === 'warning' ? 'bg-warning/10' :
-                  'bg-muted/60'
-                }`}
+          {!hasBio ? (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <Scale size={28} className="text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">Nenhum dado de bioimpedância</p>
+              <button
+                onClick={() => navigate('/profile')}
+                className="h-9 px-4 rounded-full gradient-primary text-white text-xs font-semibold hover:opacity-90 active:scale-95 transition-all"
               >
-                {ins.type === 'success'
-                  ? <CheckCircle2 size={14} className="text-success shrink-0 mt-0.5" />
-                  : ins.type === 'warning'
-                  ? <AlertCircle size={14} className="text-warning shrink-0 mt-0.5" />
-                  : <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                }
-                <p className="text-xs text-foreground leading-relaxed">{ins.text}</p>
+                Adicionar dados
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Gordura corporal — destaque com barra */}
+              {bioimpedance.bodyFat > 0 && (() => {
+                const bfStatus = bodyFatStatus(bioimpedance.bodyFat);
+                // Barra de 0–45%, marcador de "saudável" em 18–25%
+                const pct = (bioimpedance.bodyFat / 45) * 100;
+                const barCol = bioimpedance.bodyFat < 18 ? 'bg-amber-400' :
+                               bioimpedance.bodyFat < 26 ? 'bg-emerald-500' :
+                               bioimpedance.bodyFat < 31 ? 'bg-amber-400' : 'bg-red-500';
+                return (
+                  <div className="rounded-xl bg-secondary/50 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Flame size={13} className="text-muted-foreground" />
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Gordura corporal</span>
+                      </div>
+                      <span className={`text-xs font-semibold ${bfStatus.color}`}>{bfStatus.label}</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-heading font-bold text-foreground">{bioimpedance.bodyFat}</span>
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
+                    <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
+                      <div className={`h-full rounded-full transition-all duration-700 ${barCol}`} style={{ width: `${pct}%` }} />
+                      {/* Marcador de faixa ideal */}
+                      <div className="absolute inset-y-0 bg-emerald-500/20 rounded-sm" style={{ left: '40%', right: '44%' }} />
+                    </div>
+                    <div className="flex justify-between text-[9px] text-muted-foreground">
+                      <span>Muito baixo</span>
+                      <span className="text-emerald-500">Ideal 18–25%</span>
+                      <span>Alto</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Grid de métricas */}
+              <div className="grid grid-cols-2 gap-3">
+                {bioimpedance.weight > 0 && (
+                  <BioCard label="Peso" value={bioimpedance.weight} unit="kg" icon={Scale} />
+                )}
+                {bioimpedance.muscleMass > 0 && (
+                  <BioCard
+                    label="Massa muscular" value={bioimpedance.muscleMass} unit="kg" icon={Activity}
+                    barPct={(bioimpedance.muscleMass / (bioimpedance.weight || 80)) * 100}
+                    barColor="bg-primary"
+                  />
+                )}
+                {bioimpedance.basalRate > 0 && (
+                  <BioCard label="TMB" value={bioimpedance.basalRate} unit="kcal/dia" icon={Zap} sub="gasto em repouso" />
+                )}
+                {bioimpedance.bodyWater > 0 && (
+                  <BioCard
+                    label="Água corporal" value={bioimpedance.bodyWater} unit="%"
+                    icon={Droplets}
+                    status={bioimpedance.bodyWater >= 50 ? '✓ Hidratado' : '! Baixo'}
+                  />
+                )}
+                {bioimpedance.visceralFat > 0 && (() => {
+                  const vs = visceralFatStatus(bioimpedance.visceralFat);
+                  return (
+                    <BioCard
+                      label="Gordura visceral" value={bioimpedance.visceralFat} unit="nível"
+                      icon={Flame} status={vs.label}
+                    />
+                  );
+                })()}
+                {bioimpedance.metabolicAge > 0 && (
+                  <BioCard label="Idade metabólica" value={bioimpedance.metabolicAge} unit="anos" icon={TrendingUp} />
+                )}
               </div>
-            ))
+            </div>
           )}
         </div>
 
-        {/* ── Macros do dia ───────────────────────────────────────────── */}
-        <div className="glass-card rounded-2xl p-5 space-y-4 animate-slide-up" style={{ animationDelay: '0.08s' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Flame size={15} className="text-primary" />
-              <h2 className="text-sm font-heading font-semibold text-foreground">Macros de hoje</h2>
+        {/* ── Exames de sangue ─────────────────────────────────────────── */}
+        <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between mb-1">
+            <SectionHeader icon={FlaskConical} title="Exames de sangue" />
+          </div>
+
+          {markersLoading ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">Carregando exames…</p>
+          ) : !markers || visibleMarkers.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <FlaskConical size={28} className="text-muted-foreground/40" />
+              <div>
+                <p className="text-sm text-muted-foreground">Nenhum exame vinculado</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Seu nutricionista pode adicionar seus exames à plataforma
+                </p>
+              </div>
             </div>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${balanceStatus.bgClass} ${balanceStatus.textClass}`}>
-              {netBalance > 0 ? '+' : ''}{netBalance} kcal
+          ) : (
+            <div className="space-y-2">
+              {examDate && (
+                <p className="text-[10px] text-muted-foreground mb-3">
+                  Última atualização: {examDate}
+                </p>
+              )}
+              {visibleMarkers.map(m => {
+                const val = Number(markers![m.key]);
+                const status = m.evaluate(val);
+                const cfg = STATUS_CONFIG[status];
+                const Icon = cfg.icon;
+                return (
+                  <div key={m.key} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${cfg.bg}`}>
+                    <Icon size={14} className={`shrink-0 ${cfg.color}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground">{m.label}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold text-foreground">{val} <span className="text-[10px] font-normal text-muted-foreground">{m.unit}</span></p>
+                      <p className={`text-[10px] font-medium ${cfg.color}`}>{cfg.label}</p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Score geral */}
+              {visibleMarkers.length > 0 && (() => {
+                const total = visibleMarkers.length;
+                const okCount = visibleMarkers.filter(m => m.evaluate(Number(markers![m.key])) === 'ok').length;
+                const pct = Math.round((okCount / total) * 100);
+                return (
+                  <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{okCount} de {total} dentro do normal</span>
+                    <div className={`text-sm font-semibold ${pct >= 80 ? 'text-emerald-500' : pct >= 60 ? 'text-amber-500' : 'text-red-500'}`}>
+                      {pct}% OK
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+
+        {/* ── Heatmap de consistência (28 dias) ────────────────────────── */}
+        <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.18s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <SectionHeader icon={Activity} title="Consistência — últimos 28 dias" />
+            <span className="text-xs font-semibold text-foreground">
+              {trackedCount}<span className="text-muted-foreground font-normal">/28 dias</span>
             </span>
           </div>
 
-          {/* Calorie summary */}
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="bg-secondary/50 rounded-xl py-2.5">
-              <p className="text-base font-heading font-bold text-foreground">{totalCalories}</p>
-              <p className="text-[10px] text-muted-foreground">consumidas</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl py-2.5">
-              <p className="text-base font-heading font-bold text-foreground">{goal.caloriesTarget}</p>
-              <p className="text-[10px] text-muted-foreground">meta</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl py-2.5">
-              <p className={`text-base font-heading font-bold ${balanceStatus.textClass}`}>
-                {totalBurn + bioimpedance.basalRate}
-              </p>
-              <p className="text-[10px] text-muted-foreground">gastas</p>
-            </div>
-          </div>
+          {consistencyLoading ? (
+            <p className="text-xs text-muted-foreground text-center py-4">Carregando…</p>
+          ) : (
+            <>
+              {/* Weekday labels */}
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
+                  <p key={d} className="text-[9px] text-muted-foreground text-center">{d}</p>
+                ))}
+              </div>
 
-          {/* Macro bars */}
-          <div className="space-y-3 pt-1">
-            <MacroBar label="Proteína" current={totalProtein} target={goal.proteinTarget} color="bg-primary" icon={Drumstick} />
-            <MacroBar label="Carboidratos" current={totalCarbs} target={goal.carbsTarget} color="bg-accent" icon={Wheat} />
-            <MacroBar label="Gorduras" current={totalFats} target={fatsTarget} color="bg-warning" icon={Flame} />
-          </div>
+              {/* 28-day grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Fill leading empty cells to align with correct weekday */}
+                {(() => {
+                  const firstDay = new Date(); firstDay.setDate(firstDay.getDate() - 27);
+                  const offset = firstDay.getDay(); // 0=Sun
+                  return Array.from({ length: offset }, (_, i) => (
+                    <div key={`empty-${i}`} className="aspect-square rounded-md bg-transparent" />
+                  ));
+                })()}
+                {calendar.map(day => (
+                  <div
+                    key={day.iso}
+                    title={day.iso}
+                    className={`aspect-square rounded-md transition-colors ${
+                      day.tracked
+                        ? 'bg-primary hover:bg-primary/80'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Legend + score */}
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm bg-muted" /> Sem registro
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm bg-primary" /> Registrado
+                  </div>
+                </div>
+                <div className={`text-sm font-semibold ${
+                  trackedCount >= 20 ? 'text-emerald-500' :
+                  trackedCount >= 12 ? 'text-amber-500' : 'text-red-500'
+                }`}>
+                  {Math.round((trackedCount / 28) * 100)}% de adesão
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* ── Histórico (gráfico de evolução) ─────────────────────────── */}
-        <HistoryChart
-          clientId={clientId}
-          basalFallback={bioimpedance.basalRate}
-          objective={goal.objective}
-          currentDay={{
-            date: todayIso,
-            consumed: totalCalories,
-            activity: totalBurn,
-            basal: bioimpedance.basalRate,
-            mealCount,
-            activityCount,
-          }}
-        />
-
-        {/* ── Composição corporal ──────────────────────────────────────── */}
-        {hasBio && (
-          <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.18s' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <Scale size={15} className="text-primary" />
-              <h2 className="text-sm font-heading font-semibold text-foreground">Composição corporal</h2>
-              <span className="ml-auto text-[10px] text-muted-foreground">Da bioimpedância</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {bioimpedance.basalRate > 0 && (
-                <BioMetric label="TMB" value={`${bioimpedance.basalRate} kcal`} sub="gasto basal" icon={Zap} highlight />
-              )}
-              {bioimpedance.weight > 0 && (
-                <BioMetric label="Peso" value={`${bioimpedance.weight} kg`} icon={Scale} />
-              )}
-              {bioimpedance.muscleMass > 0 && (
-                <BioMetric label="Massa muscular" value={`${bioimpedance.muscleMass} kg`} icon={Activity} />
-              )}
-              {bioimpedance.bodyFat > 0 && (
-                <BioMetric label="Gordura corporal" value={`${bioimpedance.bodyFat}%`} icon={Flame} />
-              )}
-              {bioimpedance.bodyWater > 0 && (
-                <BioMetric label="Água corporal" value={`${bioimpedance.bodyWater}%`} icon={Droplets} />
-              )}
-              {bioimpedance.metabolicAge > 0 && (
-                <BioMetric label="Idade metabólica" value={`${bioimpedance.metabolicAge} anos`} icon={TrendingUp} />
-              )}
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-3">
-              Atualize seus dados em Perfil → Bioimpedância para manter os insights precisos.
-            </p>
-          </div>
-        )}
+        {/* ── Dica pro ─────────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-border/50 bg-card/40 p-4 flex items-start gap-3 animate-slide-up" style={{ animationDelay: '0.25s' }}>
+          <LinkIcon size={14} className="text-accent shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-foreground">Quer ver seus exames aqui?</span>{' '}
+            Peça ao seu nutricionista para inserir seus resultados na plataforma Grove Pro.
+            Eles aparecem automaticamente nesta tela.
+          </p>
+        </div>
 
       </div>
       <BottomNav />
