@@ -14,6 +14,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import WhatsAppChat from "./pages/WhatsAppChat";
 import Evolution from "./pages/Evolution";
+import Onboarding from "./pages/Onboarding";
 import MealRegistration from "./pages/MealRegistration";
 import DietGoals from "./pages/DietGoals";
 import DietPlan from "./pages/DietPlan";
@@ -39,6 +40,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, authLoading } = useApp();
   if (authLoading) return <FullScreenLoader />;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
+  // Redireciona para onboarding se nunca completou
+  if (!localStorage.getItem('grove-onboarded')) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 };
 
@@ -103,6 +106,7 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppChat /></ProtectedRoute>} />
               <Route path="/evolucao" element={<ProtectedRoute><Evolution /></ProtectedRoute>} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/meal" element={<ProtectedRoute><MealRegistration /></ProtectedRoute>} />
               <Route path="/diet" element={<ProtectedRoute><DietGoals /></ProtectedRoute>} />
               <Route path="/plano-alimentar" element={<ProtectedRoute><DietPlan /></ProtectedRoute>} />

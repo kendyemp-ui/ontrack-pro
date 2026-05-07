@@ -149,9 +149,22 @@ const MealHistory = () => {
 
         {!loading && tab === 'meals' && meals.length > 0 && (
           <div className="space-y-4">
-            {Object.entries(groupedMeals).map(([date, rows]) => (
+            {Object.entries(groupedMeals).map(([date, rows]) => {
+              const dayKcal = rows.reduce((s, r) => s + Math.round(Number(r.estimated_kcal ?? 0)), 0);
+              const dayProt = rows.reduce((s, r) => s + Math.round(Number(r.estimated_protein ?? 0)), 0);
+              const dayCarbs = rows.reduce((s, r) => s + Math.round(Number(r.estimated_carbs ?? 0)), 0);
+              return (
               <div key={date}>
-                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">{formatDate(date)}</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-foreground uppercase tracking-wider">{formatDate(date)}</p>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span className="font-semibold text-foreground">{dayKcal} kcal</span>
+                    <span>·</span>
+                    <span>{dayProt}g P</span>
+                    <span>·</span>
+                    <span>{dayCarbs}g C</span>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   {rows.map(meal => {
                     const time = new Date(meal.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -182,7 +195,7 @@ const MealHistory = () => {
                   })}
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         )}
 

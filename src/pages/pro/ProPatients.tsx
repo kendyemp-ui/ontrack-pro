@@ -9,15 +9,34 @@ import { StatusBadge } from '@/components/pro/StatusBadge';
 import { usePro } from '@/contexts/ProContext';
 import { cn } from '@/lib/utils';
 
+type StatusFilter = 'todos' | 'aderente' | 'atencao' | 'risco';
+
+const FILTER_OPTIONS: { id: StatusFilter; label: string; color: string }[] = [
+  { id: 'todos', label: 'Todos', color: 'border-border text-foreground' },
+  { id: 'aderente', label: 'Aderentes', color: 'border-emerald-500/40 text-emerald-500' },
+  { id: 'atencao', label: 'Atenção', color: 'border-amber-500/40 text-amber-500' },
+  { id: 'risco', label: 'Em risco', color: 'border-red-500/40 text-red-500' },
+];
+
 export default function ProPatients() {
   const { patients, patientsLoading } = usePro();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
 
   const filtered = useMemo(() =>
-    patients.filter(p =>
-      !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.phone.includes(search)
-    ), [patients, search]);
+    patients.filter(p => {
+      const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.phone.includes(search);
+      const matchStatus = statusFilter === 'todos' || p.status === statusFilter;
+      return matchSearch && matchStatus;
+    }), [patients, search, statusFilter]);
+
+  const counts = useMemo(() => ({
+    todos: patients.length,
+    aderente: patients.filter(p => p.status === 'aderente').length,
+    atencao: patients.filter(p => p.status === 'atencao').length,
+    risco: patients.filter(p => p.status === 'risco').length,
+  }), [patients]);
 
   return (
     <ProLayout
@@ -30,8 +49,26 @@ export default function ProPatients() {
       }
     >
       <Card className="glass-card">
-        <div className="p-4 border-b border-border">
-          <div className="relative w-full md:w-80">
+        <div className="p-4 border-b border-border flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Filter chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {FILTER_OPTIONS.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setStatusFilter(f.id)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-xs font-medium border transition-colors',
+                  statusFilter === f.id
+                    ? 'bg-foreground text-background border-foreground'
+                    : `bg-transparent border-border text-muted-foreground hover:${f.color}`
+                )}
+              >
+                {f.label} <span className="opacity-60 ml-1">{counts[f.id]}</span>
+              </button>
+            ))}
+          </div>
+          {/* Search */}
+          <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou WhatsApp..."

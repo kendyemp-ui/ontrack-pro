@@ -254,14 +254,29 @@ export default function ProPatientProfile() {
     { label: 'Última interação', value: patient.lastInteraction, suffix: '', icon: MessageCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', isText: true },
   ];
 
+  // Formata o número de telefone para URL do WhatsApp
+  const whatsappPhone = patient.phone.replace(/\D/g, '');
+  const daysSinceStart = Math.floor((Date.now() - new Date(patient.startDate).getTime()) / (1000 * 60 * 60 * 24));
+
   return (
     <ProLayout
       title={patient.name}
       subtitle={`${patient.goal} • desde ${new Date(patient.startDate).toLocaleDateString('pt-BR')}`}
       actions={
-        <Button variant="outline" size="sm" onClick={() => navigate('/pro/dashboard')}>
-          <ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href={`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Olá ${patient.name.split(' ')[0]}! Tudo bem? Passando para dar um acompanhamento. 😊`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button size="sm" className="bg-[#25D366] hover:bg-[#22c55e] text-white border-0">
+              <MessageCircle className="h-4 w-4 mr-1.5" /> Enviar mensagem
+            </Button>
+          </a>
+          <Button variant="outline" size="sm" onClick={() => navigate('/pro/dashboard')}>
+            <ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar
+          </Button>
+        </div>
       }
     >
       {/* Header card */}
@@ -280,12 +295,18 @@ export default function ProPatientProfile() {
               <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Início {new Date(patient.startDate).toLocaleDateString('pt-BR')}</span>
             </div>
           </div>
-          <div className="md:text-right">
-            <p className="text-xs text-muted-foreground uppercase tracking-widest">Adesão semanal</p>
-            <p className={cn(
-              'text-3xl font-semibold tabular-nums',
-              patient.weeklyAdherence >= 75 ? 'text-emerald-400' : patient.weeklyAdherence >= 50 ? 'text-amber-400' : 'text-red-400'
-            )}>{patient.weeklyAdherence}%</p>
+          <div className="flex flex-col md:items-end gap-2">
+            <div className="md:text-right">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">Adesão semanal</p>
+              <p className={cn(
+                'text-3xl font-semibold tabular-nums',
+                patient.weeklyAdherence >= 75 ? 'text-emerald-400' : patient.weeklyAdherence >= 50 ? 'text-amber-400' : 'text-red-400'
+              )}>{patient.weeklyAdherence}%</p>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              <span>{daysSinceStart} dias de acompanhamento</span>
+            </div>
           </div>
         </div>
       </Card>

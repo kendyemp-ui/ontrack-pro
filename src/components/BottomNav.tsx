@@ -4,7 +4,7 @@ import { Home, TrendingUp, Target, Clock, User } from 'lucide-react';
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
   { path: '/evolucao', label: 'Evolução', icon: TrendingUp },
-  { path: '/diet', label: 'Dieta', icon: Target },
+  { path: '/diet', label: 'Meta', icon: Target },
   { path: '/history', label: 'Histórico', icon: Clock },
   { path: '/profile', label: 'Perfil', icon: User },
 ];

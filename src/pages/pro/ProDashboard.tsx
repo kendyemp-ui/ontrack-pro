@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, CheckCircle2, AlertTriangle, AlertOctagon, CalendarX, TrendingUp, Search, MessageCircle, ChevronRight } from 'lucide-react';
 import { ProLayout } from '@/components/pro/ProLayout';
@@ -26,13 +27,14 @@ export default function ProDashboard() {
     });
   }, [patients, filter, search]);
 
-  const kpiCards = [
-    { label: 'Clientes ativos', value: kpis.total, icon: Users, accent: 'text-foreground', bg: 'bg-secondary' },
-    { label: 'Boa adesão', value: kpis.aderentes, icon: CheckCircle2, accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Em atenção', value: kpis.atencao, icon: AlertTriangle, accent: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'Em risco', value: kpis.risco, icon: AlertOctagon, accent: 'text-red-400', bg: 'bg-red-500/10' },
-    { label: 'Sem registro hoje', value: kpis.semRegistro, icon: CalendarX, accent: 'text-muted-foreground', bg: 'bg-secondary' },
-    { label: 'Adesão média', value: `${kpis.mediaAdesao}%`, icon: TrendingUp, accent: 'text-accent', bg: 'bg-accent/10' },
+  type KpiFilter = Filter | null;
+  const kpiCards: { label: string; value: number | string; icon: React.ElementType; accent: string; bg: string; filterKey: KpiFilter; ring: string }[] = [
+    { label: 'Clientes ativos', value: kpis.total, icon: Users, accent: 'text-foreground', bg: 'bg-secondary', filterKey: 'todos', ring: 'ring-border' },
+    { label: 'Boa adesão', value: kpis.aderentes, icon: CheckCircle2, accent: 'text-emerald-400', bg: 'bg-emerald-500/10', filterKey: 'aderente', ring: 'ring-emerald-500/40' },
+    { label: 'Em atenção', value: kpis.atencao, icon: AlertTriangle, accent: 'text-amber-400', bg: 'bg-amber-500/10', filterKey: 'atencao', ring: 'ring-amber-500/40' },
+    { label: 'Em risco', value: kpis.risco, icon: AlertOctagon, accent: 'text-red-400', bg: 'bg-red-500/10', filterKey: 'risco', ring: 'ring-red-500/40' },
+    { label: 'Sem registro hoje', value: kpis.semRegistro, icon: CalendarX, accent: 'text-muted-foreground', bg: 'bg-secondary', filterKey: 'sem-registro', ring: 'ring-border' },
+    { label: 'Adesão média', value: `${kpis.mediaAdesao}%`, icon: TrendingUp, accent: 'text-accent', bg: 'bg-accent/10', filterKey: null, ring: 'ring-accent/30' },
   ];
 
   const filters: { id: Filter; label: string; count: number }[] = [
@@ -51,7 +53,15 @@ export default function ProDashboard() {
     >
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {kpiCards.map((k, i) => (
-          <Card key={i} className="p-4 glass-card">
+          <Card
+            key={i}
+            onClick={() => k.filterKey && setFilter(k.filterKey)}
+            className={cn(
+              'p-4 glass-card transition-all',
+              k.filterKey ? 'cursor-pointer hover:shadow-md' : '',
+              k.filterKey && filter === k.filterKey ? `ring-2 ${k.ring}` : ''
+            )}
+          >
             <div className={cn('h-9 w-9 rounded-lg flex items-center justify-center mb-3', k.bg)}>
               <k.icon className={cn('h-4 w-4', k.accent)} />
             </div>

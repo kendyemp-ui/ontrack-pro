@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import NutritionRing from '@/components/NutritionRing';
 import HistoryChart from '@/components/HistoryChart';
-import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send, Target } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { MessageCircle, Flame, Utensils, Zap, Activity, Heart, Send, Target, Plus, Flame as FireIcon } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getCalorieStatus, objectiveLabels } from '@/lib/goalStatus';
@@ -16,7 +16,42 @@ const Dashboard = () => {
     goal, totalBurn, caloriesRemaining, proteinRemaining, carbsRemaining, netBalance,
     meals, activities, bioimpedance, hasClientRecord, clientId,
   } = useApp();
+  const navigate = useNavigate();
   const [sendingReport, setSendingReport] = useState(false);
+  const [streak, setStreak] = useState(0);
+
+  // Calcula streak de dias consecutivos com refeições registradas
+  useEffect(() => {
+    if (!clientId) return;
+    const toISO = (d: Date) =>
+      new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const since = new Date(); since.setDate(since.getDate() - 29);
+    supabase
+      .from('daily_summary')
+      .select('summary_date, meal_count')
+      .eq('client_id', clientId)
+      .gte('summary_date', toISO(since))
+      .order('summary_date', { ascending: false })
+      .then(({ data }) => {
+        const days = data ?? [];
+        // Inclui hoje se tem refeições
+        const todayISO = toISO(new Date());
+        const hasTodayInDB = days.some(d => d.summary_date === todayISO);
+        const todayEntry = meals.length > 0 && !hasTodayInDB
+          ? [{ summary_date: todayISO, meal_count: meals.length }]
+          : [];
+        const all = [...todayEntry, ...days];
+        let count = 0;
+        for (let i = 0; i < 30; i++) {
+          const d = new Date(); d.setDate(d.getDate() - i);
+          const iso = toISO(d);
+          const row = all.find(r => r.summary_date === iso);
+          if (row && Number(row.meal_count) > 0) count++;
+          else if (i > 0) break; // para no primeiro gap
+        }
+        setStreak(count);
+      });
+  }, [clientId, meals.length]);
 
   const handleSendDailyReport = async () => {
     if (!clientId) {
@@ -58,10 +93,27 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* FAB — registrar refeição */}
+      <button
+        onClick={() => navigate('/meal')}
+        className="fixed bottom-20 right-4 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all"
+        aria-label="Registrar refeição"
+      >
+        <Plus size={26} className="text-white" strokeWidth={2.5} />
+      </button>
+
       <div className="max-w-md mx-auto px-4 pt-6 space-y-4">
         {/* Header */}
         <div className="animate-fade-in pt-2">
-          <GroveIcon size={36} wordmark wordmarkSize={22} />
+          <div className="flex items-center justify-between">
+            <GroveIcon size={36} wordmark wordmarkSize={22} />
+            {streak >= 2 && (
+              <div className="flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-3 py-1.5">
+                <FireIcon size={13} className="text-warning" />
+                <span className="text-xs font-semibold text-warning">{streak} dias seguidos</span>
+              </div>
+            )}
+          </div>
           <h1 className="text-3xl font-heading font-bold text-foreground mt-3">Olá, {userName}</h1>
           <p className="text-sm text-muted-foreground mt-1 capitalize">{today}</p>
           <Link
@@ -219,7 +271,21 @@ const Dashboard = () => {
             </span>
           </div>
           {meals.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-2">Nenhuma refeição registrada ainda. Envie uma foto ou descrição pelo WhatsApp.</p>
+            <div className="py-4 flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                <Utensils size={20} className="text-accent" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Nenhuma refeição registrada</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Toque no + ou mande uma foto pelo WhatsApp</p>
+              </div>
+              <button
+                onClick={() => navigate('/meal')}
+                className="h-9 px-4 rounded-full gradient-primary text-white text-xs font-semibold flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all"
+              >
+                <Plus size={13} /> Registrar primeira refeição
+              </button>
+            </div>
           ) : (
             <div className="space-y-1">
               {meals.map(meal => (
@@ -236,10 +302,15 @@ const Dashboard = () => {
               ))}
             </div>
           )}
-          <Link to="/whatsapp" className="w-full mt-4 h-11 rounded-xl bg-[#25D366] text-white font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]">
+          <a
+            href="https://wa.me/14155238886?text=join%20silent-frozen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full mt-4 h-11 rounded-xl bg-[#25D366] text-white font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
+          >
             <MessageCircle size={16} />
-            Ver conversa no WhatsApp
-          </Link>
+            Abrir conversa no WhatsApp
+          </a>
         </div>
 
         {/* Resumo do dia */}
