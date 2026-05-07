@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
+import type React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/integrations/supabase/client';
 import {
   TrendingUp, Scale, Flame, Droplets, Activity, Zap, FlaskConical,
-  CheckCircle2, AlertCircle, AlertTriangle, Upload, Link as LinkIcon,
+  CheckCircle2, AlertCircle, AlertTriangle, Link as LinkIcon,
+  Sparkles, RefreshCw, Loader2, Star, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -83,6 +85,15 @@ function buildCalendar(trackedDates: Set<string>) {
   return days;
 }
 
+// ── AI Insight types ─────────────────────────────────────────────────────────
+interface Insight {
+  summary: string;
+  adherence_score: number;
+  patterns: { icon: string; title: string; description: string }[];
+  positive_highlights: string[];
+  recommendations: { priority: 'high' | 'medium' | 'low'; text: string }[];
+}
+
 // ── Sub-componentes ───────────────────────────────────────────────────────────
 const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
   <div className="flex items-center gap-2 mb-4">
@@ -131,6 +142,13 @@ const Evolution = () => {
   const [trackedDates, setTrackedDates] = useState<Set<string>>(new Set());
   const [consistencyLoading, setConsistencyLoading] = useState(false);
 
+  // AI Insight
+  const [insight, setInsight]         = useState<Insight | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [insightError, setInsightError]     = useState<string | null>(null);
+  const [insightExpanded, setInsightExpanded] = useState(true);
+  const [insightAt, setInsightAt]     = useState<Date | null>(null);
+
   // Carrega exames de sangue mais recentes
   useEffect(() => {
     if (!clientId) return;
@@ -166,6 +184,25 @@ const Evolution = () => {
 
   const calendar = useMemo(() => buildCalendar(trackedDates), [trackedDates]);
   const trackedCount = calendar.filter(d => d.tracked).length;
+
+  const generateInsight = async () => {
+    if (!clientId) return;
+    setInsightLoading(true);
+    setInsightError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('analyze-patient', {
+        body: { client_id: clientId },
+      });
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
+      setInsight(data.insights);
+      setInsightAt(new Date());
+    } catch (err: any) {
+      setInsightError(err.message || 'Erro ao gerar análise.');
+    } finally {
+      setInsightLoading(false);
+    }
+  };
 
   const hasBio = bioimpedance.weight > 0 || bioimpedance.bodyFat > 0;
 
@@ -409,6 +446,159 @@ const Evolution = () => {
                 </div>
               </div>
             </>
+          )}
+        </div>
+
+        {/* ── Insight IA ───────────────────────────────────────────────── */}
+        <div className="glass-card rounded-2xl overflow-hidden animate-slide-up" style={{ animationDelay: '0.22s' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between p-5 border-b border-border/50">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Sparkles size={15} className="text-accent" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold font-heading text-foreground">Insight IA</p>
+                {insightAt && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Gerado às {insightAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {insight && (
+                <button
+                  onClick={() => setInsightExpanded(e => !e)}
+                  className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-secondary transition-colors"
+                >
+                  {insightExpanded
+                    ? <ChevronUp size={14} className="text-muted-foreground" />
+                    : <ChevronDown size={14} className="text-muted-foreground" />}
+                </button>
+              )}
+              <button
+                onClick={generateInsight}
+                disabled={insightLoading}
+                className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 ${
+                  insight
+                    ? 'border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40'
+                    : 'gradient-primary text-white shadow-sm'
+                }`}
+              >
+                {insightLoading
+                  ? <><Loader2 size={12} className="animate-spin" /> Analisando…</>
+                  : insight
+                  ? <><RefreshCw size={12} /> Reanalisar</>
+                  : <><Sparkles size={12} /> Gerar análise</>}
+              </button>
+            </div>
+          </div>
+
+          {/* Loading */}
+          {insightLoading && (
+            <div className="p-5 space-y-2.5">
+              <div className="h-2.5 bg-secondary/70 rounded-full w-full animate-pulse" />
+              <div className="h-2.5 bg-secondary/70 rounded-full w-4/5 animate-pulse" />
+              <div className="h-2.5 bg-secondary/70 rounded-full w-3/5 animate-pulse" />
+              <p className="text-[11px] text-muted-foreground text-center pt-2">Analisando seus últimos 60 dias…</p>
+            </div>
+          )}
+
+          {/* Error */}
+          {insightError && !insightLoading && (
+            <div className="p-5">
+              <p className="text-xs text-destructive">{insightError}</p>
+              <button onClick={generateInsight} className="mt-2 text-xs text-primary font-medium">Tentar novamente</button>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!insightLoading && !insightError && !insight && (
+            <div className="p-6 text-center">
+              <Sparkles size={28} className="text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">
+                Toque em <strong className="text-foreground">Gerar análise</strong> para ver um resumo personalizado da sua evolução.
+              </p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                A IA cruza seus padrões alimentares, adesão e resultados dos últimos 60 dias.
+              </p>
+            </div>
+          )}
+
+          {/* Results */}
+          {insight && !insightLoading && insightExpanded && (
+            <div className="p-5 space-y-5">
+              {/* Score + Summary */}
+              <div className="flex items-start gap-4">
+                <div className="text-center shrink-0 bg-secondary/50 rounded-2xl p-3 min-w-[68px]">
+                  <p className={`text-3xl font-bold font-heading tabular-nums ${
+                    insight.adherence_score >= 8 ? 'text-emerald-500' :
+                    insight.adherence_score >= 5 ? 'text-amber-500' : 'text-red-500'
+                  }`}>
+                    {insight.adherence_score}
+                    <span className="text-sm font-normal text-muted-foreground">/10</span>
+                  </p>
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">Adesão</p>
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground flex-1">{insight.summary}</p>
+              </div>
+
+              {/* Pontos positivos */}
+              {insight.positive_highlights?.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2.5 flex items-center gap-1.5">
+                    <Star size={11} /> Seus pontos fortes
+                  </p>
+                  <div className="space-y-1.5">
+                    {insight.positive_highlights.map((h, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="text-emerald-500 shrink-0 mt-0.5 text-sm">✓</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{h}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Padrões */}
+              {insight.patterns?.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2.5 flex items-center gap-1.5">
+                    <TrendingUp size={11} /> Padrões identificados
+                  </p>
+                  <div className="space-y-2">
+                    {insight.patterns.map((p, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-secondary/30 border border-border/40">
+                        <span className="text-lg shrink-0">{p.icon}</span>
+                        <div>
+                          <p className="text-xs font-semibold text-foreground">{p.title}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{p.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recomendações */}
+              {insight.recommendations?.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2.5">💡 Próximos passos</p>
+                  <div className="space-y-2">
+                    {insight.recommendations.map((rec, i) => (
+                      <div key={i} className={`border-l-2 pl-3 py-1.5 rounded-r-xl ${
+                        rec.priority === 'high' ? 'border-l-red-400 bg-red-500/5' :
+                        rec.priority === 'medium' ? 'border-l-amber-400 bg-amber-500/5' :
+                        'border-l-emerald-400 bg-emerald-500/5'
+                      }`}>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{rec.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
