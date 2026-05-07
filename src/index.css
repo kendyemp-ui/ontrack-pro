@@ -69,6 +69,54 @@
 }
 
 @layer base {
+  /* ── Grove Dark Theme · Floresta à noite ───────────────────────── */
+  .dark {
+    --background: 150 35% 5%;          /* #07120D — deep forest night */
+    --foreground: 120 20% 87%;         /* #D6E8D6 — light sage */
+
+    --card: 150 28% 8%;                /* #0E1E14 — dark card */
+    --card-foreground: 120 20% 87%;
+
+    --popover: 150 28% 8%;
+    --popover-foreground: 120 20% 87%;
+
+    --primary: 141 35% 52%;            /* #529B6C — brighter forest for dark bg */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 20% 13%;          /* #172119 — dark secondary */
+    --secondary-foreground: 120 18% 80%;
+
+    --muted: 150 18% 11%;              /* #12190F */
+    --muted-foreground: 130 12% 54%;   /* #7D907F */
+
+    --accent: 123 22% 56%;             /* #73A878 — sage */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 141 40% 52%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 90% 52%;
+    --warning-foreground: 0 0% 0%;
+
+    --border: 150 15% 17%;             /* #1E2A21 */
+    --input: 150 15% 15%;
+    --ring: 141 35% 52%;
+
+    --sidebar-background: 150 40% 4%;  /* quase preto-verde */
+    --sidebar-foreground: 120 20% 87%;
+    --sidebar-primary: 141 35% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 20% 11%;
+    --sidebar-accent-foreground: 120 18% 80%;
+    --sidebar-border: 150 15% 14%;
+    --sidebar-ring: 141 35% 52%;
+  }
+}
+
+@layer base {
   * {
     @apply border-border;
   }

@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import BottomNav from '@/components/BottomNav';
-import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut, FileText, Upload, Loader2, Sparkles } from 'lucide-react';
+import { User, Activity, Trophy, Save, Plus, X, Calendar, MapPin, ChevronDown, ChevronUp, Pencil, Watch, Smartphone, Heart, MessageCircle, LogOut, FileText, Upload, Loader2, Sparkles, Moon, Sun } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { integrations } from '@/data/mockData';
+import { useTheme } from 'next-themes';
 
 const Profile = () => {
   const { userName, bioimpedance, updateBioimpedance, races, addRace, removeRace, logout, totalBurn, activities, user } = useApp();
+  const { theme, setTheme } = useTheme();
   const dailyBurn = {
     total: totalBurn,
     steps: activities.reduce((s, a) => s + Number(a.activity_steps ?? 0), 0),
@@ -435,12 +437,56 @@ const Profile = () => {
           </p>
         </div>
 
-        {/* Conta - Logout */}
+        {/* WhatsApp Grove — compacto */}
+        <div className="glass-card rounded-2xl p-4 flex items-center gap-3 animate-slide-up" style={{ animationDelay: '0.35s' }}>
+          <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center shrink-0">
+            <MessageCircle size={18} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Grove no WhatsApp</p>
+            <p className="text-xs text-muted-foreground truncate">Registre refeições mandando uma foto</p>
+          </div>
+          <a
+            href="https://wa.me/14155238886?text=join%20silent-frozen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-9 px-3 rounded-xl bg-[#25D366] text-white text-xs font-semibold flex items-center gap-1.5 shrink-0 hover:opacity-90 transition-all active:scale-[0.98]"
+          >
+            Abrir
+          </a>
+        </div>
+
+        {/* Conta - Preferências + Logout */}
         <div className="glass-card rounded-2xl p-5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <div className="flex items-center gap-2 mb-4">
             <User size={18} className="text-primary" />
             <h2 className="text-base font-heading font-semibold text-foreground">Conta</h2>
           </div>
+
+          {/* Tema */}
+          <div className="flex items-center justify-between rounded-xl bg-secondary/50 px-4 py-3 mb-3">
+            <div className="flex items-center gap-2">
+              {theme === 'dark' ? <Moon size={16} className="text-accent" /> : <Sun size={16} className="text-accent" />}
+              <span className="text-sm font-medium text-foreground">
+                Tema {theme === 'dark' ? 'escuro' : 'claro'}
+              </span>
+            </div>
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                theme === 'dark' ? 'bg-primary' : 'bg-border'
+              }`}
+              role="switch"
+              aria-checked={theme === 'dark'}
+            >
+              <span
+                className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                  theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
           <button
             onClick={handleLogout}
             className="w-full h-11 rounded-xl border border-destructive/30 bg-destructive/5 text-destructive font-medium text-sm flex items-center justify-center gap-2 hover:bg-destructive/10 transition-all active:scale-[0.98]"

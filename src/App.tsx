@@ -13,6 +13,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import WhatsAppChat from "./pages/WhatsAppChat";
+import Evolution from "./pages/Evolution";
 import MealRegistration from "./pages/MealRegistration";
 import DietGoals from "./pages/DietGoals";
 import DietPlan from "./pages/DietPlan";
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppChat /></ProtectedRoute>} />
+              <Route path="/evolucao" element={<ProtectedRoute><Evolution /></ProtectedRoute>} />
               <Route path="/meal" element={<ProtectedRoute><MealRegistration /></ProtectedRoute>} />
               <Route path="/diet" element={<ProtectedRoute><DietGoals /></ProtectedRoute>} />
               <Route path="/plano-alimentar" element={<ProtectedRoute><DietPlan /></ProtectedRoute>} />

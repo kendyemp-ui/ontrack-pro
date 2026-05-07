@@ -1,9 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, MessageCircle, Target, Clock, User } from 'lucide-react';
+import { Home, TrendingUp, Target, Clock, User } from 'lucide-react';
 
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
-  { path: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
+  { path: '/evolucao', label: 'Evolução', icon: TrendingUp },
   { path: '/diet', label: 'Dieta', icon: Target },
   { path: '/history', label: 'Histórico', icon: Clock },
   { path: '/profile', label: 'Perfil', icon: User },
