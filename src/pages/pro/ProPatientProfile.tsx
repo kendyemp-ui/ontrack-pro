@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Flame, TrendingDown, Beef, Wheat, Utensils, MessageCircle, ArrowLeft,
   NotebookPen, Calendar, Loader2, Upload, FileText, ImageIcon, Trash2,
-  Download, File, FlaskConical, AlertTriangle, CheckCircle,
+  Download, File, FlaskConical, AlertTriangle, CheckCircle, Bell,
 } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, ReferenceLine, CartesianGrid,
@@ -52,6 +52,28 @@ export default function ProPatientProfile() {
   // Dados de gráfico
   const [weeklyData, setWeeklyData] = useState<{ dia: string; adesao: number; meta: number }[]>([]);
   const [monthlyData, setMonthlyData] = useState<{ semana: string; adesao: number }[]>([]);
+
+  // Lembrete WhatsApp
+  const [sendingReminder, setSendingReminder] = useState(false);
+
+  const sendReminder = async (customMessage?: string) => {
+    if (!patient || sendingReminder) return;
+    setSendingReminder(true);
+    const firstName = patient.name.split(' ')[0];
+    const message = customMessage ||
+      `Olá ${firstName}! 👋 Passando para lembrar de registrar suas refeições de hoje no Grove. Mande uma foto ou descreva o que comeu — é rápido! 🥗`;
+    try {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: { to_phone: patient.phone, message, client_id: patient.id },
+      });
+      if (error || data?.error) throw new Error(error?.message || data?.error);
+      toast.success('Lembrete enviado pelo WhatsApp!');
+    } catch (err: any) {
+      toast.error('Erro ao enviar lembrete: ' + err.message);
+    } finally {
+      setSendingReminder(false);
+    }
+  };
 
   useEffect(() => {
     if (!patient?.id) return;
@@ -264,13 +286,25 @@ export default function ProPatientProfile() {
       subtitle={`${patient.goal} • desde ${new Date(patient.startDate).toLocaleDateString('pt-BR')}`}
       actions={
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => sendReminder()}
+            disabled={sendingReminder}
+            title="Envia lembrete automático de registro pelo WhatsApp"
+          >
+            {sendingReminder
+              ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              : <Bell className="h-4 w-4 mr-1.5" />}
+            Lembrete WPP
+          </Button>
           <a
             href={`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Olá ${patient.name.split(' ')[0]}! Tudo bem? Passando para dar um acompanhamento. 😊`)}`}
             target="_blank"
             rel="noopener noreferrer"
           >
             <Button size="sm" className="bg-[#25D366] hover:bg-[#22c55e] text-white border-0">
-              <MessageCircle className="h-4 w-4 mr-1.5" /> Enviar mensagem
+              <MessageCircle className="h-4 w-4 mr-1.5" /> WhatsApp
             </Button>
           </a>
           <Button variant="outline" size="sm" onClick={() => navigate('/pro/dashboard')}>

@@ -1,13 +1,15 @@
 import { useState, useMemo } from 'react';
 import type React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, CheckCircle2, AlertTriangle, AlertOctagon, CalendarX, TrendingUp, Search, MessageCircle, ChevronRight } from 'lucide-react';
+import { Users, CheckCircle2, AlertTriangle, AlertOctagon, CalendarX, TrendingUp, Search, MessageCircle, ChevronRight, Bell, Loader2 } from 'lucide-react';
 import { ProLayout } from '@/components/pro/ProLayout';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/pro/StatusBadge';
 import { usePro } from '@/contexts/ProContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 type Filter = 'todos' | 'aderente' | 'atencao' | 'risco' | 'sem-registro';
@@ -17,6 +19,26 @@ export default function ProDashboard() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<Filter>('todos');
   const [search, setSearch] = useState('');
+  const [sendingBulk, setSendingBulk] = useState(false);
+
+  const sendBulkReminder = async () => {
+    const semRegistro = patients.filter(p => !p.registeredToday);
+    if (semRegistro.length === 0) { toast.info('Todos os pacientes já registraram hoje!'); return; }
+    if (!confirm(`Enviar lembrete pelo WhatsApp para ${semRegistro.length} paciente(s) sem registro hoje?`)) return;
+    setSendingBulk(true);
+    let ok = 0; let fail = 0;
+    await Promise.allSettled(semRegistro.map(async p => {
+      const firstName = p.name.split(' ')[0];
+      const message = `Olá ${firstName}! 👋 Lembrete do Grove: não esqueça de registrar suas refeições de hoje. É rápido — mande uma foto ou escreva o que comeu! 🥗`;
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: { to_phone: p.phone, message, client_id: p.id },
+      });
+      if (error || data?.error) fail++; else ok++;
+    }));
+    setSendingBulk(false);
+    if (ok > 0) toast.success(`${ok} lembrete(s) enviado(s) com sucesso!`);
+    if (fail > 0) toast.error(`${fail} falha(s) no envio.`);
+  };
 
   const filtered = useMemo(() => {
     return patients.filter(p => {
@@ -49,7 +71,23 @@ export default function ProDashboard() {
     <ProLayout
       title="Visão geral"
       subtitle="Acompanhe sua carteira de pacientes em tempo real"
-      actions={<Button onClick={() => navigate('/pro/pacientes/novo')} size="sm">Novo paciente</Button>}
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={sendBulkReminder}
+            disabled={sendingBulk}
+            title={`Enviar lembrete para ${kpis.semRegistro} pacientes sem registro hoje`}
+          >
+            {sendingBulk
+              ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              : <Bell className="h-4 w-4 mr-1.5" />}
+            Lembrar {kpis.semRegistro > 0 ? `(${kpis.semRegistro})` : 'todos'}
+          </Button>
+          <Button onClick={() => navigate('/pro/pacientes/novo')} size="sm">Novo paciente</Button>
+        </div>
+      }
     >
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {kpiCards.map((k, i) => (
