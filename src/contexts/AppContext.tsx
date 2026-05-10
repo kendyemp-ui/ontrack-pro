@@ -159,10 +159,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateBioimpedance = async (bio: Bioimpedance, source: string = 'manual', pdfPath?: string) => {
     setBioimpedance(bio);
     if (!user) return;
+    // INSERT sempre — cada salvar gera um novo ponto no histórico de evolução
     const { error } = await supabase
       .from('bioimpedance')
-      .upsert({
+      .insert({
         user_id: user.id,
+        measured_at: new Date().toISOString(),
         basal_rate: bio.basalRate,
         weight: bio.weight,
         height: bio.height,
@@ -174,7 +176,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         metabolic_age: bio.metabolicAge,
         source,
         ...(pdfPath ? { pdf_path: pdfPath } : {}),
-      }, { onConflict: 'user_id' });
+      });
     if (error) console.error('updateBioimpedance error', error);
 
     // Sincroniza o gasto basal no registro de cliente para que o daily_summary
