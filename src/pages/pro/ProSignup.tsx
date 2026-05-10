@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { ArrowLeft, Upload, Check, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { GroveIcon } from "@/components/GroveIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-// CRN: aceita "CRN-3 12345/P", "CRN3 12345/P", "CRN-3 12345" etc.
-const crnRegex = /^CRN[-\s]?[0-9]{1,2}\s?[0-9]{3,6}(\/[A-Za-z]{1,2})?$/i;
 
 const signupSchema = z.object({
   fullName: z.string().trim().min(3, "Nome muito curto").max(120),
@@ -22,12 +19,6 @@ const signupSchema = z.object({
     .min(10, "WhatsApp incompleto")
     .max(20, "WhatsApp muito longo")
     .regex(/^[0-9()\s+\-]+$/, "Use apenas números"),
-  crn: z
-    .string()
-    .trim()
-    .min(4)
-    .max(30)
-    .regex(crnRegex, "Formato esperado: CRN-3 12345/P"),
 });
 
 const PLANS = ["teste", "start", "scale", "pro"] as const;
@@ -37,63 +28,32 @@ const planLabels: Record<Plan, string> = {
   teste: "Teste, 5 pacientes (grátis)",
   start: "Start, 10 pacientes (R$ 199,90/mês)",
   scale: "Scale, 30 pacientes (R$ 398,90/mês)",
-  pro: "Pro, 50 pacientes (R$ 499,90/mês)",
+  pro:   "Pro, 50+ pacientes (R$ 499,90/mês)",
 };
-
-const ALLOWED_EXT = ["jpg", "jpeg", "png", "webp", "pdf"];
-const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 
 export default function ProSignup() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const initialPlan = (params.get("plano") as Plan) || "teste";
 
-  const [plan, setPlan] = useState<Plan>(PLANS.includes(initialPlan) ? initialPlan : "teste");
+  const [plan, setPlan]         = useState<Plan>(PLANS.includes(initialPlan) ? initialPlan : "teste");
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [crn, setCrn] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors]     = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const validateFile = (f: File): string | null => {
-    const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!ALLOWED_EXT.includes(ext)) return "Envie JPG, PNG, WEBP ou PDF.";
-    if (f.size > MAX_FILE_SIZE) return "Arquivo deve ter até 8 MB.";
-    return null;
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null;
-    if (!f) return setFile(null);
-    const err = validateFile(f);
-    if (err) {
-      toast({ title: "Documento inválido", description: err, variant: "destructive" });
-      e.target.value = "";
-      return;
-    }
-    setFile(f);
-    setErrors((p) => ({ ...p, file: "" }));
-  };
-
-  const filePreviewName = useMemo(() => file?.name ?? "", [file]);
+  const [success, setSuccess]   = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    const parsed = signupSchema.safeParse({ fullName, email, whatsapp, crn });
-    const newErrors: Record<string, string> = {};
+    const parsed = signupSchema.safeParse({ fullName, email, whatsapp });
     if (!parsed.success) {
+      const newErrors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
         newErrors[issue.path[0] as string] = issue.message;
       }
-    }
-    if (!file) newErrors.file = "Anexe o documento de comprovação do CRN.";
-    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       toast({ title: "Verifique os campos", variant: "destructive" });
       return;
@@ -101,36 +61,19 @@ export default function ProSignup() {
 
     setSubmitting(true);
     try {
-      const data = parsed.data!;
-      const ext = file!.name.split(".").pop()?.toLowerCase() ?? "pdf";
-      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
-      const path = `signups/${safeName}`;
-
-      const { error: upErr } = await supabase.storage
-        .from("pro-documents")
-        .upload(path, file!, { contentType: file!.type, upsert: false });
-
-      if (upErr) throw upErr;
-
       const { error: insErr } = await supabase.from("pro_signups").insert({
-        full_name: data.fullName,
-        email: data.email.toLowerCase(),
-        whatsapp: data.whatsapp,
-        crn: data.crn.toUpperCase(),
-        document_path: path,
+        full_name: parsed.data.fullName,
+        email: parsed.data.email.toLowerCase(),
+        whatsapp: parsed.data.whatsapp,
         selected_plan: plan,
       });
 
-      if (insErr) {
-        // tenta limpar o documento órfão (pode falhar por RLS, sem problema)
-        await supabase.storage.from("pro-documents").remove([path]).catch(() => {});
-        throw insErr;
-      }
+      if (insErr) throw insErr;
 
       setSuccess(true);
       toast({
-        title: "Cadastro recebido",
-        description: "Vamos validar seu CRN e te chamar no WhatsApp em até 24h úteis.",
+        title: "Cadastro recebido!",
+        description: "Entraremos em contato no WhatsApp em até 24h úteis.",
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Tente novamente em instantes.";
@@ -152,8 +95,7 @@ export default function ProSignup() {
               Cadastro recebido!
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Vamos validar seu CRN e o documento enviado. Em até 24h úteis você recebe a
-              liberação no WhatsApp informado.
+              Em até 24h úteis você recebe a liberação no WhatsApp informado.
             </p>
             <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Button asChild variant="outline">
@@ -187,8 +129,7 @@ export default function ProSignup() {
 
           <h1 className="landing-h2 mt-6">Crie sua conta de profissional.</h1>
           <p className="landing-lead mt-3">
-            Validamos cada cadastro manualmente para garantir que o Grove Pro seja usado apenas
-            por nutricionistas registrados. Liberação em até 24h úteis.
+            Validamos cada cadastro manualmente. Liberação em até 24h úteis direto no seu WhatsApp.
           </p>
 
           <Card className="mt-8 p-6 sm:p-8">
@@ -203,9 +144,7 @@ export default function ProSignup() {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   {PLANS.map((p) => (
-                    <option key={p} value={p}>
-                      {planLabels[p]}
-                    </option>
+                    <option key={p} value={p}>{planLabels[p]}</option>
                   ))}
                 </select>
                 <p className="text-xs text-muted-foreground">
@@ -220,13 +159,11 @@ export default function ProSignup() {
                   id="fullName"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Como aparece no seu CRN"
+                  placeholder="Seu nome completo"
                   maxLength={120}
                   autoComplete="name"
                 />
-                {errors.fullName && (
-                  <p className="text-xs text-destructive">{errors.fullName}</p>
-                )}
+                {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
               </div>
 
               {/* Email + WhatsApp */}
@@ -254,69 +191,8 @@ export default function ProSignup() {
                     maxLength={20}
                     autoComplete="tel"
                   />
-                  {errors.whatsapp && (
-                    <p className="text-xs text-destructive">{errors.whatsapp}</p>
-                  )}
+                  {errors.whatsapp && <p className="text-xs text-destructive">{errors.whatsapp}</p>}
                 </div>
-              </div>
-
-              {/* CRN */}
-              <div className="space-y-2">
-                <Label htmlFor="crn">Número do CRN</Label>
-                <Input
-                  id="crn"
-                  value={crn}
-                  onChange={(e) => setCrn(e.target.value.toUpperCase())}
-                  placeholder="CRN-3 12345/P"
-                  maxLength={30}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Formato: CRN seguido do número da regional, número de inscrição e categoria. Ex.: CRN-3 12345/P.
-                </p>
-                {errors.crn && <p className="text-xs text-destructive">{errors.crn}</p>}
-              </div>
-
-              {/* Upload */}
-              <div className="space-y-2">
-                <Label htmlFor="document">Documento de comprovação</Label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="group flex cursor-pointer items-center gap-4 rounded-lg border border-dashed border-border bg-card/40 px-4 py-4 transition-colors hover:border-accent/50 hover:bg-card"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border/60 bg-background pro-accent">
-                    {file ? <FileText size={18} /> : <Upload size={18} />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    {file ? (
-                      <>
-                        <p className="truncate text-sm font-medium text-foreground">
-                          {filePreviewName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {(file.size / 1024).toFixed(0)} KB · clique para trocar
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm font-medium text-foreground">
-                          Clique para anexar carteira do CRN ou diploma
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          JPG, PNG, WEBP ou PDF, até 8 MB
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  id="document"
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.webp,.pdf,application/pdf,image/jpeg,image/png,image/webp"
-                  onChange={handleFileChange}
-                  className="sr-only"
-                />
-                {errors.file && <p className="text-xs text-destructive">{errors.file}</p>}
               </div>
 
               <Button
@@ -326,9 +202,7 @@ export default function ProSignup() {
                 className="w-full pro-bg-accent text-white hover:opacity-90"
               >
                 {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando cadastro
-                  </>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando cadastro</>
                 ) : (
                   "Enviar cadastro"
                 )}
