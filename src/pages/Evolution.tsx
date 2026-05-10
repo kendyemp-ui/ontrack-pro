@@ -74,14 +74,34 @@ function visceralFatStatus(v: number): { label: string; color: string } {
 }
 
 // ── Heatmap de consistência ───────────────────────────────────────────────────
-function buildCalendar(trackedDates: Set<string>) {
+type DayStatus = 'on_goal' | 'off_goal' | 'untracked' | 'future';
+
+function buildCalendar(
+  tracked: Map<string, number>,
+  objective: string | null,
+): { iso: string; status: DayStatus }[] {
   const today = new Date();
-  const days: { iso: string; tracked: boolean; future: boolean }[] = [];
+  const days: { iso: string; status: DayStatus }[] = [];
+
+  // 28 dias passados
   for (let i = 27; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const iso = toLocalISO(d);
-    days.push({ iso, tracked: trackedDates.has(iso), future: false });
+    if (!tracked.has(iso)) { days.push({ iso, status: 'untracked' }); continue; }
+    const balance = tracked.get(iso)!;
+    let onGoal: boolean;
+    if (objective === 'gain')         onGoal = balance >= 0;
+    else if (objective === 'maintain') onGoal = Math.abs(balance) <= 200;
+    else                               onGoal = balance <= 0; // 'lose' ou padrão
+    days.push({ iso, status: onGoal ? 'on_goal' : 'off_goal' });
   }
+
+  // Células futuras para fechar a última semana
+  const firstDay = new Date(); firstDay.setDate(firstDay.getDate() - 27);
+  const offset = firstDay.getDay();
+  const trailingCount = (offset + 28) % 7 === 0 ? 0 : 7 - ((offset + 28) % 7);
+  for (let i = 0; i < trailingCount; i++) days.push({ iso: `future-${i}`, status: 'future' });
+
   return days;
 }
 
@@ -139,7 +159,8 @@ const Evolution = () => {
 
   const [markers, setMarkers]           = useState<HealthMarkers | null>(null);
   const [markersLoading, setMarkersLoading] = useState(false);
-  const [trackedDates, setTrackedDates] = useState<Set<string>>(new Set());
+  const [trackedDates, setTrackedDates] = useState<Map<string, number>>(new Map());
+  const [userObjective, setUserObjective] = useState<string | null>(null);
   const [consistencyLoading, setConsistencyLoading] = useState(false);
 
   // AI Insight
@@ -163,27 +184,34 @@ const Evolution = () => {
       .then(({ data }) => { setMarkers(data as any); setMarkersLoading(false); });
   }, [clientId]);
 
-  // Carrega consistência dos últimos 28 dias
+  // Carrega consistência dos últimos 28 dias + objetivo do usuário
   useEffect(() => {
-    if (!clientId) return;
+    if (!clientId || !user) return;
     setConsistencyLoading(true);
     const since = new Date(); since.setDate(since.getDate() - 27);
-    supabase
-      .from('daily_summary')
-      .select('summary_date, meal_count')
-      .eq('client_id', clientId)
-      .gte('summary_date', toLocalISO(since))
-      .then(({ data }) => {
-        const set = new Set<string>(
-          (data ?? []).filter((r: any) => Number(r.meal_count) > 0).map((r: any) => r.summary_date)
-        );
-        setTrackedDates(set);
-        setConsistencyLoading(false);
-      });
-  }, [clientId]);
 
-  const calendar = useMemo(() => buildCalendar(trackedDates), [trackedDates]);
-  const trackedCount = calendar.filter(d => d.tracked).length;
+    Promise.all([
+      supabase.from('daily_summary')
+        .select('summary_date, meal_count, calorie_balance')
+        .eq('client_id', clientId)
+        .gte('summary_date', toLocalISO(since)),
+      supabase.from('diet_goals')
+        .select('objective')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ]).then(([{ data: days }, { data: goals }]) => {
+      const map = new Map<string, number>();
+      (days ?? []).filter((r: any) => Number(r.meal_count) > 0).forEach((r: any) => {
+        map.set(r.summary_date, r.calorie_balance ?? 0);
+      });
+      setTrackedDates(map);
+      setUserObjective(goals?.objective ?? null);
+      setConsistencyLoading(false);
+    });
+  }, [clientId, user]);
+
+  const calendar = useMemo(() => buildCalendar(trackedDates, userObjective), [trackedDates, userObjective]);
+  const trackedCount = calendar.filter(d => d.status === 'on_goal' || d.status === 'off_goal').length;
 
   const generateInsight = async () => {
     if (!clientId) return;
@@ -405,37 +433,56 @@ const Evolution = () => {
                 ))}
               </div>
 
-              {/* 28-day grid */}
-              <div className="grid grid-cols-7 gap-1">
-                {/* Fill leading empty cells to align with correct weekday */}
-                {(() => {
-                  const firstDay = new Date(); firstDay.setDate(firstDay.getDate() - 27);
-                  const offset = firstDay.getDay(); // 0=Sun
-                  return Array.from({ length: offset }, (_, i) => (
-                    <div key={`empty-${i}`} className="aspect-square rounded-md bg-transparent" />
-                  ));
-                })()}
-                {calendar.map(day => (
-                  <div
-                    key={day.iso}
-                    title={day.iso}
-                    className={`aspect-square rounded-md transition-colors ${
-                      day.tracked
-                        ? 'bg-primary hover:bg-primary/80'
-                        : 'bg-muted hover:bg-muted/80'
-                    }`}
-                  />
-                ))}
-              </div>
+              {/* 28-day grid — offset + data + trailing (semanas completas) */}
+              {(() => {
+                const firstDay = new Date(); firstDay.setDate(firstDay.getDate() - 27);
+                const offset = firstDay.getDay();
+                const allCells = [
+                  ...Array.from({ length: offset }, (_, i) => ({ iso: `pre-${i}`, status: 'pre' as const })),
+                  ...calendar,
+                ];
+                const rows = Math.ceil(allCells.length / 7);
+                return (
+                  <div className="space-y-1">
+                    {Array.from({ length: rows }, (_, row) => (
+                      <div key={row} className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: 7 }, (_, col) => {
+                          const cell = allCells[row * 7 + col];
+                          if (!cell || cell.status === 'pre') {
+                            return <div key={col} className="aspect-square rounded-md" />;
+                          }
+                          if (cell.status === 'future') {
+                            return <div key={col} className="aspect-square rounded-md border border-dashed border-border/40 bg-muted/20" />;
+                          }
+                          return (
+                            <div
+                              key={col}
+                              title={cell.iso}
+                              className={`aspect-square rounded-md transition-colors ${
+                                cell.status === 'on_goal'  ? 'bg-primary hover:bg-primary/80' :
+                                cell.status === 'off_goal' ? 'bg-orange-300/80 hover:bg-orange-300' :
+                                'bg-muted hover:bg-muted/80'
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Legend + score */}
               <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
                   <div className="flex items-center gap-1">
                     <div className="w-3 h-3 rounded-sm bg-muted" /> Sem registro
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-sm bg-primary" /> Registrado
+                    <div className="w-3 h-3 rounded-sm bg-primary" /> Meta batida
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm bg-orange-300/80" /> Fora da meta
                   </div>
                 </div>
                 <div className={`text-sm font-semibold ${
