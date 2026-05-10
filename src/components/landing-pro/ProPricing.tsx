@@ -10,6 +10,8 @@ type Plan = {
   perPatient: string;
   description: string;
   cta: string;
+  href: string;
+  external?: boolean;
   features: string[];
   highlighted?: boolean;
   badge?: string;
@@ -23,6 +25,7 @@ const plans: Plan[] = [
     perPatient: "Sem custo",
     description: "Para validar a plataforma com sua carteira inicial.",
     cta: "Começar grátis",
+    href: "/pro/cadastro",
     features: [
       "Dashboard completo",
       "Integração WhatsApp",
@@ -37,6 +40,8 @@ const plans: Plan[] = [
     perPatient: "≈ R$ 19,99 / paciente",
     description: "Para nutricionistas em crescimento estruturando a carteira.",
     cta: "Assinar Start",
+    href: "https://pay.kiwify.com.br/8e2DPyA",
+    external: true,
     features: [
       "Tudo do Teste",
       "Métricas avançadas",
@@ -51,6 +56,8 @@ const plans: Plan[] = [
     perPatient: "≈ R$ 13,30 / paciente",
     description: "Para quem já tem carteira consolidada e quer escalar atendimento.",
     cta: "Assinar Scale",
+    href: "https://pay.kiwify.com.br/KxxvbFd",
+    external: true,
     features: [
       "Tudo do Start",
       "Relatórios em PDF",
@@ -60,11 +67,13 @@ const plans: Plan[] = [
   },
   {
     name: "Pro",
-    patients: "Até 50 pacientes",
+    patients: "50+ pacientes",
     price: "R$ 499,90",
     perPatient: "≈ R$ 9,98 / paciente",
     description: "Maior carteira, menor custo por paciente. A operação madura.",
     cta: "Assinar Pro",
+    href: "https://pay.kiwify.com.br/OclGGTk",
+    external: true,
     features: [
       "Tudo do Scale",
       "Multi-canal WhatsApp",
@@ -154,7 +163,11 @@ export const ProPricing = () => {
                     : "bg-foreground text-background hover:bg-foreground/90"
                 )}
               >
-                <Link to={`/pro/cadastro?plano=${plan.name.toLowerCase()}`}>{plan.cta}</Link>
+                {plan.external ? (
+                  <a href={plan.href} target="_blank" rel="noopener noreferrer">{plan.cta}</a>
+                ) : (
+                  <Link to={plan.href}>{plan.cta}</Link>
+                )}
               </Button>
             </div>
           ))}

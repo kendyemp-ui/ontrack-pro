@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { GroveIcon } from "@/components/GroveIcon";
@@ -21,22 +21,8 @@ const signupSchema = z.object({
     .regex(/^[0-9()\s+\-]+$/, "Use apenas números"),
 });
 
-const PLANS = ["teste", "start", "scale", "pro"] as const;
-type Plan = (typeof PLANS)[number];
-
-const planLabels: Record<Plan, string> = {
-  teste: "Teste, 5 pacientes (grátis)",
-  start: "Start, 10 pacientes (R$ 199,90/mês)",
-  scale: "Scale, 30 pacientes (R$ 398,90/mês)",
-  pro:   "Pro, 50+ pacientes (R$ 499,90/mês)",
-};
-
 export default function ProSignup() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const initialPlan = (params.get("plano") as Plan) || "teste";
-
-  const [plan, setPlan]         = useState<Plan>(PLANS.includes(initialPlan) ? initialPlan : "teste");
   const [fullName, setFullName] = useState("");
   const [email, setEmail]       = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -65,7 +51,7 @@ export default function ProSignup() {
         full_name: parsed.data.fullName,
         email: parsed.data.email.toLowerCase(),
         whatsapp: parsed.data.whatsapp,
-        selected_plan: plan,
+        selected_plan: 'teste',
       });
 
       if (insErr) throw insErr;
@@ -127,31 +113,13 @@ export default function ProSignup() {
             <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.22em] pro-accent -ml-1">Pro</span>
           </div>
 
-          <h1 className="landing-h2 mt-6">Crie sua conta de profissional.</h1>
+          <h1 className="landing-h2 mt-6">Começar gratuitamente.</h1>
           <p className="landing-lead mt-3">
-            Validamos cada cadastro manualmente. Liberação em até 24h úteis direto no seu WhatsApp.
+            Plano Teste — até 5 pacientes, sem cartão. Liberação em até 24h úteis direto no seu WhatsApp.
           </p>
 
           <Card className="mt-8 p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Plano */}
-              <div className="space-y-2">
-                <Label htmlFor="plan">Plano escolhido</Label>
-                <select
-                  id="plan"
-                  value={plan}
-                  onChange={(e) => setPlan(e.target.value as Plan)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  {PLANS.map((p) => (
-                    <option key={p} value={p}>{planLabels[p]}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Você pode trocar de plano depois, sem fidelidade.
-                </p>
-              </div>
-
               {/* Nome */}
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nome completo</Label>
