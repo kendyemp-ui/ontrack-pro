@@ -11,6 +11,19 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
+interface BioPoint {
+  date: string;
+  weight: number; body_fat: number; muscle_mass: number;
+  basal_rate: number; body_water: number; visceral_fat: number; metabolic_age: number;
+}
+
+type MetricKey = 'weight' | 'body_fat' | 'muscle_mass';
+const METRIC_OPTS: { key: MetricKey; label: string; unit: string; color: string }[] = [
+  { key: 'weight',      label: 'Peso',    unit: 'kg', color: '#4A7C59' },
+  { key: 'body_fat',    label: 'Gordura', unit: '%',  color: '#f59e0b' },
+  { key: 'muscle_mass', label: 'Músculo', unit: 'kg', color: '#3b82f6' },
+];
+
 interface HealthMarkers {
   exam_date: string | null;
   glucose: number | null;
@@ -22,37 +35,96 @@ interface HealthMarkers {
   uric_acid: number | null;
   creatinine: number | null;
   tsh: number | null;
+  t4: number | null;
   hemoglobin: number | null;
+  hematocrit: number | null;
+  raw_markers: Record<string, { value: number; unit: string; reference?: string }> | null;
 }
 
 type MarkerStatus = 'ok' | 'borderline' | 'high' | 'low';
 
-interface MarkerDef {
-  key: keyof HealthMarkers;
-  label: string;
-  unit: string;
-  evaluate: (v: number) => MarkerStatus;
+// ── Avaliação clínica ─────────────────────────────────────────────────────────
+function evalMarker(key: string, v: number): MarkerStatus {
+  switch (key) {
+    case 'glucose':           return v < 100 ? 'ok' : v < 126 ? 'borderline' : 'high';
+    case 'hba1c':             return v < 5.7 ? 'ok' : v < 6.5 ? 'borderline' : 'high';
+    case 'ldl':               return v < 130 ? 'ok' : v < 160 ? 'borderline' : 'high';
+    case 'hdl':               return v >= 60 ? 'ok' : v >= 40 ? 'borderline' : 'low';
+    case 'total_cholesterol': return v < 200 ? 'ok' : v < 240 ? 'borderline' : 'high';
+    case 'triglycerides':     return v < 150 ? 'ok' : v < 200 ? 'borderline' : 'high';
+    case 'tsh':               return v >= 0.5 && v <= 4.0 ? 'ok' : 'borderline';
+    case 't4':                return v >= 0.8 && v <= 1.8 ? 'ok' : 'borderline';
+    case 'creatinine':        return v < 1.3 ? 'ok' : v < 1.7 ? 'borderline' : 'high';
+    case 'uric_acid':         return v < 7.0 ? 'ok' : 'high';
+    case 'hemoglobin':        return v >= 12 ? 'ok' : v >= 10 ? 'borderline' : 'low';
+    case 'hematocrit':        return v >= 36 ? 'ok' : v >= 30 ? 'borderline' : 'low';
+    default:                  return 'ok';
+  }
 }
 
-// ── Definições de referência clínica ─────────────────────────────────────────
-const MARKERS: MarkerDef[] = [
-  { key: 'glucose',           label: 'Glicemia',       unit: 'mg/dL', evaluate: v => v < 100 ? 'ok' : v < 126 ? 'borderline' : 'high' },
-  { key: 'hba1c',             label: 'HbA1c',          unit: '%',     evaluate: v => v < 5.7 ? 'ok' : v < 6.5 ? 'borderline' : 'high' },
-  { key: 'ldl',               label: 'LDL',            unit: 'mg/dL', evaluate: v => v < 130 ? 'ok' : v < 160 ? 'borderline' : 'high' },
-  { key: 'hdl',               label: 'HDL',            unit: 'mg/dL', evaluate: v => v >= 60 ? 'ok' : v >= 40 ? 'borderline' : 'low' },
-  { key: 'total_cholesterol', label: 'Colesterol total',unit: 'mg/dL', evaluate: v => v < 200 ? 'ok' : v < 240 ? 'borderline' : 'high' },
-  { key: 'triglycerides',     label: 'Triglicerídeos', unit: 'mg/dL', evaluate: v => v < 150 ? 'ok' : v < 200 ? 'borderline' : 'high' },
-  { key: 'tsh',               label: 'TSH',            unit: 'mUI/L', evaluate: v => v >= 0.5 && v <= 4.0 ? 'ok' : 'borderline' },
-  { key: 'creatinine',        label: 'Creatinina',     unit: 'mg/dL', evaluate: v => v < 1.3 ? 'ok' : v < 1.7 ? 'borderline' : 'high' },
-  { key: 'hemoglobin',        label: 'Hemoglobina',    unit: 'g/dL',  evaluate: v => v >= 12 ? 'ok' : v >= 10 ? 'borderline' : 'low' },
-  { key: 'uric_acid',         label: 'Ácido úrico',    unit: 'mg/dL', evaluate: v => v < 7.0 ? 'ok' : 'high' },
+// ── Categorias de marcadores (igual ao app) ───────────────────────────────────
+const MARKER_CATEGORIES = [
+  {
+    label: '🩸 Glicemia',
+    keys: ['glucose', 'hba1c'] as (keyof HealthMarkers)[],
+    meta: {
+      glucose: { label: 'Glicemia',  unit: 'mg/dL' },
+      hba1c:   { label: 'HbA1c',     unit: '%'     },
+    } as Record<string, { label: string; unit: string }>,
+  },
+  {
+    label: '🫀 Lipídios',
+    keys: ['total_cholesterol', 'ldl', 'hdl', 'triglycerides'] as (keyof HealthMarkers)[],
+    meta: {
+      total_cholesterol: { label: 'Colesterol total', unit: 'mg/dL' },
+      ldl:               { label: 'LDL',              unit: 'mg/dL' },
+      hdl:               { label: 'HDL',              unit: 'mg/dL' },
+      triglycerides:     { label: 'Triglicerídeos',   unit: 'mg/dL' },
+    } as Record<string, { label: string; unit: string }>,
+  },
+  {
+    label: '🦋 Tireoide',
+    keys: ['tsh', 't4'] as (keyof HealthMarkers)[],
+    meta: {
+      tsh: { label: 'TSH',     unit: 'mUI/L' },
+      t4:  { label: 'T4 livre', unit: 'ng/dL' },
+    } as Record<string, { label: string; unit: string }>,
+  },
+  {
+    label: '🫘 Função renal',
+    keys: ['creatinine', 'uric_acid'] as (keyof HealthMarkers)[],
+    meta: {
+      creatinine: { label: 'Creatinina', unit: 'mg/dL' },
+      uric_acid:  { label: 'Ác. úrico',  unit: 'mg/dL' },
+    } as Record<string, { label: string; unit: string }>,
+  },
+  {
+    label: '🔴 Hematologia',
+    keys: ['hemoglobin', 'hematocrit'] as (keyof HealthMarkers)[],
+    meta: {
+      hemoglobin: { label: 'Hemoglobina',  unit: 'g/dL' },
+      hematocrit: { label: 'Hematócrito',  unit: '%'    },
+    } as Record<string, { label: string; unit: string }>,
+  },
 ];
 
+// Marcadores extras do raw_markers
+const RAW_PRIORITY = ['testosterone', 'vitamin_d', 'ferritin', 'insulin', 'vitamin_b12', 'alt', 'cortisol'];
+const RAW_LABELS: Record<string, { label: string; unit: string }> = {
+  testosterone: { label: 'Testosterona', unit: 'ng/dL'   },
+  vitamin_d:    { label: 'Vitamina D',   unit: 'ng/mL'   },
+  ferritin:     { label: 'Ferritina',    unit: 'ng/mL'   },
+  insulin:      { label: 'Insulina',     unit: 'µIU/mL'  },
+  vitamin_b12:  { label: 'Vitamina B12', unit: 'pg/mL'   },
+  alt:          { label: 'ALT/TGP',      unit: 'U/L'     },
+  cortisol:     { label: 'Cortisol',     unit: 'µg/dL'   },
+};
+
 const STATUS_CONFIG: Record<MarkerStatus, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-  ok:         { label: 'Normal',     icon: CheckCircle2,  color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  borderline: { label: 'Atenção',    icon: AlertTriangle, color: 'text-amber-500',   bg: 'bg-amber-500/10'   },
-  high:       { label: 'Alto',       icon: AlertCircle,   color: 'text-red-500',     bg: 'bg-red-500/10'     },
-  low:        { label: 'Baixo',      icon: AlertCircle,   color: 'text-red-500',     bg: 'bg-red-500/10'     },
+  ok:         { label: 'Normal',  icon: CheckCircle2,  color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  borderline: { label: 'Atenção', icon: AlertTriangle, color: 'text-amber-500',   bg: 'bg-amber-500/10'   },
+  high:       { label: 'Alto',    icon: AlertCircle,   color: 'text-red-500',     bg: 'bg-red-500/10'     },
+  low:        { label: 'Baixo',   icon: AlertCircle,   color: 'text-red-500',     bg: 'bg-red-500/10'     },
 };
 
 const toLocalISO = (d: Date) =>
@@ -60,17 +132,103 @@ const toLocalISO = (d: Date) =>
 
 // ── Body fat reference ranges ─────────────────────────────────────────────────
 function bodyFatStatus(pct: number): { label: string; color: string } {
-  if (pct < 6)   return { label: 'Muito baixo', color: 'text-amber-500' };
-  if (pct < 18)  return { label: 'Atlético',    color: 'text-emerald-500' };
-  if (pct < 25)  return { label: 'Normal',       color: 'text-emerald-400' };
-  if (pct < 30)  return { label: 'Acima do ideal', color: 'text-amber-500' };
-  return            { label: 'Alto',            color: 'text-red-500' };
+  if (pct < 6)   return { label: 'Muito baixo',    color: 'text-amber-500'   };
+  if (pct < 18)  return { label: 'Atlético',        color: 'text-emerald-500' };
+  if (pct < 25)  return { label: 'Normal',          color: 'text-emerald-400' };
+  if (pct < 30)  return { label: 'Acima do ideal',  color: 'text-amber-500'   };
+  return            { label: 'Alto',             color: 'text-red-500'     };
 }
 
 function visceralFatStatus(v: number): { label: string; color: string } {
   if (v <= 9)  return { label: 'Saudável', color: 'text-emerald-500' };
-  if (v <= 14) return { label: 'Atenção',  color: 'text-amber-500' };
-  return          { label: 'Risco',      color: 'text-red-500' };
+  if (v <= 14) return { label: 'Atenção',  color: 'text-amber-500'   };
+  return          { label: 'Risco',      color: 'text-red-500'     };
+}
+
+// ── Gráfico de evolução (SVG inline) ─────────────────────────────────────────
+function BioChart({ history, metric }: { history: BioPoint[]; metric: MetricKey }) {
+  const W = 340;
+  const H = 148;
+  const PAD = { l: 38, r: 52, t: 20, b: 32 };
+  const cW = W - PAD.l - PAD.r;
+  const cH = H - PAD.t - PAD.b;
+
+  const opts  = METRIC_OPTS.find(m => m.key === metric)!;
+  const color = opts.color;
+  const unit  = opts.unit;
+
+  const validPts = history.filter(p => (p[metric] ?? 0) > 0);
+  if (validPts.length < 2) {
+    return (
+      <div className="flex items-center justify-center" style={{ height: H }}>
+        <p className="text-xs text-muted-foreground text-center">
+          Registre pelo menos 2 medições para ver o gráfico
+        </p>
+      </div>
+    );
+  }
+
+  const vals   = validPts.map(p => p[metric] as number);
+  const rawMin = Math.min(...vals);
+  const rawMax = Math.max(...vals);
+  const spread = rawMax - rawMin || rawMax * 0.05 || 1;
+  const minV   = rawMin - spread * 0.15;
+  const maxV   = rawMax + spread * 0.15;
+
+  const toX = (i: number) => PAD.l + (i / (validPts.length - 1)) * cW;
+  const toY = (v: number) => PAD.t + (1 - (v - minV) / (maxV - minV)) * cH;
+
+  const pts     = validPts.map((p, i) => ({ x: toX(i), y: toY(p[metric] as number), v: p[metric] as number, date: p.date }));
+  const polyline = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const midY    = PAD.t + cH / 2;
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+      {/* Grid horizontal */}
+      <line x1={PAD.l} y1={PAD.t}       x2={W - PAD.r} y2={PAD.t}       stroke="#E8EFE8" strokeWidth={1} />
+      <line x1={PAD.l} y1={midY}        x2={W - PAD.r} y2={midY}        stroke="#E8EFE8" strokeWidth={1} strokeDasharray="3,3" />
+      <line x1={PAD.l} y1={H - PAD.b}  x2={W - PAD.r} y2={H - PAD.b}  stroke="#E8EFE8" strokeWidth={1} />
+      {/* Eixo Y */}
+      <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={H - PAD.b} stroke="#E8EFE8" strokeWidth={1} />
+
+      {/* Labels eixo Y */}
+      <text x={PAD.l - 5} y={PAD.t + 4}     fontSize={9} fill="#9AB89A" textAnchor="end">{rawMax.toFixed(1)}</text>
+      <text x={PAD.l - 5} y={H - PAD.b + 1} fontSize={9} fill="#9AB89A" textAnchor="end">{rawMin.toFixed(1)}</text>
+
+      {/* Linha */}
+      <polyline points={polyline} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+
+      {/* Pontos e labels */}
+      {pts.map((p, i) => {
+        const isFirst = i === 0;
+        const isLast  = i === pts.length - 1;
+        return (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r={6} fill="#FFFFFF" />
+            <circle cx={p.x} cy={p.y} r={4} fill={color} />
+
+            {(isFirst || isLast) && (
+              <text
+                x={isFirst ? PAD.l : W - PAD.r}
+                y={H - PAD.b + 14}
+                fontSize={9}
+                fill="#9AB89A"
+                textAnchor={isFirst ? 'start' : 'end'}
+              >
+                {p.date.slice(5).replace('-', '/')}
+              </text>
+            )}
+
+            {isLast && (
+              <text x={p.x + 9} y={p.y + 4} fontSize={11} fill={color} fontWeight="700" textAnchor="start">
+                {p.v}{unit}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
 }
 
 // ── Heatmap de consistência ───────────────────────────────────────────────────
@@ -83,20 +241,18 @@ function buildCalendar(
   const today = new Date();
   const days: { iso: string; status: DayStatus }[] = [];
 
-  // 28 dias passados
   for (let i = 27; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const iso = toLocalISO(d);
     if (!tracked.has(iso)) { days.push({ iso, status: 'untracked' }); continue; }
     const balance = tracked.get(iso)!;
     let onGoal: boolean;
-    if (objective === 'gain')         onGoal = balance >= 0;
+    if (objective === 'gain')          onGoal = balance >= 0;
     else if (objective === 'maintain') onGoal = Math.abs(balance) <= 200;
-    else                               onGoal = balance <= 0; // 'lose' ou padrão
+    else                               onGoal = balance <= 0;
     days.push({ iso, status: onGoal ? 'on_goal' : 'off_goal' });
   }
 
-  // Células futuras para fechar a última semana
   const firstDay = new Date(); firstDay.setDate(firstDay.getDate() - 27);
   const offset = firstDay.getDay();
   const trailingCount = (offset + 28) % 7 === 0 ? 0 : 7 - ((offset + 28) % 7);
@@ -157,26 +313,52 @@ const Evolution = () => {
   const { bioimpedance, clientId, user } = useApp();
   const navigate = useNavigate();
 
+  // Bioimpedância histórico
+  const [bioHistory, setBioHistory]     = useState<BioPoint[]>([]);
+  const [bioMetric, setBioMetric]       = useState<MetricKey>('weight');
+
+  // Exames de sangue
   const [markers, setMarkers]           = useState<HealthMarkers | null>(null);
   const [markersLoading, setMarkersLoading] = useState(false);
+
+  // Heatmap consistência
   const [trackedDates, setTrackedDates] = useState<Map<string, number>>(new Map());
   const [userObjective, setUserObjective] = useState<string | null>(null);
   const [consistencyLoading, setConsistencyLoading] = useState(false);
 
   // AI Insight
-  const [insight, setInsight]         = useState<Insight | null>(null);
+  const [insight, setInsight]           = useState<Insight | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [insightError, setInsightError]     = useState<string | null>(null);
   const [insightExpanded, setInsightExpanded] = useState(true);
-  const [insightAt, setInsightAt]     = useState<Date | null>(null);
+  const [insightAt, setInsightAt]       = useState<Date | null>(null);
 
-  // Carrega exames de sangue mais recentes
+  // Carrega histórico de bioimpedância (últimas 10 medições)
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('bioimpedance')
+      .select('measured_at,created_at,weight,body_fat,muscle_mass,basal_rate,body_water,visceral_fat,metabolic_age')
+      .eq('user_id', user.id)
+      .order('measured_at', { ascending: true })
+      .limit(10)
+      .then(({ data }) => {
+        if (data?.length) {
+          setBioHistory(data.map((r: any) => ({
+            ...r,
+            date: (r.measured_at ?? r.created_at).slice(0, 10),
+          })));
+        }
+      });
+  }, [user]);
+
+  // Carrega exames de sangue mais recentes (inclui t4, hematocrit, raw_markers)
   useEffect(() => {
     if (!clientId) return;
     setMarkersLoading(true);
     supabase
       .from('patient_health_markers')
-      .select('exam_date,glucose,hba1c,ldl,hdl,total_cholesterol,triglycerides,uric_acid,creatinine,tsh,hemoglobin')
+      .select('exam_date,glucose,hba1c,ldl,hdl,total_cholesterol,triglycerides,uric_acid,creatinine,tsh,t4,hemoglobin,hematocrit,raw_markers')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -210,7 +392,7 @@ const Evolution = () => {
     });
   }, [clientId, user]);
 
-  const calendar = useMemo(() => buildCalendar(trackedDates, userObjective), [trackedDates, userObjective]);
+  const calendar     = useMemo(() => buildCalendar(trackedDates, userObjective), [trackedDates, userObjective]);
   const trackedCount = calendar.filter(d => d.status === 'on_goal' || d.status === 'off_goal').length;
 
   const generateInsight = async () => {
@@ -232,12 +414,17 @@ const Evolution = () => {
     }
   };
 
-  const hasBio = bioimpedance.weight > 0 || bioimpedance.bodyFat > 0;
-
-  const visibleMarkers = MARKERS.filter(m => markers && markers[m.key] != null);
-  const examDate = markers?.exam_date
+  const hasBio    = bioimpedance.weight > 0 || bioimpedance.bodyFat > 0;
+  const examDate  = markers?.exam_date
     ? new Date(markers.exam_date).toLocaleDateString('pt-BR')
     : null;
+
+  // Score geral dos exames
+  const allMarkerItems = MARKER_CATEGORIES.flatMap(cat =>
+    cat.keys.filter(k => markers && markers[k] != null)
+      .map(k => ({ key: k as string, value: Number(markers![k]) }))
+  );
+  const okCount = allMarkerItems.filter(m => evalMarker(m.key, m.value) === 'ok').length;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -277,10 +464,32 @@ const Evolution = () => {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Tabs de métrica */}
+              <div className="flex border-b border-border/50">
+                {METRIC_OPTS.map(m => (
+                  <button
+                    key={m.key}
+                    onClick={() => setBioMetric(m.key)}
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                      bioMetric === m.key
+                        ? 'border-b-2 font-semibold'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    style={bioMetric === m.key ? { borderBottomColor: m.color, color: m.color } : {}}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Gráfico de evolução */}
+              <div className="w-full">
+                <BioChart history={bioHistory} metric={bioMetric} />
+              </div>
+
               {/* Gordura corporal — destaque com barra */}
               {bioimpedance.bodyFat > 0 && (() => {
                 const bfStatus = bodyFatStatus(bioimpedance.bodyFat);
-                // Barra de 0–45%, marcador de "saudável" em 18–25%
                 const pct = (bioimpedance.bodyFat / 45) * 100;
                 const barCol = bioimpedance.bodyFat < 18 ? 'bg-amber-400' :
                                bioimpedance.bodyFat < 26 ? 'bg-emerald-500' :
@@ -300,7 +509,6 @@ const Evolution = () => {
                     </div>
                     <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
                       <div className={`h-full rounded-full transition-all duration-700 ${barCol}`} style={{ width: `${pct}%` }} />
-                      {/* Marcador de faixa ideal */}
                       <div className="absolute inset-y-0 bg-emerald-500/20 rounded-sm" style={{ left: '40%', right: '44%' }} />
                     </div>
                     <div className="flex justify-between text-[9px] text-muted-foreground">
@@ -347,6 +555,10 @@ const Evolution = () => {
                   <BioCard label="Idade metabólica" value={bioimpedance.metabolicAge} unit="anos" icon={TrendingUp} />
                 )}
               </div>
+
+              {bioHistory.length > 1 && (
+                <p className="text-[10px] text-muted-foreground text-center">{bioHistory.length} medições registradas</p>
+              )}
             </div>
           )}
         </div>
@@ -359,7 +571,7 @@ const Evolution = () => {
 
           {markersLoading ? (
             <p className="text-xs text-muted-foreground py-4 text-center">Carregando exames…</p>
-          ) : !markers || visibleMarkers.length === 0 ? (
+          ) : !markers || allMarkerItems.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <FlaskConical size={28} className="text-muted-foreground/40" />
               <div>
@@ -370,45 +582,89 @@ const Evolution = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {examDate && (
-                <p className="text-[10px] text-muted-foreground mb-3">
+                <p className="text-[10px] text-muted-foreground">
                   Última atualização: {examDate}
                 </p>
               )}
-              {visibleMarkers.map(m => {
-                const val = Number(markers![m.key]);
-                const status = m.evaluate(val);
-                const cfg = STATUS_CONFIG[status];
-                const Icon = cfg.icon;
+
+              {/* Marcadores por categoria */}
+              {MARKER_CATEGORIES.map(cat => {
+                const items = cat.keys
+                  .filter(k => markers[k] != null)
+                  .map(k => ({
+                    key: k as string,
+                    label: cat.meta[k as string].label,
+                    unit:  cat.meta[k as string].unit,
+                    value: Number(markers[k]),
+                  }));
+                if (!items.length) return null;
                 return (
-                  <div key={m.key} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${cfg.bg}`}>
-                    <Icon size={14} className={`shrink-0 ${cfg.color}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground">{m.label}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold text-foreground">{val} <span className="text-[10px] font-normal text-muted-foreground">{m.unit}</span></p>
-                      <p className={`text-[10px] font-medium ${cfg.color}`}>{cfg.label}</p>
-                    </div>
+                  <div key={cat.label} className="space-y-1.5">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-2">
+                      {cat.label}
+                    </p>
+                    {items.map(m => {
+                      const status = evalMarker(m.key, m.value);
+                      const cfg = STATUS_CONFIG[status];
+                      const Icon = cfg.icon;
+                      return (
+                        <div key={m.key} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${cfg.bg}`}>
+                          <Icon size={14} className={`shrink-0 ${cfg.color}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground">{m.label}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-semibold text-foreground">
+                              {m.value} <span className="text-[10px] font-normal text-muted-foreground">{m.unit}</span>
+                            </p>
+                            <p className={`text-[10px] font-medium ${cfg.color}`}>{cfg.label}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
 
-              {/* Score geral */}
-              {visibleMarkers.length > 0 && (() => {
-                const total = visibleMarkers.length;
-                const okCount = visibleMarkers.filter(m => m.evaluate(Number(markers![m.key])) === 'ok').length;
-                const pct = Math.round((okCount / total) * 100);
+              {/* raw_markers — testosterona, vitamina D, etc. */}
+              {markers.raw_markers && (() => {
+                const extras = RAW_PRIORITY
+                  .filter(k => markers.raw_markers![k]?.value)
+                  .map(k => ({ key: k, ...RAW_LABELS[k], value: markers.raw_markers![k].value }));
+                if (!extras.length) return null;
                 return (
-                  <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{okCount} de {total} dentro do normal</span>
-                    <div className={`text-sm font-semibold ${pct >= 80 ? 'text-emerald-500' : pct >= 60 ? 'text-amber-500' : 'text-red-500'}`}>
-                      {pct}% OK
-                    </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-2">
+                      🧬 Outros marcadores
+                    </p>
+                    {extras.map(m => (
+                      <div key={m.key} className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-secondary/50">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground">{m.label}</p>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground shrink-0">
+                          {m.value} <span className="text-[10px] font-normal text-muted-foreground">{m.unit}</span>
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 );
               })()}
+
+              {/* Score geral */}
+              {allMarkerItems.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{okCount} de {allMarkerItems.length} dentro do normal</span>
+                  <div className={`text-sm font-semibold ${
+                    okCount / allMarkerItems.length >= 0.8 ? 'text-emerald-500' :
+                    okCount / allMarkerItems.length >= 0.6 ? 'text-amber-500' : 'text-red-500'
+                  }`}>
+                    {Math.round((okCount / allMarkerItems.length) * 100)}% OK
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -433,7 +689,7 @@ const Evolution = () => {
                 ))}
               </div>
 
-              {/* 28-day grid — offset + data + trailing (semanas completas) */}
+              {/* 28-day grid */}
               {(() => {
                 const firstDay = new Date(); firstDay.setDate(firstDay.getDate() - 27);
                 const offset = firstDay.getDay();

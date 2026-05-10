@@ -99,6 +99,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         .from('bioimpedance')
         .select('*')
         .eq('user_id', user.id)
+        .order('measured_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
         .then(({ data }) => {
           if (data) {
