@@ -33,6 +33,7 @@ import ProPatientProfile from "./pages/pro/ProPatientProfile";
 import ProAlerts from "./pages/pro/ProAlerts";
 import ProWhatsApp from "./pages/pro/ProWhatsApp";
 import ProObrigado from "./pages/pro/ProObrigado";
+import Obrigado from "./pages/Obrigado";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -115,6 +116,7 @@ const App = () => (
               <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/admin/assinaturas" element={<AdminProtectedRoute><AdminSubscriptions /></AdminProtectedRoute>} />
+              <Route path="/obrigado" element={<Obrigado />} />
 
               {/* Profissional (B2B SaaS) */}
               <Route path="/pro" element={<ProLanding />} />
