@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 
 // TODO: Substituir pelas URLs reais do checkout Kiwify
 const KIWIFY_URLS = {
-  monthly: "https://pay.kiwify.com.br/SEU-LINK-MENSAL",
-  semestral: "https://pay.kiwify.com.br/SEU-LINK-SEMESTRAL",
-  annual: "https://pay.kiwify.com.br/SEU-LINK-ANUAL",
+  monthly: "https://pay.kiwify.com.br/Zb94IHu",
+  semestral: "https://pay.kiwify.com.br/KhI5ohM",
+  annual: "https://pay.kiwify.com.br/ICu9X66",
 };
 
 const plans = [
