@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import ProDietPlanEditor from '@/components/pro/ProDietPlanEditor';
+import ProWorkoutEditor from '@/components/pro/ProWorkoutEditor';
 import PatientDashboardTab from '@/components/pro/PatientDashboardTab';
 import PatientInsightsPanel from '@/components/pro/PatientInsightsPanel';
 import { usePatientDashboard } from '@/hooks/usePatientDashboard';
@@ -27,7 +28,7 @@ export default function ProPatientProfile() {
   const { getPatient, professionalId } = usePro();
   const patient = id ? getPatient(id) : undefined;
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'resumo' | 'dieta' | 'observacoes'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'resumo' | 'dieta' | 'treino' | 'observacoes'>('dashboard');
 
   // Observações
   const [obsSubTab, setObsSubTab] = useState<'notes' | 'docs' | 'ai'>('notes');
@@ -351,6 +352,7 @@ export default function ProPatientProfile() {
           { id: 'dashboard', label: 'Dashboard' },
           { id: 'resumo', label: 'Resumo' },
           { id: 'dieta', label: 'Plano Alimentar' },
+          { id: 'treino', label: 'Treino' },
           { id: 'observacoes', label: 'Observações' },
         ].map(tab => (
           <button
@@ -447,6 +449,10 @@ export default function ProPatientProfile() {
 
       {activeTab === 'dieta' && (
         <ProDietPlanEditor clientId={patient.id} />
+      )}
+
+      {activeTab === 'treino' && (
+        <ProWorkoutEditor clientId={patient.id} />
       )}
 
       {activeTab === 'observacoes' && (
